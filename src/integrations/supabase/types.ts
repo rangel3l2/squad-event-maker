@@ -14,8 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_requests: {
+        Row: {
+          email: string
+          full_name: string
+          id: string
+          requested_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          email: string
+          full_name: string
+          id?: string
+          requested_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          email?: string
+          full_name?: string
+          id?: string
+          requested_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
+          allowed_email_domain: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -26,6 +54,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allowed_email_domain?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -36,6 +65,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allowed_email_domain?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -211,6 +241,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      validate_event_email_domain: {
+        Args: { _event_id: string; _user_email: string }
         Returns: boolean
       }
     }
