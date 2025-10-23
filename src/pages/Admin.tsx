@@ -64,6 +64,7 @@ const Admin = () => {
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const eventDate = formData.get("event_date") as string;
+    const allowedEmailDomain = formData.get("allowed_email_domain") as string;
 
     try {
       const { error } = await supabase
@@ -74,6 +75,7 @@ const Admin = () => {
           event_date: eventDate,
           created_by: user!.id,
           is_active: true,
+          allowed_email_domain: allowedEmailDomain || null,
         });
 
       if (error) throw error;
@@ -185,6 +187,21 @@ const Admin = () => {
                       required
                       disabled={isLoading}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="allowed_email_domain">
+                      Domínio de Email Permitido (Opcional)
+                    </Label>
+                    <Input
+                      id="allowed_email_domain"
+                      name="allowed_email_domain"
+                      type="text"
+                      placeholder="ex: estudante.ifms.edu.br"
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Deixe em branco para permitir todos os domínios
+                    </p>
                   </div>
                   <Button
                     type="submit"
