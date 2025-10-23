@@ -1,1 +1,4 @@
 project_id = "twfbsgbydjuhqjjkhodv"
+
+[functions.generate-logo]
+verify_jwt = false

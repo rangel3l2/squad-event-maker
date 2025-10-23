@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, Trophy } from "lucide-react";
+import { Calendar, Users, Trophy, Palette } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 
@@ -78,11 +78,20 @@ const Events = () => {
       <Navbar />
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
         <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Eventos Disponíveis</h1>
-            <p className="text-muted-foreground">
-              Escolha um evento e crie seu time!
-            </p>
+          <div className="mb-8 flex justify-between items-start">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Eventos Disponíveis</h1>
+              <p className="text-muted-foreground">
+                Escolha um evento e crie seu time!
+              </p>
+            </div>
+            <Button 
+              onClick={() => navigate('/logo-editor')}
+              className="bg-gradient-accent hover:opacity-90"
+            >
+              <Palette className="w-4 h-4 mr-2" />
+              Criar Logo para Time
+            </Button>
           </div>
 
           {events.length === 0 ? (
