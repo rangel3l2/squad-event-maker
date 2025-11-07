@@ -1,273 +1,276 @@
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AvatarSelector } from "./AvatarSelector";
-
-const joinTeamSchema = z.object({
-  teamId: z.string().min(1, "Selecione um time"),
-  fullName: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(100),
-  classroom: z.string().min(1, "Informe sua sala"),
-  classroomGroup: z.enum(["A", "B"], { required_error: "Selecione um grupo" }),
-  cpf: z.string().regex(/^\d{11}$/, "CPF deve conter 11 dígitos"),
-});
-
-type JoinTeamFormData = z.infer<typeof joinTeamSchema>;
+import { Users, Search, CheckCircle, Lock } from "lucide-react";
 
 interface Team {
   id: string;
   name: string;
   logo_url: string;
+  description: string | null;
+  member_count: number;
 }
 
 interface JoinTeamFormProps {
   onSuccess: () => void;
 }
 
+const MAX_MEMBERS_PER_TEAM = 3;
+
 export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [teams, setTeams] = useState<Team[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
-
-  const form = useForm<JoinTeamFormData>({
-    resolver: zodResolver(joinTeamSchema),
-    defaultValues: {
-      teamId: "",
-      fullName: "",
-      classroom: "",
-      classroomGroup: undefined,
-      cpf: "",
-    },
-  });
+  const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isJoining, setIsJoining] = useState<string | null>(null);
 
   useEffect(() => {
     loadTeams();
-    loadUserProfile();
   }, []);
 
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredTeams(teams);
+    } else {
+      const filtered = teams.filter((team) =>
+        team.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredTeams(filtered);
+    }
+  }, [searchTerm, teams]);
+
   const loadTeams = async () => {
-    const { data: events } = await supabase
-      .from("events")
-      .select("id")
-      .eq("is_active", true)
-      .single();
+    try {
+      const { data: events } = await supabase
+        .from("events")
+        .select("id")
+        .eq("is_active", true)
+        .single();
 
-    if (!events) return;
-
-    const { data } = await supabase
-      .from("teams")
-      .select("id, name, logo_url")
-      .eq("event_id", events.id)
-      .order("name");
-
-    if (data) setTeams(data);
-  };
-
-  const loadUserProfile = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("profiles")
-      .select("full_name, cpf, avatar_url")
-      .eq("id", user.id)
-      .single();
-
-    if (data) {
-      form.setValue("fullName", data.full_name || "");
-      if (data.cpf) {
-        form.setValue("cpf", data.cpf);
+      if (!events) {
+        toast.error("Nenhum evento ativo encontrado");
+        return;
       }
-      if (data.avatar_url) {
-        setAvatarUrl(data.avatar_url);
-      }
+
+      // Buscar times com contagem de membros
+      const { data: teamsData } = await supabase
+        .from("teams")
+        .select("id, name, logo_url, description")
+        .eq("event_id", events.id)
+        .order("name");
+
+      if (!teamsData) return;
+
+      // Buscar contagem de membros para cada time
+      const teamsWithCount = await Promise.all(
+        teamsData.map(async (team) => {
+          const { count } = await supabase
+            .from("team_members")
+            .select("*", { count: "exact", head: true })
+            .eq("team_id", team.id);
+
+          return {
+            ...team,
+            member_count: count || 0,
+          };
+        })
+      );
+
+      setTeams(teamsWithCount);
+      setFilteredTeams(teamsWithCount);
+    } catch (error) {
+      console.error("Error loading teams:", error);
+      toast.error("Erro ao carregar times");
     }
   };
 
-  const onSubmit = async (data: JoinTeamFormData) => {
+  const handleJoinTeam = async (teamId: string, teamName: string, memberCount: number) => {
     if (!user) {
       toast.error("Você precisa estar logado");
       return;
     }
 
-    setIsSubmitting(true);
+    if (memberCount >= MAX_MEMBERS_PER_TEAM) {
+      toast.error("Este time já está completo (máximo 3 membros)");
+      return;
+    }
+
+    setIsJoining(teamId);
 
     try {
-      // Update profile with CPF and avatar
-      const { error: profileError } = await supabase
+      // Verificar se usuário já tem perfil completo
+      const { data: profile } = await supabase
         .from("profiles")
-        .update({
-          full_name: data.fullName,
-          cpf: data.cpf,
-          avatar_url: avatarUrl || user.user_metadata?.avatar_url || user.user_metadata?.picture,
-        })
-        .eq("id", user.id);
+        .select("cpf, full_name")
+        .eq("id", user.id)
+        .single();
 
-      if (profileError) throw profileError;
+      if (!profile?.cpf || !profile?.full_name) {
+        toast.error("Complete seu perfil primeiro");
+        navigate("/complete-profile");
+        return;
+      }
 
-      // Join team
-      const { error: memberError } = await supabase
+      // Verificar se já está em um time
+      const { data: existingMember } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (existingMember) {
+        toast.error("Você já está em um time. Saia do time atual para entrar em outro.");
+        return;
+      }
+
+      // Buscar dados adicionais do perfil para classroom e classroom_group
+      const { data: memberData } = await supabase
+        .from("team_members")
+        .select("classroom, classroom_group")
+        .eq("user_id", user.id)
+        .single();
+
+      // Se não tiver classroom, pedir para completar
+      if (!memberData?.classroom) {
+        toast.error("Complete suas informações de turma no perfil");
+        navigate("/complete-profile");
+        return;
+      }
+
+      // Entrar no time
+      const { error: joinError } = await supabase
         .from("team_members")
         .insert({
-          team_id: data.teamId,
+          team_id: teamId,
           user_id: user.id,
-          classroom: data.classroom,
-          classroom_group: data.classroomGroup,
+          classroom: memberData.classroom,
+          classroom_group: memberData.classroom_group,
         });
 
-      if (memberError) throw memberError;
+      if (joinError) throw joinError;
 
-      toast.success("Você entrou no time com sucesso!");
+      toast.success(`Você entrou no time ${teamName} com sucesso!`);
       onSuccess();
     } catch (error: any) {
       console.error("Error joining team:", error);
       if (error.code === "23505") {
         toast.error("Você já está neste time");
       } else {
-        toast.error("Erro ao entrar no time");
+        toast.error("Erro ao entrar no time: " + error.message);
       }
     } finally {
-      setIsSubmitting(false);
+      setIsJoining(null);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Entrar em um Time</CardTitle>
-        <CardDescription>Escolha um time e preencha suas informações</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <AvatarSelector
-              currentAvatar={avatarUrl}
-              onAvatarChange={setAvatarUrl}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Escolha seu Time</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+            <Input
+              placeholder="Buscar time por nome..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
             />
+          </div>
+        </CardContent>
+      </Card>
 
-            <FormField
-              control={form.control}
-              name="teamId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Selecione o Time *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Escolha um time" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {teams.map((team) => (
-                        <SelectItem key={team.id} value={team.id}>
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={team.logo_url}
-                              alt={team.name}
-                              className="w-6 h-6 object-cover rounded"
-                            />
-                            {team.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      {filteredTeams.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              {searchTerm ? "Nenhum time encontrado com esse nome" : "Nenhum time disponível"}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTeams.map((team) => {
+            const isFull = team.member_count >= MAX_MEMBERS_PER_TEAM;
+            const isCurrentlyJoining = isJoining === team.id;
 
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome Completo *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Digite seu nome completo" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            return (
+              <Card
+                key={team.id}
+                className={`relative overflow-hidden transition-all hover:shadow-lg ${
+                  isFull ? "opacity-60" : ""
+                }`}
+              >
+                <div className="absolute top-4 right-4 z-10">
+                  <Badge variant={isFull ? "destructive" : "secondary"} className="flex items-center gap-1">
+                    {isFull ? (
+                      <>
+                        <Lock className="w-3 h-3" />
+                        Completo
+                      </>
+                    ) : (
+                      <>
+                        <Users className="w-3 h-3" />
+                        {team.member_count}/{MAX_MEMBERS_PER_TEAM}
+                      </>
+                    )}
+                  </Badge>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="classroom"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sala *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: 3º Ano" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <CardHeader className="pb-4">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-32 h-32 rounded-lg overflow-hidden border-4 border-border shadow-lg">
+                      <img
+                        src={team.logo_url}
+                        alt={team.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <CardTitle className="text-xl text-center">{team.name}</CardTitle>
+                  </div>
+                </CardHeader>
 
-              <FormField
-                control={form.control}
-                name="classroomGroup"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Grupo *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Grupo" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="A">Grupo A</SelectItem>
-                        <SelectItem value="B">Grupo B</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                <CardContent className="space-y-4">
+                  {team.description && (
+                    <p className="text-sm text-muted-foreground text-center line-clamp-2">
+                      {team.description}
+                    </p>
+                  )}
 
-            <FormField
-              control={form.control}
-              name="cpf"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CPF *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Digite apenas números"
-                      maxLength={11}
-                      {...field}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "");
-                        field.onChange(value);
-                      }}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Necessário para emissão do certificado
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Entrando..." : "Entrar no Time"}
-            </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+                  <Button
+                    className="w-full"
+                    onClick={() => handleJoinTeam(team.id, team.name, team.member_count)}
+                    disabled={isFull || isCurrentlyJoining}
+                  >
+                    {isCurrentlyJoining ? (
+                      "Entrando..."
+                    ) : isFull ? (
+                      <>
+                        <Lock className="w-4 h-4 mr-2" />
+                        Time Completo
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Entrar no Time
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
