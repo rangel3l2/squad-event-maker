@@ -116,7 +116,47 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
 
       if (teamError) throw teamError;
 
-      toast.success("Time criado com sucesso!");
+      // Buscar informações de classroom do perfil/team_members do usuário
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      // Verificar se já tem informações de classroom em team_members anteriores
+      const { data: previousMember } = await supabase
+        .from("team_members")
+        .select("classroom, classroom_group")
+        .eq("user_id", user.id)
+        .order("joined_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // Se não tiver, redirecionar para completar perfil
+      if (!previousMember?.classroom && !profile?.cpf) {
+        toast.error("Complete suas informações de cadastro primeiro");
+        // Não adiciona ao time, mas deixa o time criado
+        onSuccess();
+        return;
+      }
+
+      // Adicionar o criador como membro do time
+      const { error: memberError } = await supabase
+        .from("team_members")
+        .insert({
+          team_id: team.id,
+          user_id: user.id,
+          classroom: previousMember?.classroom || "A definir",
+          classroom_group: previousMember?.classroom_group || "A",
+        });
+
+      if (memberError) {
+        console.error("Error adding creator as member:", memberError);
+        toast.error("Time criado, mas houve erro ao adicionar você como membro. Entre no time manualmente.");
+      } else {
+        toast.success("Time criado com sucesso! Você já foi adicionado ao time.");
+      }
+
       onSuccess();
     } catch (error) {
       console.error("Error creating team:", error);
