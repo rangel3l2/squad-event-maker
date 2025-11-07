@@ -71,23 +71,22 @@ export default function Profile() {
       if (profile) {
         form.setValue('fullName', profile.full_name || '');
         form.setValue('cpf', profile.cpf || '');
+        form.setValue('classroom', profile.classroom || '');
+        if (profile.classroom_group === 'A' || profile.classroom_group === 'B') {
+          form.setValue('classroomGroup', profile.classroom_group);
+        }
         setAvatarUrl(profile.avatar_url || '');
       }
 
       // Buscar time do usuário
       const { data: teamMember } = await supabase
         .from('team_members')
-        .select('classroom, classroom_group, team_id, teams(id, name, logo_url, captain_id, event_id)')
+        .select('team_id, teams(id, name, logo_url, captain_id, event_id)')
         .eq('user_id', user.id)
         .single();
 
-      if (teamMember) {
-        form.setValue('classroom', teamMember.classroom);
-        form.setValue('classroomGroup', teamMember.classroom_group);
-        
-        if (teamMember.teams) {
-          setCurrentTeam(teamMember.teams as any);
-        }
+      if (teamMember?.teams) {
+        setCurrentTeam(teamMember.teams as any);
       }
 
       // Verificar a data do evento ativo
@@ -124,6 +123,8 @@ export default function Profile() {
           full_name: data.fullName,
           cpf: data.cpf,
           avatar_url: avatarUrl,
+          classroom: data.classroom,
+          classroom_group: data.classroomGroup,
         })
         .eq('id', user.id);
 

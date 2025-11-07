@@ -108,38 +108,12 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
       // Verificar se usuário já tem perfil completo
       const { data: profile } = await supabase
         .from("profiles")
-        .select("cpf, full_name")
+        .select("cpf, full_name, classroom, classroom_group")
         .eq("id", user.id)
         .single();
 
-      if (!profile?.cpf || !profile?.full_name) {
+      if (!profile?.cpf || !profile?.full_name || !profile?.classroom || !profile?.classroom_group) {
         toast.error("Complete seu perfil primeiro");
-        navigate("/complete-profile");
-        return;
-      }
-
-      // Verificar se já está em um time
-      const { data: existingMember } = await supabase
-        .from("team_members")
-        .select("team_id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (existingMember) {
-        toast.error("Você já está em um time. Saia do time atual para entrar em outro.");
-        return;
-      }
-
-      // Buscar dados adicionais do perfil para classroom e classroom_group
-      const { data: memberData } = await supabase
-        .from("team_members")
-        .select("classroom, classroom_group")
-        .eq("user_id", user.id)
-        .single();
-
-      // Se não tiver classroom, pedir para completar
-      if (!memberData?.classroom) {
-        toast.error("Complete suas informações de turma no perfil");
         navigate("/complete-profile");
         return;
       }
@@ -150,8 +124,8 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
         .insert({
           team_id: teamId,
           user_id: user.id,
-          classroom: memberData.classroom,
-          classroom_group: memberData.classroom_group,
+          classroom: profile.classroom,
+          classroom_group: profile.classroom_group,
         });
 
       if (joinError) throw joinError;

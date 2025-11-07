@@ -52,12 +52,21 @@ export default function CompleteProfile() {
         .eq('id', user.id)
         .single();
 
-      if (profile?.cpf && profile?.full_name) {
+      if (profile?.cpf && profile?.full_name && profile?.classroom && profile?.classroom_group) {
         // Já tem cadastro completo
         navigate("/teams");
       } else if (profile) {
         // Preencher com dados existentes
         form.setValue('fullName', profile.full_name || '');
+        if (profile.cpf) {
+          form.setValue('cpf', profile.cpf);
+        }
+        if (profile.classroom) {
+          form.setValue('classroom', profile.classroom);
+        }
+        if (profile.classroom_group === 'A' || profile.classroom_group === 'B') {
+          form.setValue('classroomGroup', profile.classroom_group);
+        }
         setAvatarUrl(profile.avatar_url || '');
       }
     };
@@ -76,6 +85,8 @@ export default function CompleteProfile() {
           full_name: data.fullName,
           cpf: data.cpf,
           avatar_url: avatarUrl,
+          classroom: data.classroom,
+          classroom_group: data.classroomGroup,
         })
         .eq('id', user.id);
 

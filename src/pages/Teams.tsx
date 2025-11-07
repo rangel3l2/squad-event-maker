@@ -27,11 +27,11 @@ export default function Teams() {
     const checkProfile = async () => {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('cpf, full_name')
+        .select('cpf, full_name, classroom, classroom_group')
         .eq('id', user.id)
         .single();
 
-      if (!profile?.cpf || !profile?.full_name) {
+      if (!profile?.cpf || !profile?.full_name || !profile?.classroom || !profile?.classroom_group) {
         navigate("/complete-profile");
         return;
       }
@@ -60,7 +60,7 @@ export default function Teams() {
         
         {mode === "select" && (
           <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("join")}>
+            <Card className={hasTeam ? "opacity-50" : "hover:shadow-lg transition-shadow cursor-pointer"} onClick={() => !hasTeam && setMode("join")}>
               <CardHeader>
                 <Users className="w-12 h-12 mb-4 text-primary" />
                 <CardTitle>Entrar em um Time</CardTitle>
@@ -69,7 +69,16 @@ export default function Teams() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">Selecionar</Button>
+                {hasTeam ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Você já está no time "{currentTeamName}". Para entrar em outro time, primeiro saia do seu time atual através do seu perfil.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Button className="w-full">Selecionar</Button>
+                )}
               </CardContent>
             </Card>
 

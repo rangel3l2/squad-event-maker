@@ -116,26 +116,15 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
 
       if (teamError) throw teamError;
 
-      // Buscar informações de classroom do perfil/team_members do usuário
+      // Buscar informações de classroom do perfil do usuário
       const { data: profile } = await supabase
         .from("profiles")
-        .select("*")
+        .select("classroom, classroom_group")
         .eq("id", user.id)
         .single();
 
-      // Verificar se já tem informações de classroom em team_members anteriores
-      const { data: previousMember } = await supabase
-        .from("team_members")
-        .select("classroom, classroom_group")
-        .eq("user_id", user.id)
-        .order("joined_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      // Se não tiver, redirecionar para completar perfil
-      if (!previousMember?.classroom && !profile?.cpf) {
+      if (!profile?.classroom || !profile?.classroom_group) {
         toast.error("Complete suas informações de cadastro primeiro");
-        // Não adiciona ao time, mas deixa o time criado
         onSuccess();
         return;
       }
@@ -146,8 +135,8 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         .insert({
           team_id: team.id,
           user_id: user.id,
-          classroom: previousMember?.classroom || "A definir",
-          classroom_group: previousMember?.classroom_group || "A",
+          classroom: profile.classroom,
+          classroom_group: profile.classroom_group,
         });
 
       if (memberError) {

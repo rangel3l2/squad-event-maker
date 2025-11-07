@@ -267,6 +267,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          classroom: string | null
+          classroom_group: Database["public"]["Enums"]["classroom_group"] | null
           cpf: string | null
           created_at: string
           email: string
@@ -276,6 +278,10 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          classroom?: string | null
+          classroom_group?:
+            | Database["public"]["Enums"]["classroom_group"]
+            | null
           cpf?: string | null
           created_at?: string
           email: string
@@ -285,6 +291,10 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          classroom?: string | null
+          classroom_group?:
+            | Database["public"]["Enums"]["classroom_group"]
+            | null
           cpf?: string | null
           created_at?: string
           email?: string
