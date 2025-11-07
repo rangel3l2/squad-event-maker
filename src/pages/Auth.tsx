@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const Auth = () => {
@@ -10,8 +11,26 @@ const Auth = () => {
   const { user, signInWithGoogle } = useAuth();
 
   useEffect(() => {
+    const checkUserProfile = async () => {
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('cpf, full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.cpf && profile?.full_name) {
+        // Usuário já completou o cadastro
+        navigate("/teams");
+      } else {
+        // Usuário precisa completar o cadastro
+        navigate("/complete-profile");
+      }
+    };
+
     if (user) {
-      navigate("/complete-profile");
+      checkUserProfile();
     }
   }, [user, navigate]);
 
