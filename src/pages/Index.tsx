@@ -254,6 +254,59 @@ const Index = () => {
         </section>
       )}
 
+      {/* CTA Section - Cadastre-se Agora */}
+      <section className="py-20 px-4 bg-gradient-to-b from-primary/10 via-secondary/10 to-accent/10">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                Cadastre-se Agora!
+              </h2>
+              <p className="text-xl md:text-2xl text-muted-foreground mb-8">
+                Entre para a maior competição de futebol entre turmas
+              </p>
+            </div>
+            
+            {!user ? (
+              <Card className="border-2 border-primary/20 shadow-glow">
+                <CardHeader>
+                  <CardTitle className="text-2xl md:text-3xl">Comece sua jornada</CardTitle>
+                  <CardDescription className="text-lg">
+                    Primeiro, faça login com sua conta do Google
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">1</span>
+                    <span>Login com Google</span>
+                    <span className="text-2xl">→</span>
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">2</span>
+                    <span>Escolher Time</span>
+                  </div>
+                  <Button onClick={() => navigate("/auth")} size="lg" className="w-full text-lg h-14">
+                    Fazer Login e Começar
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-2 border-primary/20 shadow-glow">
+                <CardHeader>
+                  <CardTitle className="text-2xl md:text-3xl">Você está logado!</CardTitle>
+                  <CardDescription className="text-lg">
+                    Agora escolha criar seu time ou entrar em um existente
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={() => navigate("/teams")} size="lg" className="w-full text-lg h-14">
+                    Gerenciar Meu Time
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* How it Works Section */}
       <section className="py-16 px-4 bg-card/50">
         <div className="max-w-6xl mx-auto">
@@ -273,11 +326,11 @@ const Index = () => {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>2. Crie seu Time</CardTitle>
+                <CardTitle>2. Escolha seu Time</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Monte sua equipe e personalize o logo do seu time
+                  Crie seu próprio time ou entre em um time já existente
                 </p>
               </CardContent>
             </Card>
@@ -294,26 +347,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-
-      {!user && (
-        <section className="py-16 px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-3xl">Pronto para começar?</CardTitle>
-                <CardDescription>
-                  Faça login para participar dos eventos
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={() => navigate("/auth")} size="lg">
-                  Entrar Agora
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-      )}
     </div>
   );
 };

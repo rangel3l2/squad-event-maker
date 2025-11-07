@@ -11,7 +11,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/");
+      navigate("/teams");
     }
   }, [user, navigate]);
 
