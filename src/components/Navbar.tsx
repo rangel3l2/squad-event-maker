@@ -25,6 +25,12 @@ const Navbar = () => {
                   Eventos
                 </Button>
               </Link>
+              <Link to="/teams">
+                <Button variant="ghost" size="sm">
+                  <Users className="w-4 h-4 mr-2" />
+                  Times
+                </Button>
+              </Link>
               <Link to="/logo-editor">
                 <Button variant="ghost" size="sm">
                   <Palette className="w-4 h-4 mr-2" />

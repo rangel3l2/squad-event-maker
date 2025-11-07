@@ -11,6 +11,7 @@ import Admin from "./pages/Admin";
 import LogoEditor from "./pages/LogoEditor";
 import AdminCarousel from "./pages/AdminCarousel";
 import AdminInvites from "./pages/AdminInvites";
+import Teams from "./pages/Teams";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/teams" element={<Teams />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/carousel" element={<AdminCarousel />} />
             <Route path="/admin/invites" element={<AdminInvites />} />

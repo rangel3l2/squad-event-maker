@@ -172,6 +172,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          cpf: string | null
           created_at: string
           email: string
           full_name: string
@@ -179,6 +180,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cpf?: string | null
           created_at?: string
           email: string
           full_name: string
@@ -186,6 +188,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cpf?: string | null
           created_at?: string
           email?: string
           full_name?: string
@@ -240,9 +243,11 @@ export type Database = {
         Row: {
           captain_id: string | null
           created_at: string
+          description: string | null
           event_id: string
           id: string
-          logo_url: string | null
+          intro_video_url: string | null
+          logo_url: string
           name: string
           primary_color: string
           secondary_color: string
@@ -251,9 +256,11 @@ export type Database = {
         Insert: {
           captain_id?: string | null
           created_at?: string
+          description?: string | null
           event_id: string
           id?: string
-          logo_url?: string | null
+          intro_video_url?: string | null
+          logo_url: string
           name: string
           primary_color?: string
           secondary_color?: string
@@ -262,9 +269,11 @@ export type Database = {
         Update: {
           captain_id?: string | null
           created_at?: string
+          description?: string | null
           event_id?: string
           id?: string
-          logo_url?: string | null
+          intro_video_url?: string | null
+          logo_url?: string
           name?: string
           primary_color?: string
           secondary_color?: string
