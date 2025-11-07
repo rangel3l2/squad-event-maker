@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Users, Trophy, LogOut, Settings, Palette } from "lucide-react";
+import { Users, Trophy, LogOut, Settings, Palette, UserCircle } from "lucide-react";
 
 const Navbar = () => {
   const { user, role, signOut } = useAuth();
@@ -35,6 +35,12 @@ const Navbar = () => {
                 <Button variant="ghost" size="sm">
                   <Palette className="w-4 h-4 mr-2" />
                   Editor de Logos
+                </Button>
+              </Link>
+              <Link to="/profile">
+                <Button variant="ghost" size="sm">
+                  <UserCircle className="w-4 h-4 mr-2" />
+                  Perfil
                 </Button>
               </Link>
               {role === 'admin' && (

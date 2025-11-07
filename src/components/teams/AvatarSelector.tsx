@@ -11,9 +11,10 @@ import { Upload } from "lucide-react";
 interface AvatarSelectorProps {
   currentAvatar?: string | null;
   onAvatarChange: (avatarUrl: string) => void;
+  disabled?: boolean;
 }
 
-export function AvatarSelector({ currentAvatar, onAvatarChange }: AvatarSelectorProps) {
+export function AvatarSelector({ currentAvatar, onAvatarChange, disabled = false }: AvatarSelectorProps) {
   const { user } = useAuth();
   const [avatarType, setAvatarType] = useState<"google" | "upload">("google");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -23,6 +24,7 @@ export function AvatarSelector({ currentAvatar, onAvatarChange }: AvatarSelector
   const googleAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
@@ -58,6 +60,7 @@ export function AvatarSelector({ currentAvatar, onAvatarChange }: AvatarSelector
   };
 
   const handleAvatarTypeChange = (type: "google" | "upload") => {
+    if (disabled) return;
     setAvatarType(type);
     if (type === "google" && googleAvatar) {
       onAvatarChange(googleAvatar);
@@ -87,16 +90,16 @@ export function AvatarSelector({ currentAvatar, onAvatarChange }: AvatarSelector
         >
           {googleAvatar && (
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="google" id="google" />
-              <Label htmlFor="google" className="cursor-pointer">
+              <RadioGroupItem value="google" id="google" disabled={disabled} />
+              <Label htmlFor="google" className={disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}>
                 Usar foto do Google
               </Label>
             </div>
           )}
           
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="upload" id="upload" />
-            <Label htmlFor="upload" className="cursor-pointer">
+            <RadioGroupItem value="upload" id="upload" disabled={disabled} />
+            <Label htmlFor="upload" className={disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}>
               Fazer upload de outra foto
             </Label>
           </div>
@@ -109,7 +112,7 @@ export function AvatarSelector({ currentAvatar, onAvatarChange }: AvatarSelector
             type="file"
             accept="image/*"
             onChange={handleFileChange}
-            disabled={isUploading}
+            disabled={isUploading || disabled}
             className="cursor-pointer"
           />
           <p className="text-sm text-muted-foreground mt-1">
