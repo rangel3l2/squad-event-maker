@@ -138,14 +138,27 @@ const Admin = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-between mb-8">
+          <div className="space-y-6 mb-8">
             <div>
               <h1 className="text-4xl font-bold mb-2">Painel Administrativo</h1>
-              <p className="text-muted-foreground">Gerencie eventos e times</p>
+              <p className="text-muted-foreground">Gerencie eventos, carrossel e administradores</p>
             </div>
+            
+            <div className="flex gap-4">
+              <Button onClick={() => navigate("/admin/carousel")}>
+                Gerenciar Carrossel
+              </Button>
+              <Button onClick={() => navigate("/admin/invites")} variant="secondary">
+                Gerenciar Admins
+              </Button>
+            </div>
+          </div>
 
+          <h2 className="text-2xl font-bold mb-4">Gerenciar Eventos</h2>
+          
+          <div className="mb-8">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-primary hover:opacity-90 shadow-glow">

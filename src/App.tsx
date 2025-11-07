@@ -8,8 +8,9 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Events from "./pages/Events";
 import Admin from "./pages/Admin";
-import AdminSignup from "./pages/AdminSignup";
 import LogoEditor from "./pages/LogoEditor";
+import AdminCarousel from "./pages/AdminCarousel";
+import AdminInvites from "./pages/AdminInvites";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,8 +27,10 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/events" element={<Events />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/signup" element={<AdminSignup />} />
-            <Route path="/logo-editor" element={<LogoEditor />} />
+            <Route path="/admin/carousel" element={<AdminCarousel />} />
+            <Route path="/admin/invites" element={<AdminInvites />} />
+            <Route path="/events/:eventId" element={<Events />} />
+            <Route path="/logo-editor/:teamId" element={<LogoEditor />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
