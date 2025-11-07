@@ -51,14 +51,9 @@ const Navbar = () => {
               </Button>
             </>
           ) : (
-            <>
-              <Link to="/auth">
-                <Button className="bg-gradient-primary">Entrar</Button>
-              </Link>
-              <Link to="/admin/signup">
-                <Button variant="outline" size="sm">Cadastro Admin</Button>
-              </Link>
-            </>
+            <Link to="/auth">
+              <Button className="bg-gradient-primary">Entrar</Button>
+            </Link>
           )}
         </div>
       </div>
