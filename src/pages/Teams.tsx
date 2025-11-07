@@ -1,13 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, PlusCircle } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Teams() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [mode, setMode] = useState<"select" | "create" | "join">("select");
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    // Verificar se completou o cadastro
+    const checkProfile = async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('cpf, full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.cpf || !profile?.full_name) {
+        navigate("/complete-profile");
+      }
+    };
+
+    checkProfile();
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen bg-background">

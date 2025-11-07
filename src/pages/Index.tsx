@@ -272,19 +272,28 @@ const Index = () => {
                 <CardHeader>
                   <CardTitle className="text-2xl md:text-3xl">Comece sua jornada</CardTitle>
                   <CardDescription className="text-lg">
-                    Primeiro, faça login com sua conta do Google
+                    Siga os passos para participar
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">1</span>
-                    <span>Login com Google</span>
+                  <div className="flex items-center justify-center gap-2 text-sm md:text-base text-muted-foreground flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">1</span>
+                      <span>Login</span>
+                    </div>
                     <span className="text-2xl">→</span>
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">2</span>
-                    <span>Escolher Time</span>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">2</span>
+                      <span>Cadastro</span>
+                    </div>
+                    <span className="text-2xl">→</span>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">3</span>
+                      <span>Escolher Time</span>
+                    </div>
                   </div>
                   <Button onClick={() => navigate("/auth")} size="lg" className="w-full text-lg h-14">
-                    Fazer Login e Começar
+                    Começar Cadastro
                   </Button>
                 </CardContent>
               </Card>
@@ -293,12 +302,12 @@ const Index = () => {
                 <CardHeader>
                   <CardTitle className="text-2xl md:text-3xl">Você está logado!</CardTitle>
                   <CardDescription className="text-lg">
-                    Agora escolha criar seu time ou entrar em um existente
+                    Continue seu cadastro ou gerencie seu time
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Button onClick={() => navigate("/teams")} size="lg" className="w-full text-lg h-14">
-                    Gerenciar Meu Time
+                    Continuar
                   </Button>
                 </CardContent>
               </Card>
@@ -326,7 +335,17 @@ const Index = () => {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>2. Escolha seu Time</CardTitle>
+                <CardTitle>2. Complete seu Cadastro</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  Preencha seus dados pessoais: nome, CPF, turma e grupo
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>3. Escolha seu Time</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
@@ -336,7 +355,7 @@ const Index = () => {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>3. Participe</CardTitle>
+                <CardTitle>4. Participe</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
