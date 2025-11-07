@@ -17,6 +17,7 @@ import AdminRules from "./pages/AdminRules";
 import AdminPrizes from "./pages/AdminPrizes";
 import Teams from "./pages/Teams";
 import Profile from "./pages/Profile";
+import TeamEdit from "./pages/TeamEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/events" element={<Events />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/team-edit/:teamId" element={<TeamEdit />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/carousel" element={<AdminCarousel />} />
             <Route path="/admin/invites" element={<AdminInvites />} />
