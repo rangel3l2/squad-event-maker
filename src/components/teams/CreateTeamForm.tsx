@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Upload } from "lucide-react";
+import { AvatarSelector } from "./AvatarSelector";
 
 const createTeamSchema = z.object({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(50, "Nome muito longo"),
@@ -29,6 +30,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
 
   const form = useForm<CreateTeamFormData>({
     resolver: zodResolver(createTeamSchema),
@@ -65,6 +67,14 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     setIsSubmitting(true);
 
     try {
+      // Update user profile with avatar if selected
+      if (avatarUrl) {
+        await supabase
+          .from("profiles")
+          .update({ avatar_url: avatarUrl })
+          .eq("id", user.id);
+      }
+
       // Upload logo
       const fileExt = logoFile.name.split(".").pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
@@ -125,6 +135,11 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <AvatarSelector
+              currentAvatar={avatarUrl}
+              onAvatarChange={setAvatarUrl}
+            />
+
             <div className="space-y-4">
               <div>
                 <FormLabel>Logo do Time *</FormLabel>

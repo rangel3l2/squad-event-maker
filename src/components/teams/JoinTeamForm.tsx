@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AvatarSelector } from "./AvatarSelector";
 
 const joinTeamSchema = z.object({
   teamId: z.string().min(1, "Selecione um time"),
@@ -35,6 +36,7 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
   const { user } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
 
   const form = useForm<JoinTeamFormData>({
     resolver: zodResolver(joinTeamSchema),
@@ -75,7 +77,7 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
 
     const { data } = await supabase
       .from("profiles")
-      .select("full_name, cpf")
+      .select("full_name, cpf, avatar_url")
       .eq("id", user.id)
       .single();
 
@@ -83,6 +85,9 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
       form.setValue("fullName", data.full_name || "");
       if (data.cpf) {
         form.setValue("cpf", data.cpf);
+      }
+      if (data.avatar_url) {
+        setAvatarUrl(data.avatar_url);
       }
     }
   };
@@ -96,12 +101,13 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
     setIsSubmitting(true);
 
     try {
-      // Update profile with CPF
+      // Update profile with CPF and avatar
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
           full_name: data.fullName,
           cpf: data.cpf,
+          avatar_url: avatarUrl || user.user_metadata?.avatar_url || user.user_metadata?.picture,
         })
         .eq("id", user.id);
 
@@ -142,6 +148,11 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <AvatarSelector
+              currentAvatar={avatarUrl}
+              onAvatarChange={setAvatarUrl}
+            />
+
             <FormField
               control={form.control}
               name="teamId"
