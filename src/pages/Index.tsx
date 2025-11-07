@@ -7,6 +7,7 @@ import { HeroCarousel } from "@/components/HeroCarousel";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Trophy, BookOpen, Share2 } from "lucide-react";
 
 interface Event {
   id: string;
@@ -14,30 +15,69 @@ interface Event {
   description: string;
   event_date: string;
   is_active: boolean;
+  logo_url?: string;
+  edition?: string;
+}
+
+interface Rule {
+  id: string;
+  title: string;
+  content: string;
+}
+
+interface Prize {
+  id: string;
+  position: number;
+  title: string;
+  description: string | null;
+  prize_details: string;
 }
 
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [prizes, setPrizes] = useState<Prize[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchEvents();
+    fetchData();
   }, []);
 
-  const fetchEvents = async () => {
+  const fetchData = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: eventsData, error: eventsError } = await supabase
         .from('events')
         .select('*')
         .eq('is_active', true)
         .order('event_date', { ascending: true });
 
-      if (error) throw error;
-      setEvents(data || []);
+      if (eventsError) throw eventsError;
+      setEvents(eventsData || []);
+
+      if (eventsData && eventsData.length > 0) {
+        const firstEventId = eventsData[0].id;
+        setActiveEventId(firstEventId);
+
+        const { data: rulesData } = await supabase
+          .from('event_rules')
+          .select('*')
+          .eq('event_id', firstEventId)
+          .order('display_order');
+
+        const { data: prizesData } = await supabase
+          .from('event_prizes')
+          .select('*')
+          .eq('event_id', firstEventId)
+          .order('display_order');
+
+        setRules(rulesData || []);
+        setPrizes(prizesData || []);
+      }
     } catch (error: any) {
-      toast.error("Erro ao carregar eventos");
+      toast.error("Erro ao carregar dados");
       console.error(error);
     } finally {
       setLoading(false);
@@ -63,6 +103,15 @@ const Index = () => {
     navigate(`/event/${eventId}`);
   };
 
+  const getPositionColor = (position: number) => {
+    switch (position) {
+      case 1: return "text-yellow-500";
+      case 2: return "text-gray-400";
+      case 3: return "text-amber-700";
+      default: return "text-muted-foreground";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -70,9 +119,23 @@ const Index = () => {
       {/* Hero Section */}
       <section className="py-20 px-4 text-center bg-gradient-to-b from-background to-card">
         <div className="max-w-5xl mx-auto space-y-8">
+          {events.length > 0 && events[0].logo_url && (
+            <div className="flex justify-center mb-6">
+              <img 
+                src={events[0].logo_url} 
+                alt="Frontend Teams Cup Logo" 
+                className="h-32 object-contain"
+              />
+            </div>
+          )}
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
             Frontend Teams Cup
           </h1>
+          {events.length > 0 && events[0].edition && (
+            <p className="text-2xl md:text-3xl font-semibold text-primary mb-4">
+              {events[0].edition}
+            </p>
+          )}
           <p className="text-xl md:text-2xl text-muted-foreground mb-8">
             A maior competição de futebol entre turmas de desenvolvimento web
           </p>
@@ -104,6 +167,9 @@ const Index = () => {
                 >
                   <CardHeader>
                     <CardTitle>{event.name}</CardTitle>
+                    {event.edition && (
+                      <p className="text-sm font-semibold text-primary">{event.edition}</p>
+                    )}
                     <CardDescription>{event.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -120,6 +186,73 @@ const Index = () => {
           )}
         </div>
       </section>
+
+      {/* Rules Section */}
+      {rules.length > 0 && (
+        <section className="py-16 px-4 bg-card/30">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-12">
+              <BookOpen className="h-10 w-10 text-primary" />
+              <h2 className="text-3xl md:text-4xl font-bold text-center">
+                Regras do Evento
+              </h2>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              {rules.map((rule, index) => (
+                <Card key={rule.id}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <span className="text-primary">{index + 1}.</span>
+                      {rule.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground whitespace-pre-wrap">
+                      {rule.content}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Prizes Section */}
+      {prizes.length > 0 && (
+        <section className="py-16 px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-12">
+              <Trophy className="h-10 w-10 text-yellow-500" />
+              <h2 className="text-3xl md:text-4xl font-bold text-center">
+                Premiações
+              </h2>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {prizes.map((prize) => (
+                <Card key={prize.id} className="hover:shadow-glow transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-center justify-center mb-4">
+                      <Trophy className={`h-16 w-16 ${getPositionColor(prize.position)}`} />
+                    </div>
+                    <CardTitle className="text-center">{prize.title}</CardTitle>
+                    {prize.description && (
+                      <CardDescription className="text-center">
+                        {prize.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-center whitespace-pre-wrap">
+                      {prize.prize_details}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* How it Works Section */}
       <section className="py-16 px-4 bg-card/50">

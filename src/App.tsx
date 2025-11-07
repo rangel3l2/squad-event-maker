@@ -11,6 +11,9 @@ import Admin from "./pages/Admin";
 import LogoEditor from "./pages/LogoEditor";
 import AdminCarousel from "./pages/AdminCarousel";
 import AdminInvites from "./pages/AdminInvites";
+import AdminEventConfig from "./pages/AdminEventConfig";
+import AdminRules from "./pages/AdminRules";
+import AdminPrizes from "./pages/AdminPrizes";
 import Teams from "./pages/Teams";
 import NotFound from "./pages/NotFound";
 
@@ -31,6 +34,9 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/carousel" element={<AdminCarousel />} />
             <Route path="/admin/invites" element={<AdminInvites />} />
+            <Route path="/admin/config" element={<AdminEventConfig />} />
+            <Route path="/admin/rules" element={<AdminRules />} />
+            <Route path="/admin/prizes" element={<AdminPrizes />} />
             <Route path="/events/:eventId" element={<Events />} />
             <Route path="/logo-editor/:teamId" element={<LogoEditor />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

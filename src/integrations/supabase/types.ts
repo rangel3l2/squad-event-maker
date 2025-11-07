@@ -72,7 +72,9 @@ export type Database = {
           id: string
           image_url: string
           is_active: boolean
+          media_type: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           created_at?: string
@@ -80,7 +82,9 @@ export type Database = {
           id?: string
           image_url: string
           is_active?: boolean
+          media_type?: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           created_at?: string
@@ -88,7 +92,9 @@ export type Database = {
           id?: string
           image_url?: string
           is_active?: boolean
+          media_type?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -116,6 +122,88 @@ export type Database = {
         }
         Relationships: []
       }
+      event_prizes: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          event_id: string
+          id: string
+          position: number
+          prize_details: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          event_id: string
+          id?: string
+          position: number
+          prize_details: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          event_id?: string
+          id?: string
+          position?: number
+          prize_details?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_prizes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_rules: {
+        Row: {
+          content: string
+          created_at: string
+          display_order: number
+          event_id: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          display_order?: number
+          event_id: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          display_order?: number
+          event_id?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           allowed_email_domain: string | null
@@ -123,9 +211,11 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          edition: string | null
           event_date: string
           id: string
           is_active: boolean
+          logo_url: string | null
           name: string
           updated_at: string
         }
@@ -135,9 +225,11 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          edition?: string | null
           event_date: string
           id?: string
           is_active?: boolean
+          logo_url?: string | null
           name: string
           updated_at?: string
         }
@@ -147,9 +239,11 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          edition?: string | null
           event_date?: string
           id?: string
           is_active?: boolean
+          logo_url?: string | null
           name?: string
           updated_at?: string
         }

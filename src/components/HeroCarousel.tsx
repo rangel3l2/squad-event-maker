@@ -12,6 +12,8 @@ import Autoplay from "embla-carousel-autoplay";
 interface CarouselImage {
   id: string;
   image_url: string;
+  video_url?: string;
+  media_type: string;
   display_order: number;
 }
 
@@ -50,11 +52,22 @@ export const HeroCarousel = () => {
           {images.map((image) => (
             <CarouselItem key={image.id}>
               <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border shadow-card">
-                <img
-                  src={image.image_url}
-                  alt="Frontend Teams Cup"
-                  className="w-full h-full object-cover"
-                />
+                {image.media_type === 'video' ? (
+                  <video
+                    src={image.video_url}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={image.image_url}
+                    alt="Frontend Teams Cup"
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
             </CarouselItem>
           ))}

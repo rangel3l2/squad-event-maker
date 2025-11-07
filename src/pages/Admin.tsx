@@ -146,9 +146,18 @@ const Admin = () => {
               <p className="text-muted-foreground">Gerencie eventos, carrossel e administradores</p>
             </div>
             
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap">
               <Button onClick={() => navigate("/admin/carousel")}>
                 Gerenciar Carrossel
+              </Button>
+              <Button onClick={() => navigate("/admin/config")} variant="secondary">
+                Configurar Evento
+              </Button>
+              <Button onClick={() => navigate("/admin/rules")} variant="secondary">
+                Gerenciar Regras
+              </Button>
+              <Button onClick={() => navigate("/admin/prizes")} variant="secondary">
+                Gerenciar Premiações
               </Button>
               <Button onClick={() => navigate("/admin/invites")} variant="secondary">
                 Gerenciar Admins

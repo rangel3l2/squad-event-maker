@@ -13,6 +13,8 @@ import { Trash2, ArrowUp, ArrowDown } from "lucide-react";
 interface CarouselImage {
   id: string;
   image_url: string;
+  video_url?: string;
+  media_type: string;
   display_order: number;
   is_active: boolean;
 }
@@ -46,7 +48,7 @@ const AdminCarousel = () => {
     }
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, mediaType: 'image' | 'video') => {
     if (!e.target.files || e.target.files.length === 0) return;
 
     const file = e.target.files[0];
@@ -69,17 +71,25 @@ const AdminCarousel = () => {
 
       const maxOrder = images.length > 0 ? Math.max(...images.map(img => img.display_order)) : -1;
 
+      const insertData: any = {
+        display_order: maxOrder + 1,
+        is_active: true,
+        media_type: mediaType,
+      };
+
+      if (mediaType === 'image') {
+        insertData.image_url = publicUrl;
+      } else {
+        insertData.video_url = publicUrl;
+      }
+
       const { error: dbError } = await supabase
         .from("carousel_images")
-        .insert({
-          image_url: publicUrl,
-          display_order: maxOrder + 1,
-          is_active: true,
-        });
+        .insert(insertData);
 
       if (dbError) throw dbError;
 
-      toast.success("Imagem adicionada com sucesso!");
+      toast.success(`${mediaType === 'image' ? 'Imagem' : 'Vídeo'} adicionado com sucesso!`);
       fetchImages();
     } catch (error: any) {
       toast.error("Erro ao fazer upload: " + error.message);
@@ -153,21 +163,33 @@ const AdminCarousel = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Adicionar Nova Imagem</CardTitle>
+              <CardTitle>Adicionar Nova Mídia</CardTitle>
               <CardDescription>
-                Selecione uma imagem ou GIF para adicionar ao carrossel
+                Selecione uma imagem, GIF ou vídeo para adicionar ao carrossel
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Label htmlFor="image">Imagem</Label>
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleUpload}
-                  disabled={uploading}
-                />
+                <div>
+                  <Label htmlFor="image">Imagem / GIF</Label>
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleUpload(e, 'image')}
+                    disabled={uploading}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="video">Vídeo</Label>
+                  <Input
+                    id="video"
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => handleUpload(e, 'video')}
+                    disabled={uploading}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -188,14 +210,22 @@ const AdminCarousel = () => {
                       key={image.id}
                       className="flex items-center gap-4 p-4 border rounded-lg"
                     >
-                      <img
-                        src={image.image_url}
-                        alt="Carousel"
-                        className="w-32 h-20 object-cover rounded"
-                      />
+                      {image.media_type === 'video' ? (
+                        <video
+                          src={image.video_url}
+                          className="w-32 h-20 object-cover rounded"
+                          controls
+                        />
+                      ) : (
+                        <img
+                          src={image.image_url}
+                          alt="Carousel"
+                          className="w-32 h-20 object-cover rounded"
+                        />
+                      )}
                       <div className="flex-1">
                         <p className="text-sm text-muted-foreground">
-                          Posição {index + 1}
+                          Posição {index + 1} - {image.media_type === 'video' ? 'Vídeo' : 'Imagem'}
                         </p>
                       </div>
                       <div className="flex gap-2">
