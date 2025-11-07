@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_invites: {
+        Row: {
+          accepted_at: string | null
+          email: string
+          id: string
+          invited_at: string
+          invited_by: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          email: string
+          id?: string
+          invited_at?: string
+          invited_by: string
+        }
+        Update: {
+          accepted_at?: string | null
+          email?: string
+          id?: string
+          invited_at?: string
+          invited_by?: string
+        }
+        Relationships: []
+      }
       admin_requests: {
         Row: {
           email: string
@@ -41,9 +65,34 @@ export type Database = {
         }
         Relationships: []
       }
+      copa_css_config: {
+        Row: {
+          created_at: string
+          id: string
+          is_current: boolean
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_current?: boolean
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_current?: boolean
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           allowed_email_domain: string | null
+          copa_year: number | null
           created_at: string
           created_by: string
           description: string | null
@@ -55,6 +104,7 @@ export type Database = {
         }
         Insert: {
           allowed_email_domain?: string | null
+          copa_year?: number | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -66,6 +116,7 @@ export type Database = {
         }
         Update: {
           allowed_email_domain?: string | null
+          copa_year?: number | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -76,6 +127,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "events_copa_year_fkey"
+            columns: ["copa_year"]
+            isOneToOne: false
+            referencedRelation: "copa_css_config"
+            referencedColumns: ["year"]
+          },
           {
             foreignKeyName: "events_created_by_fkey"
             columns: ["created_by"]
@@ -236,6 +294,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_admin_by_email: { Args: { _email: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
