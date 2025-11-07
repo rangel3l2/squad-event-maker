@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, PlusCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Users, PlusCircle, AlertCircle } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,8 @@ export default function Teams() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [mode, setMode] = useState<"select" | "create" | "join">("select");
+  const [hasTeam, setHasTeam] = useState(false);
+  const [currentTeamName, setCurrentTeamName] = useState<string>("");
 
   useEffect(() => {
     if (!user) {
@@ -20,7 +23,7 @@ export default function Teams() {
       return;
     }
 
-    // Verificar se completou o cadastro
+    // Verificar se completou o cadastro e se já está em um time
     const checkProfile = async () => {
       const { data: profile } = await supabase
         .from('profiles')
@@ -30,6 +33,19 @@ export default function Teams() {
 
       if (!profile?.cpf || !profile?.full_name) {
         navigate("/complete-profile");
+        return;
+      }
+
+      // Verificar se já está em um time
+      const { data: teamMember } = await supabase
+        .from('team_members')
+        .select('team_id, teams(name)')
+        .eq('user_id', user.id)
+        .single();
+
+      if (teamMember) {
+        setHasTeam(true);
+        setCurrentTeamName((teamMember.teams as any)?.name || "");
       }
     };
 
@@ -57,7 +73,7 @@ export default function Teams() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("create")}>
+            <Card className={hasTeam ? "opacity-50" : "hover:shadow-lg transition-shadow cursor-pointer"} onClick={() => !hasTeam && setMode("create")}>
               <CardHeader>
                 <PlusCircle className="w-12 h-12 mb-4 text-primary" />
                 <CardTitle>Criar Novo Time</CardTitle>
@@ -66,7 +82,16 @@ export default function Teams() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">Criar Time</Button>
+                {hasTeam ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Você já está no time "{currentTeamName}". Para criar um novo time, primeiro saia do seu time atual através do seu perfil.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Button className="w-full">Criar Time</Button>
+                )}
               </CardContent>
             </Card>
           </div>
