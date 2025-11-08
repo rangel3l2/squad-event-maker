@@ -1,12 +1,9 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload } from "lucide-react";
 
 interface AvatarSelectorProps {
   currentAvatar?: string | null;
@@ -23,40 +20,22 @@ export function AvatarSelector({ currentAvatar, onAvatarChange, disabled = false
 
   const googleAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
 
     setUploadedFile(file);
+    setIsUploading(true);
+    
     const reader = new FileReader();
     reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
+      const base64String = reader.result as string;
+      setPreviewUrl(base64String);
+      onAvatarChange(base64String);
+      setIsUploading(false);
     };
     reader.readAsDataURL(file);
-
-    // Upload imediatamente
-    setIsUploading(true);
-    try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(fileName);
-
-      onAvatarChange(publicUrl);
-    } catch (error) {
-      console.error("Error uploading avatar:", error);
-    } finally {
-      setIsUploading(false);
-    }
   };
 
   const handleAvatarTypeChange = (type: "google" | "upload") => {
