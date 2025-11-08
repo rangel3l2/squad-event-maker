@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Users, Search, CheckCircle, Lock } from "lucide-react";
+import { listarTimes, adicionarIntegrante, listarUsuarios } from "@/services/api";
 
 interface Team {
-  id: string;
+  id: number;
   name: string;
   logo_url: string;
   description: string | null;
@@ -29,7 +29,7 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [filteredTeams, setFilteredTeams] = useState<Team[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isJoining, setIsJoining] = useState<string | null>(null);
+  const [isJoining, setIsJoining] = useState<number | null>(null);
 
   useEffect(() => {
     loadTeams();
@@ -48,40 +48,16 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
 
   const loadTeams = async () => {
     try {
-      const { data: events } = await supabase
-        .from("events")
-        .select("id")
-        .eq("is_active", true)
-        .single();
-
-      if (!events) {
-        toast.error("Nenhum evento ativo encontrado");
-        return;
-      }
-
-      // Buscar times com contagem de membros
-      const { data: teamsData } = await supabase
-        .from("teams")
-        .select("id, name, logo_url, description")
-        .eq("event_id", events.id)
-        .order("name");
-
-      if (!teamsData) return;
-
-      // Buscar contagem de membros para cada time
-      const teamsWithCount = await Promise.all(
-        teamsData.map(async (team) => {
-          const { count } = await supabase
-            .from("team_members")
-            .select("*", { count: "exact", head: true })
-            .eq("team_id", team.id);
-
-          return {
-            ...team,
-            member_count: count || 0,
-          };
-        })
-      );
+      const timesData = await listarTimes();
+      
+      // Transformar para o formato esperado
+      const teamsWithCount = timesData.map(time => ({
+        id: time.id!,
+        name: time.nome,
+        logo_url: time.url_image_perfil,
+        description: null,
+        member_count: 0, // TODO: implementar contagem via API quando disponível
+      }));
 
       setTeams(teamsWithCount);
       setFilteredTeams(teamsWithCount);
@@ -91,7 +67,7 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
     }
   };
 
-  const handleJoinTeam = async (teamId: string, teamName: string, memberCount: number) => {
+  const handleJoinTeam = async (teamId: number, teamName: string, memberCount: number) => {
     if (!user) {
       toast.error("Você precisa estar logado");
       return;
@@ -105,40 +81,27 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
     setIsJoining(teamId);
 
     try {
-      // Verificar se usuário já tem perfil completo
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("cpf, full_name, classroom, classroom_group")
-        .eq("id", user.id)
-        .single();
+      // Verificar se usuário já tem perfil completo via API
+      const usuarios = await listarUsuarios();
+      const usuario = usuarios.find(u => u.token_gmail === user.id);
 
-      if (!profile?.cpf || !profile?.full_name || !profile?.classroom || !profile?.classroom_group) {
+      if (!usuario) {
         toast.error("Complete seu perfil primeiro");
         navigate("/complete-profile");
         return;
       }
 
-      // Entrar no time
-      const { error: joinError } = await supabase
-        .from("team_members")
-        .insert({
-          team_id: teamId,
-          user_id: user.id,
-          classroom: profile.classroom,
-          classroom_group: profile.classroom_group,
-        });
-
-      if (joinError) throw joinError;
+      // Entrar no time via API
+      await adicionarIntegrante(teamId, {
+        usuario_id: usuario.id!,
+        funcao: "Membro",
+      });
 
       toast.success(`Você entrou no time ${teamName} com sucesso!`);
       onSuccess();
     } catch (error: any) {
       console.error("Error joining team:", error);
-      if (error.code === "23505") {
-        toast.error("Você já está neste time");
-      } else {
-        toast.error("Erro ao entrar no time: " + error.message);
-      }
+      toast.error("Erro ao entrar no time: " + error.message);
     } finally {
       setIsJoining(null);
     }

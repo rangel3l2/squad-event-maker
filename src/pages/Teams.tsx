@@ -7,8 +7,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Users, PlusCircle, AlertCircle } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { listarUsuarios, mostrarTimeUsuario } from "@/services/api";
 
 export default function Teams() {
   const navigate = useNavigate();
@@ -25,27 +25,25 @@ export default function Teams() {
 
     // Verificar se completou o cadastro e se já está em um time
     const checkProfile = async () => {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('cpf, full_name, classroom, classroom_group')
-        .eq('id', user.id)
-        .single();
+      try {
+        // Verificar perfil completo via API
+        const usuarios = await listarUsuarios();
+        const usuario = usuarios.find(u => u.token_gmail === user.id);
 
-      if (!profile?.cpf || !profile?.full_name || !profile?.classroom || !profile?.classroom_group) {
-        navigate("/complete-profile");
-        return;
-      }
+        if (!usuario) {
+          navigate("/complete-profile");
+          return;
+        }
 
-      // Verificar se já está em um time
-      const { data: teamMember } = await supabase
-        .from('team_members')
-        .select('team_id, teams(name)')
-        .eq('user_id', user.id)
-        .single();
-
-      if (teamMember) {
-        setHasTeam(true);
-        setCurrentTeamName((teamMember.teams as any)?.name || "");
+        // Verificar se já está em um time via API
+        const timeUsuario = await mostrarTimeUsuario(usuario.id!);
+        
+        if (timeUsuario) {
+          setHasTeam(true);
+          setCurrentTeamName(timeUsuario.nome || "");
+        }
+      } catch (error) {
+        console.error("Error checking profile:", error);
       }
     };
 

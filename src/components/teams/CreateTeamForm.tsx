@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { criarTime, adicionarIntegrante, listarUsuarios } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -59,97 +59,44 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       return;
     }
 
-    if (!logoFile) {
-      toast.error("Logo é obrigatório");
+    if (!avatarUrl && !logoFile) {
+      toast.error("Selecione um avatar ou logo");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Update user profile with avatar if selected
-      if (avatarUrl) {
-        await supabase
-          .from("profiles")
-          .update({ avatar_url: avatarUrl })
-          .eq("id", user.id);
-      }
+      // Buscar informações do usuário na API
+      const usuarios = await listarUsuarios();
+      const usuario = usuarios.find(u => u.token_gmail === user.id);
 
-      // Upload logo
-      const fileExt = logoFile.name.split(".").pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from("team-logos")
-        .upload(fileName, logoFile);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("team-logos")
-        .getPublicUrl(fileName);
-
-      // Get current event
-      const { data: events } = await supabase
-        .from("events")
-        .select("id")
-        .eq("is_active", true)
-        .single();
-
-      if (!events) {
-        toast.error("Nenhum evento ativo encontrado");
-        return;
-      }
-
-      // Create team
-      const { data: team, error: teamError } = await supabase
-        .from("teams")
-        .insert({
-          name: data.name,
-          description: data.description || null,
-          intro_video_url: data.introVideoUrl || null,
-          logo_url: publicUrl,
-          captain_id: user.id,
-          event_id: events.id,
-        })
-        .select()
-        .single();
-
-      if (teamError) throw teamError;
-
-      // Buscar informações de classroom do perfil do usuário
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("classroom, classroom_group")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.classroom || !profile?.classroom_group) {
+      if (!usuario) {
         toast.error("Complete suas informações de cadastro primeiro");
-        onSuccess();
         return;
       }
+
+      // Criar time usando a API
+      const novoTime = await criarTime({
+        nome: data.name,
+        token_gmail: user.id,
+        turma: usuario.turma,
+        periodo: usuario.periodo,
+        url_image_perfil: avatarUrl || logoPreview,
+        email: user.email || "",
+      });
 
       // Adicionar o criador como membro do time
-      const { error: memberError } = await supabase
-        .from("team_members")
-        .insert({
-          team_id: team.id,
-          user_id: user.id,
-          classroom: profile.classroom,
-          classroom_group: profile.classroom_group,
-        });
+      await adicionarIntegrante(novoTime.id!, {
+        usuario_id: usuario.id!,
+        funcao: "Capitão",
+      });
 
-      if (memberError) {
-        console.error("Error adding creator as member:", memberError);
-        toast.error("Time criado, mas houve erro ao adicionar você como membro. Entre no time manualmente.");
-      } else {
-        toast.success("Time criado com sucesso! Você já foi adicionado ao time.");
-      }
-
+      toast.success("Time criado com sucesso! Você já foi adicionado ao time.");
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating team:", error);
-      toast.error("Erro ao criar time");
+      toast.error("Erro ao criar time: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
