@@ -4,19 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { criarTime, adicionarIntegrante, listarUsuarios } from "@/services/api";
+import { criarTime, listarUsuarios } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Upload } from "lucide-react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Copy, Check } from "lucide-react";
 import { AvatarSelector } from "./AvatarSelector";
 
 const createTeamSchema = z.object({
-  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(50, "Nome muito longo"),
-  description: z.string().max(500, "Descrição muito longa").optional(),
-  introVideoUrl: z.string().url("URL inválida").optional().or(z.literal("")),
+  name: z.string().trim().min(3, "Nome deve ter pelo menos 3 caracteres").max(50, "Nome deve ter no máximo 50 caracteres"),
 });
 
 type CreateTeamFormData = z.infer<typeof createTeamSchema>;
@@ -27,30 +25,24 @@ interface CreateTeamFormProps {
 
 export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const { user } = useAuth();
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [inviteCode, setInviteCode] = useState<string>("");
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const form = useForm<CreateTeamFormData>({
     resolver: zodResolver(createTeamSchema),
     defaultValues: {
       name: "",
-      description: "",
-      introVideoUrl: "",
     },
   });
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(inviteCode);
+    setCopied(true);
+    toast.success("Código copiado!");
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const onSubmit = async (data: CreateTeamFormData) => {
@@ -59,8 +51,8 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       return;
     }
 
-    if (!avatarUrl && !logoFile) {
-      toast.error("Selecione um avatar ou logo");
+    if (!avatarUrl) {
+      toast.error("Selecione uma imagem para o time");
       return;
     }
 
@@ -78,22 +70,20 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
 
       // Criar time usando a API
       const novoTime = await criarTime({
-        nome: data.name,
-        token_gmail: user.id,
-        turma: usuario.turma,
-        periodo: usuario.periodo,
-        url_image_perfil: avatarUrl || logoPreview,
-        email: user.email || "",
+        nome_time: data.name,
+        dono_id: usuario.id!,
+        imagem_time: avatarUrl,
       });
 
-      // Adicionar o criador como membro do time
-      await adicionarIntegrante(novoTime.id!, {
-        usuario_id: usuario.id!,
-        funcao: "Capitão",
-      });
+      // Mostrar o código de convite gerado
+      if (novoTime.senha_convite) {
+        setInviteCode(novoTime.senha_convite);
+        setShowInviteDialog(true);
+        toast.success("Time criado com sucesso!");
+      }
 
-      toast.success("Time criado com sucesso! Você já foi adicionado ao time.");
-      onSuccess();
+      form.reset();
+      setAvatarUrl("");
     } catch (error: any) {
       console.error("Error creating team:", error);
       toast.error("Erro ao criar time: " + error.message);
@@ -102,109 +92,90 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     }
   };
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Criar Novo Time</CardTitle>
-        <CardDescription>Preencha as informações do seu time</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <AvatarSelector
-              currentAvatar={avatarUrl}
-              onAvatarChange={setAvatarUrl}
-            />
+  const handleDialogClose = () => {
+    setShowInviteDialog(false);
+    onSuccess();
+  };
 
-            <div className="space-y-4">
-              <div>
-                <FormLabel>Logo do Time *</FormLabel>
-                <div className="mt-2 flex items-center gap-4">
-                  {logoPreview && (
-                    <img
-                      src={logoPreview}
-                      alt="Preview"
-                      className="w-24 h-24 object-cover rounded-lg border"
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Criar Novo Time</CardTitle>
+          <CardDescription>Preencha as informações do seu time</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <FormLabel>Imagem do Time *</FormLabel>
+                  <div className="mt-2">
+                    <AvatarSelector
+                      currentAvatar={avatarUrl}
+                      onAvatarChange={setAvatarUrl}
                     />
-                  )}
-                  <div className="flex-1">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleLogoChange}
-                      className="cursor-pointer"
-                    />
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Formatos aceitos: PNG, JPG, GIF
-                    </p>
                   </div>
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Time *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Digite o nome do time" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do Time *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Digite o nome do time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Criando..." : "Criar Time"}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição (opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Conte um pouco sobre o time..."
-                        className="resize-none"
-                        rows={4}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Máximo 500 caracteres
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Time Criado com Sucesso! 🎉</DialogTitle>
+            <DialogDescription>
+              Compartilhe este código com seus amigos para eles entrarem no time
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
+              <code className="flex-1 text-2xl font-mono font-bold text-center">
+                {inviteCode}
+              </code>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={copyToClipboard}
+                className="shrink-0"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4" />
                 )}
-              />
-
-              <FormField
-                control={form.control}
-                name="introVideoUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vídeo de Introdução (opcional)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="url"
-                        placeholder="https://youtube.com/watch?v=..."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Link do YouTube ou outro serviço de vídeo
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              </Button>
             </div>
-
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Criando..." : "Criar Time"}
+            <p className="text-sm text-muted-foreground text-center">
+              Guarde este código em um lugar seguro. Seus amigos precisarão dele para entrar no time.
+            </p>
+            <Button onClick={handleDialogClose} className="w-full">
+              Entendi
             </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

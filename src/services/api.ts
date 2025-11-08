@@ -12,12 +12,10 @@ export interface Usuario {
 
 export interface Time {
   id?: number;
-  nome: string;
-  token_gmail: string;
-  turma: number;
-  periodo: number;
-  url_image_perfil: string;
-  email: string;
+  nome_time: string;
+  dono_id: number;
+  senha_convite?: string;
+  imagem_time?: string;
 }
 
 export interface Integrante {
