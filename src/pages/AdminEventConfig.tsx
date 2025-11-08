@@ -28,19 +28,15 @@ const mockEvent: Event = {
 
 const AdminEventConfig = () => {
   const navigate = useNavigate();
-  const { user, role } = useAuth();
-  const [event, setEvent] = useState<Event>(mockEvent);
+  const { user } = useAuth();
+  const [event] = useState<Event>(mockEvent);
 
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
-    if (role !== "admin") {
-      navigate("/");
-      return;
-    }
-  }, [user, role, navigate]);
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen bg-background">

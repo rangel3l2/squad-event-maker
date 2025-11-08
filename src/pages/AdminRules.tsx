@@ -37,7 +37,7 @@ const mockRules: Rule[] = [
 
 const AdminRules = () => {
   const navigate = useNavigate();
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const [rules, setRules] = useState<Rule[]>(mockRules);
 
   useEffect(() => {
@@ -45,11 +45,7 @@ const AdminRules = () => {
       navigate("/auth");
       return;
     }
-    if (role !== "admin") {
-      navigate("/");
-      return;
-    }
-  }, [user, role, navigate]);
+  }, [user, navigate]);
 
   const handleReorder = (id: string, direction: "up" | "down") => {
     const currentIndex = rules.findIndex(r => r.id === id);

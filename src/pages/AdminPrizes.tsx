@@ -35,7 +35,7 @@ interface Prize {
 
 const AdminPrizes = () => {
   const navigate = useNavigate();
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [prizes, setPrizes] = useState<Prize[]>([]);
@@ -46,12 +46,8 @@ const AdminPrizes = () => {
       navigate("/auth");
       return;
     }
-    if (role !== "admin") {
-      navigate("/");
-      return;
-    }
     fetchEvents();
-  }, [user, role, navigate]);
+  }, [user, navigate]);
 
   useEffect(() => {
     if (selectedEventId) {

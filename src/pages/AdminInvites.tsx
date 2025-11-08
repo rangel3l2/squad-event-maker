@@ -19,7 +19,7 @@ interface AdminInvite {
 
 const AdminInvites = () => {
   const navigate = useNavigate();
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const [invites, setInvites] = useState<AdminInvite[]>([]);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,12 +29,8 @@ const AdminInvites = () => {
       navigate("/auth");
       return;
     }
-    if (role !== "admin") {
-      navigate("/");
-      return;
-    }
     fetchInvites();
-  }, [user, role, navigate]);
+  }, [user, navigate]);
 
   const fetchInvites = async () => {
     const { data, error } = await supabase

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Users, Trophy, LogOut, Settings, Palette, UserCircle } from "lucide-react";
 
 const Navbar = () => {
-  const { user, role, signOut } = useAuth();
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="border-b border-border/50 backdrop-blur-lg bg-background/80 sticky top-0 z-50">
@@ -43,14 +43,6 @@ const Navbar = () => {
                   Perfil
                 </Button>
               </Link>
-              {role === 'admin' && (
-                <Link to="/admin">
-                  <Button variant="ghost" size="sm">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Admin
-                  </Button>
-                </Link>
-              )}
               <Button onClick={signOut} variant="ghost" size="sm">
                 <LogOut className="w-4 h-4 mr-2" />
                 Sair

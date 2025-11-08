@@ -37,7 +37,7 @@ const mockImages: CarouselImage[] = [
 
 const AdminCarousel = () => {
   const navigate = useNavigate();
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const [images, setImages] = useState<CarouselImage[]>(mockImages);
 
   useEffect(() => {
@@ -45,11 +45,7 @@ const AdminCarousel = () => {
       navigate("/auth");
       return;
     }
-    if (role !== "admin") {
-      navigate("/");
-      return;
-    }
-  }, [user, role, navigate]);
+  }, [user, navigate]);
 
   const handleReorder = (id: string, direction: "up" | "down") => {
     const currentIndex = images.findIndex(img => img.id === id);

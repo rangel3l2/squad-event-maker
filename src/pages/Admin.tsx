@@ -21,7 +21,7 @@ interface Event {
 }
 
 const Admin = () => {
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -32,15 +32,9 @@ const Admin = () => {
       navigate("/auth");
       return;
     }
-    
-    if (role !== 'admin') {
-      toast.error("Acesso negado - apenas administradores");
-      navigate("/");
-      return;
-    }
 
     fetchEvents();
-  }, [user, role, navigate]);
+  }, [user, navigate]);
 
   const fetchEvents = async () => {
     try {
