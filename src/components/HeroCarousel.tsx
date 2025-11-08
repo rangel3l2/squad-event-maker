@@ -51,11 +51,11 @@ export const HeroCarousel = () => {
         <CarouselContent>
           {images.map((image) => (
             <CarouselItem key={image.id}>
-              <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border shadow-card">
+              <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border shadow-card bg-muted">
                 {image.media_type === 'video' ? (
                   <video
                     src={image.video_url}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     autoPlay
                     loop
                     muted
@@ -65,7 +65,7 @@ export const HeroCarousel = () => {
                   <img
                     src={image.image_url}
                     alt="Frontend Teams Cup"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 )}
               </div>
