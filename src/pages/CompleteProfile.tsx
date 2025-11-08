@@ -44,30 +44,17 @@ export default function CompleteProfile() {
       return;
     }
 
-    // Verificar se já tem perfil completo
     const checkProfile = async () => {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      try {
+        const { listarUsuarios } = await import("@/services/api");
+        const usuarios = await listarUsuarios();
+        const usuario = usuarios.find(u => u.token_gmail === user.id);
 
-      if (profile?.cpf && profile?.full_name && profile?.classroom && profile?.classroom_group) {
-        // Já tem cadastro completo
-        navigate("/teams");
-      } else if (profile) {
-        // Preencher com dados existentes
-        form.setValue('fullName', profile.full_name || '');
-        if (profile.cpf) {
-          form.setValue('cpf', profile.cpf);
+        if (usuario) {
+          navigate("/teams");
         }
-        if (profile.classroom) {
-          form.setValue('classroom', profile.classroom);
-        }
-        if (profile.classroom_group === 'A' || profile.classroom_group === 'B') {
-          form.setValue('classroomGroup', profile.classroom_group);
-        }
-        setAvatarUrl(profile.avatar_url || '');
+      } catch (error) {
+        console.error("Error checking user:", error);
       }
     };
 
@@ -79,18 +66,16 @@ export default function CompleteProfile() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: data.fullName,
-          cpf: data.cpf,
-          avatar_url: avatarUrl,
-          classroom: data.classroom,
-          classroom_group: data.classroomGroup,
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
+      const { criarUsuario } = await import("@/services/api");
+      
+      await criarUsuario({
+        nome: data.fullName,
+        token_gmail: user.id,
+        turma: parseInt(data.classroom),
+        periodo: parseInt(data.classroomGroup === "A" ? "1" : "2"),
+        url_image_perfil: avatarUrl || "",
+        email: user.email || "",
+      });
 
       toast.success("Cadastro completo! Agora você pode criar ou entrar em um time.");
       navigate("/teams");
