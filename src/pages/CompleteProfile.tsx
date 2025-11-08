@@ -14,10 +14,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
-  fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
-  cpf: z.string().regex(/^\d{11}$/, "CPF deve ter 11 dígitos"),
-  classroom: z.string().min(1, "Selecione uma turma"),
-  classroomGroup: z.enum(["A", "B"], { required_error: "Selecione um grupo" }),
+  fullName: z.string().trim().min(3, "Nome completo deve ter pelo menos 3 caracteres").max(100, "Nome deve ter no máximo 100 caracteres"),
+  classroom: z.string().trim().min(1, "Turma é obrigatória").max(50, "Turma deve ter no máximo 50 caracteres"),
+  period: z.string().min(1, "Selecione um período"),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -32,9 +31,8 @@ export default function CompleteProfile() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: "",
-      cpf: "",
       classroom: "",
-      classroomGroup: undefined,
+      period: "",
     },
   });
 
@@ -72,7 +70,7 @@ export default function CompleteProfile() {
         nome: data.fullName,
         token_gmail: user.id,
         turma: parseInt(data.classroom),
-        periodo: parseInt(data.classroomGroup === "A" ? "1" : "2"),
+        periodo: parseInt(data.period),
         url_image_perfil: avatarUrl || "",
         email: user.email || "",
       });
@@ -121,30 +119,12 @@ export default function CompleteProfile() {
 
               <FormField
                 control={form.control}
-                name="cpf"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CPF *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="12345678900" 
-                        maxLength={11}
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="classroom"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Turma *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: 3º Ano" {...field} />
+                      <Input placeholder="Ex: 3" type="number" min="1" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,19 +133,21 @@ export default function CompleteProfile() {
 
               <FormField
                 control={form.control}
-                name="classroomGroup"
+                name="period"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Grupo da Turma *</FormLabel>
+                    <FormLabel>Período *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o grupo" />
+                          <SelectValue placeholder="Selecione o período" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="A">Grupo A</SelectItem>
-                        <SelectItem value="B">Grupo B</SelectItem>
+                        <SelectItem value="1">1º Período</SelectItem>
+                        <SelectItem value="2">2º Período</SelectItem>
+                        <SelectItem value="3">3º Período</SelectItem>
+                        <SelectItem value="4">4º Período</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
