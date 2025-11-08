@@ -1,4 +1,16 @@
-const API_BASE_URL = "http://ifms.pro.br:6003";
+// Use Edge Function proxy for HTTPS compatibility
+const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/api-proxy`;
+
+const makeRequest = async (path: string, options?: RequestInit) => {
+  const url = `${EDGE_FUNCTION_URL}?path=${encodeURIComponent(path)}`;
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      'Content-Type': 'application/json',
+    },
+  });
+};
 
 export interface Usuario {
   id?: number;
@@ -25,15 +37,14 @@ export interface Integrante {
 
 // Usuários
 export const listarUsuarios = async (): Promise<Usuario[]> => {
-  const response = await fetch(`${API_BASE_URL}/usuarios`);
+  const response = await makeRequest('/usuarios');
   if (!response.ok) throw new Error("Erro ao listar usuários");
   return response.json();
 };
 
 export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
-  const response = await fetch(`${API_BASE_URL}/usuarios`, {
+  const response = await makeRequest('/usuarios', {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(usuario),
   });
   if (!response.ok) throw new Error("Erro ao criar usuário");
@@ -41,9 +52,8 @@ export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
 };
 
 export const alterarUsuario = async (id: number, usuario: Partial<Usuario>): Promise<Usuario> => {
-  const response = await fetch(`${API_BASE_URL}/usuarios/${id}`, {
+  const response = await makeRequest(`/usuarios/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(usuario),
   });
   if (!response.ok) throw new Error("Erro ao alterar usuário");
@@ -51,28 +61,27 @@ export const alterarUsuario = async (id: number, usuario: Partial<Usuario>): Pro
 };
 
 export const listarUsuariosSemTime = async (): Promise<Usuario[]> => {
-  const response = await fetch(`${API_BASE_URL}/usuarios/sem-time`);
+  const response = await makeRequest('/usuarios/sem-time');
   if (!response.ok) throw new Error("Erro ao listar usuários sem time");
   return response.json();
 };
 
 export const mostrarTimeUsuario = async (usuarioId: number) => {
-  const response = await fetch(`${API_BASE_URL}/usuarios/${usuarioId}/time`);
+  const response = await makeRequest(`/usuarios/${usuarioId}/time`);
   if (!response.ok) throw new Error("Erro ao mostrar time do usuário");
   return response.json();
 };
 
 // Times
 export const listarTimes = async (): Promise<Time[]> => {
-  const response = await fetch(`${API_BASE_URL}/times`);
+  const response = await makeRequest('/times');
   if (!response.ok) throw new Error("Erro ao listar times");
   return response.json();
 };
 
 export const criarTime = async (time: Time): Promise<Time> => {
-  const response = await fetch(`${API_BASE_URL}/times`, {
+  const response = await makeRequest('/times', {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(time),
   });
   if (!response.ok) throw new Error("Erro ao criar time");
@@ -80,21 +89,20 @@ export const criarTime = async (time: Time): Promise<Time> => {
 };
 
 export const mostrarTime = async (timeId: number) => {
-  const response = await fetch(`${API_BASE_URL}/times/${timeId}`);
+  const response = await makeRequest(`/times/${timeId}`);
   if (!response.ok) throw new Error("Erro ao mostrar time");
   return response.json();
 };
 
 export const listarTimesIncompletos = async () => {
-  const response = await fetch(`${API_BASE_URL}/times/incompletos`);
+  const response = await makeRequest('/times/incompletos');
   if (!response.ok) throw new Error("Erro ao listar times incompletos");
   return response.json();
 };
 
 export const adicionarIntegrante = async (timeId: number, integrante: Integrante) => {
-  const response = await fetch(`${API_BASE_URL}/times/${timeId}/integrantes`, {
+  const response = await makeRequest(`/times/${timeId}/integrantes`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(integrante),
   });
   if (!response.ok) throw new Error("Erro ao adicionar integrante");
@@ -102,7 +110,7 @@ export const adicionarIntegrante = async (timeId: number, integrante: Integrante
 };
 
 export const removerIntegrante = async (timeId: number, usuarioId: number) => {
-  const response = await fetch(`${API_BASE_URL}/times/${timeId}/integrantes/${usuarioId}`, {
+  const response = await makeRequest(`/times/${timeId}/integrantes/${usuarioId}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Erro ao remover integrante");
