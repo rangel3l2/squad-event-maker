@@ -11,17 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AvatarSelector } from "@/components/teams/AvatarSelector";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { AlertCircle, Users, LogOut, Edit } from "lucide-react";
+import { listarUsuarios, mostrarTimeUsuario, alterarUsuario, removerIntegrante } from "@/services/api";
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
-  cpf: z.string().regex(/^\d{11}$/, "CPF deve ter 11 dígitos"),
-  classroom: z.string().min(1, "Selecione uma turma"),
-  classroomGroup: z.enum(["A", "B"], { required_error: "Selecione um grupo" }),
+  classroom: z.string().min(1, "Turma é obrigatória"),
+  period: z.string().min(1, "Selecione um período"),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -39,18 +38,17 @@ export default function Profile() {
   const { user } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [canEdit, setCanEdit] = useState(true);
-  const [eventDate, setEventDate] = useState<Date | null>(null);
   const [currentTeam, setCurrentTeam] = useState<TeamInfo | null>(null);
   const [isLeavingTeam, setIsLeavingTeam] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [teamId, setTeamId] = useState<number | null>(null);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: "",
-      cpf: "",
       classroom: "",
-      classroomGroup: undefined,
+      period: "",
     },
   });
 
@@ -60,88 +58,53 @@ export default function Profile() {
       return;
     }
 
-    const loadProfileAndCheckEvent = async () => {
-      // Carregar perfil do usuário
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+    const loadProfile = async () => {
+      try {
+        const usuarios = await listarUsuarios();
+        const usuario = usuarios.find(u => u.token_gmail === user.id);
 
-      if (profile) {
-        form.setValue('fullName', profile.full_name || '');
-        form.setValue('cpf', profile.cpf || '');
-        form.setValue('classroom', profile.classroom || '');
-        if (profile.classroom_group === 'A' || profile.classroom_group === 'B') {
-          form.setValue('classroomGroup', profile.classroom_group);
+        if (usuario) {
+          setUserId(usuario.id!);
+          form.setValue('fullName', usuario.nome || '');
+          form.setValue('classroom', usuario.turma?.toString() || '');
+          form.setValue('period', usuario.periodo?.toString() || '');
+          setAvatarUrl(usuario.url_image_perfil || '');
+
+          // Buscar time do usuário
+          const timeUsuario = await mostrarTimeUsuario(usuario.id!);
+          if (timeUsuario) {
+            setTeamId(timeUsuario.id);
+            setCurrentTeam({
+              id: timeUsuario.id.toString(),
+              name: timeUsuario.nome_time,
+              logo_url: timeUsuario.imagem_time || '',
+              captain_id: timeUsuario.dono_id.toString(),
+              event_id: ''
+            });
+          }
         }
-        setAvatarUrl(profile.avatar_url || '');
-      }
-
-      // Buscar time do usuário
-      const { data: teamMember } = await supabase
-        .from('team_members')
-        .select('team_id, teams(id, name, logo_url, captain_id, event_id)')
-        .eq('user_id', user.id)
-        .single();
-
-      if (teamMember?.teams) {
-        setCurrentTeam(teamMember.teams as any);
-      }
-
-      // Verificar a data do evento ativo
-      const { data: event } = await supabase
-        .from('events')
-        .select('event_date')
-        .eq('is_active', true)
-        .single();
-
-      if (event?.event_date) {
-        const eventStartDate = new Date(event.event_date);
-        setEventDate(eventStartDate);
-        const now = new Date();
-        
-        // Não pode editar se a data do evento já passou
-        if (now >= eventStartDate) {
-          setCanEdit(false);
-        }
+      } catch (error) {
+        console.error("Error loading profile:", error);
+        toast.error("Erro ao carregar perfil");
       }
     };
 
-    loadProfileAndCheckEvent();
+    loadProfile();
   }, [user, navigate, form]);
 
   const onSubmit = async (data: ProfileFormData) => {
-    if (!user || !canEdit) return;
+    if (!user || !userId) return;
 
     setIsSubmitting(true);
     try {
-      // Atualizar perfil
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: data.fullName,
-          cpf: data.cpf,
-          avatar_url: avatarUrl,
-          classroom: data.classroom,
-          classroom_group: data.classroomGroup,
-        })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // Atualizar informações do team_member se existir
-      const { error: memberError } = await supabase
-        .from('team_members')
-        .update({
-          classroom: data.classroom,
-          classroom_group: data.classroomGroup,
-        })
-        .eq('user_id', user.id);
-
-      if (memberError && memberError.code !== 'PGRST116') {
-        throw memberError;
-      }
+      await alterarUsuario(userId, {
+        nome: data.fullName,
+        turma: parseInt(data.classroom),
+        periodo: parseInt(data.period),
+        url_image_perfil: avatarUrl,
+        email: user.email || '',
+        token_gmail: user.id,
+      });
 
       toast.success("Perfil atualizado com sucesso!");
     } catch (error: any) {
@@ -152,22 +115,15 @@ export default function Profile() {
   };
 
   const handleLeaveTeam = async () => {
-    if (!user || !currentTeam) return;
+    if (!userId || !teamId) return;
 
     setIsLeavingTeam(true);
     try {
-      const { error } = await supabase
-        .from('team_members')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('team_id', currentTeam.id);
-
-      if (error) throw error;
+      await removerIntegrante(teamId, userId);
 
       toast.success("Você saiu do time com sucesso!");
       setCurrentTeam(null);
       
-      // Redirecionar para página de times após 1 segundo
       setTimeout(() => {
         navigate("/teams");
       }, 1000);
@@ -217,13 +173,6 @@ export default function Profile() {
                   </div>
                   
                   <div className="flex gap-2">
-                    {isCaptain && canEdit && (
-                      <Button onClick={handleEditTeam} variant="outline">
-                        <Edit className="w-4 h-4 mr-2" />
-                        Editar Time
-                      </Button>
-                    )}
-                    
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive">
@@ -262,27 +211,17 @@ export default function Profile() {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-3xl font-bold">Dados Pessoais</CardTitle>
-              <CardDescription className="text-lg">
-                {canEdit ? "Edite suas informações de cadastro" : "Visualize suas informações de cadastro"}
-              </CardDescription>
+            <CardDescription className="text-lg">
+              Edite suas informações de cadastro
+            </CardDescription>
             </CardHeader>
             <CardContent>
-              {!canEdit && (
-                <Alert className="mb-6">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Não é possível editar suas informações pois o evento já iniciou em {eventDate?.toLocaleDateString('pt-BR')}.
-                  </AlertDescription>
-                </Alert>
-              )}
-
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <div className="flex justify-center">
                     <AvatarSelector
                       currentAvatar={avatarUrl}
                       onAvatarChange={setAvatarUrl}
-                      disabled={!canEdit}
                     />
                   </div>
 
@@ -293,30 +232,7 @@ export default function Profile() {
                       <FormItem>
                         <FormLabel>Nome Completo *</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Seu nome completo" 
-                            {...field} 
-                            disabled={!canEdit}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="cpf"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CPF *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="12345678900" 
-                            maxLength={11}
-                            {...field} 
-                            disabled={!canEdit}
-                          />
+                          <Input placeholder="Seu nome completo" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -330,11 +246,7 @@ export default function Profile() {
                       <FormItem>
                         <FormLabel>Turma *</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Ex: 3º Ano" 
-                            {...field} 
-                            disabled={!canEdit}
-                          />
+                          <Input placeholder="Ex: 3" type="number" min="1" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -343,23 +255,21 @@ export default function Profile() {
 
                   <FormField
                     control={form.control}
-                    name="classroomGroup"
+                    name="period"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Grupo da Turma *</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          value={field.value}
-                          disabled={!canEdit}
-                        >
+                        <FormLabel>Período *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione o grupo" />
+                              <SelectValue placeholder="Selecione o período" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="A">Grupo A</SelectItem>
-                            <SelectItem value="B">Grupo B</SelectItem>
+                            <SelectItem value="1">1º Período</SelectItem>
+                            <SelectItem value="2">2º Período</SelectItem>
+                            <SelectItem value="3">3º Período</SelectItem>
+                            <SelectItem value="4">4º Período</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -367,11 +277,9 @@ export default function Profile() {
                     )}
                   />
 
-                  {canEdit && (
-                    <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                      {isSubmitting ? "Salvando..." : "Salvar Alterações"}
-                    </Button>
-                  )}
+                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                    {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+                  </Button>
 
                   <Button 
                     type="button" 
