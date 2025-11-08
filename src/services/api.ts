@@ -1,8 +1,8 @@
-// Use Edge Function proxy for HTTPS compatibility
-const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/api-proxy`;
+// Direct HTTP connection to external API
+const API_BASE_URL = "http://ifms.pro.br:6003";
 
 const makeRequest = async (path: string, options?: RequestInit) => {
-  const url = `${EDGE_FUNCTION_URL}?path=${encodeURIComponent(path)}`;
+  const url = `${API_BASE_URL}${path}`;
   return fetch(url, {
     ...options,
     headers: {
