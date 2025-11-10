@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Copy, Check } from "lucide-react";
-import { AvatarSelector } from "./AvatarSelector";
+import { TeamLogoUploader } from "./TeamLogoUploader";
 
 const createTeamSchema = z.object({
   name: z.string().trim().min(3, "Nome deve ter pelo menos 3 caracteres").max(50, "Nome deve ter no máximo 50 caracteres"),
@@ -26,7 +26,7 @@ interface CreateTeamFormProps {
 export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [logoUrl, setLogoUrl] = useState<string>("");
   const [inviteCode, setInviteCode] = useState<string>("");
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -51,8 +51,8 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       return;
     }
 
-    if (!avatarUrl) {
-      toast.error("Selecione uma imagem para o time");
+    if (!logoUrl) {
+      toast.error("O logo do time é obrigatório");
       return;
     }
 
@@ -72,7 +72,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       const novoTime = await criarTime({
         nome_time: data.name,
         dono_id: usuario.id!,
-        imagem_time: avatarUrl,
+        imagem_time: logoUrl,
       });
 
       // Mostrar o código de convite gerado
@@ -83,7 +83,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       }
 
       form.reset();
-      setAvatarUrl("");
+      setLogoUrl("");
     } catch (error: any) {
       console.error("Error creating team:", error);
       toast.error("Erro ao criar time: " + error.message);
@@ -108,15 +108,10 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-4">
-                <div>
-                  <FormLabel>Imagem do Time *</FormLabel>
-                  <div className="mt-2">
-                    <AvatarSelector
-                      currentAvatar={avatarUrl}
-                      onAvatarChange={setAvatarUrl}
-                    />
-                  </div>
-                </div>
+                <TeamLogoUploader
+                  currentLogo={logoUrl}
+                  onLogoChange={setLogoUrl}
+                />
 
                 <FormField
                   control={form.control}
