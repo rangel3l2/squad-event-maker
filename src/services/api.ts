@@ -114,9 +114,16 @@ export const listarTimes = async (): Promise<Time[]> => {
 };
 
 export const criarTime = async (time: Time): Promise<Time> => {
+  const params = new URLSearchParams();
+  params.set('nome_time', time.nome_time);
+  params.set('dono_id', String(time.dono_id));
+  if (time.senha_convite) params.set('senha_convite', time.senha_convite);
+  if (time.imagem_time) params.set('imagem_time', time.imagem_time);
+
   const response = await makeRequest('/times', {
     method: "POST",
-    body: JSON.stringify(time),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
   });
   if (!response.ok) throw new Error("Erro ao criar time");
   return response.json();
