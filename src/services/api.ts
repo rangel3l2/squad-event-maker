@@ -6,8 +6,8 @@ const makeRequest = async (path: string, options?: RequestInit) => {
   return fetch(url, {
     ...options,
     headers: {
-      ...options?.headers,
       'Content-Type': 'application/json',
+      ...options?.headers,
     },
   });
 };
@@ -18,7 +18,7 @@ export interface Usuario {
   token_gmail: string;
   turma: number;
   periodo: number;
-  url_image_perfil: string;
+  url_image_perfil?: string;
   email: string;
 }
 
@@ -43,11 +43,28 @@ export const listarUsuarios = async (): Promise<Usuario[]> => {
 };
 
 export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
+  const params = new URLSearchParams();
+  params.set('nome', usuario.nome);
+  if (usuario.token_gmail) params.set('token_gmail', usuario.token_gmail);
+  params.set('turma', String(usuario.turma));
+  params.set('periodo', String(usuario.periodo));
+  if (usuario.url_image_perfil) params.set('url_image_perfil', usuario.url_image_perfil);
+  params.set('email', usuario.email);
+
   const response = await makeRequest('/usuarios', {
     method: "POST",
-    body: JSON.stringify(usuario),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
   });
-  if (!response.ok) throw new Error("Erro ao criar usuário");
+  if (!response.ok) {
+    let detail: any = "";
+    const ct = response.headers.get('content-type') || "";
+    try {
+      detail = ct.includes('application/json') ? await response.json() : await response.text();
+    } catch {}
+    const message = typeof detail === "string" ? detail : detail?.message || JSON.stringify(detail);
+    throw new Error(message || `Erro ao criar usuário (${response.status})`);
+  }
   return response.json();
 };
 
