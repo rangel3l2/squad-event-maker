@@ -71,17 +71,23 @@ export default function Profile() {
           setAvatarUrl(usuario.url_image_perfil || '');
 
           // Buscar time do usuário
-          const timeUsuario = await mostrarTimeUsuario(usuario.id!);
-          if (timeUsuario) {
-            setTeamId(timeUsuario.id);
-            setCurrentTeam({
-              id: timeUsuario.id.toString(),
-              name: timeUsuario.nome_time,
-              logo_url: timeUsuario.imagem_time || '',
-              captain_id: timeUsuario.dono_id.toString(),
-              event_id: ''
-            });
-          }
+           const timeUsuario = await mostrarTimeUsuario(usuario.id!);
+           console.log("Perfil - usuario:", usuario);
+           console.log("Perfil - timeUsuario:", timeUsuario);
+           if (timeUsuario && timeUsuario.id != null) {
+             setTeamId(timeUsuario.id);
+             setCurrentTeam({
+               id: String(timeUsuario.id),
+               name: timeUsuario.nome_time || 'Meu Time',
+               logo_url: timeUsuario.imagem_time || '',
+               captain_id: timeUsuario.dono_id != null ? String(timeUsuario.dono_id) : '',
+               event_id: ''
+             });
+           } else {
+             setTeamId(null);
+             setCurrentTeam(null);
+             console.warn("Time do usuário ausente ou inválido:", timeUsuario);
+           }
         }
       } catch (error) {
         console.error("Error loading profile:", error);
