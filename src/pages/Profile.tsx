@@ -66,8 +66,8 @@ export default function Profile() {
         if (usuario) {
           setUserId(usuario.id!);
           form.setValue('fullName', usuario.nome || '');
-          form.setValue('classroom', usuario.turma?.toString() || '');
-          form.setValue('period', usuario.periodo?.toString() || '');
+          form.setValue('classroom', usuario.turma ? usuario.turma.toString() : '');
+          form.setValue('period', usuario.periodo ? usuario.periodo.toString() : '');
           setAvatarUrl(usuario.url_image_perfil || '');
 
           // Buscar time do usuário

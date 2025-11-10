@@ -69,11 +69,28 @@ export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
 };
 
 export const alterarUsuario = async (id: number, usuario: Partial<Usuario>): Promise<Usuario> => {
+  const params = new URLSearchParams();
+  if (usuario.nome) params.set('nome', usuario.nome);
+  if (usuario.token_gmail) params.set('token_gmail', usuario.token_gmail);
+  if (usuario.turma !== undefined) params.set('turma', String(usuario.turma));
+  if (usuario.periodo !== undefined) params.set('periodo', String(usuario.periodo));
+  if (usuario.url_image_perfil !== undefined) params.set('url_image_perfil', usuario.url_image_perfil);
+  if (usuario.email) params.set('email', usuario.email);
+
   const response = await makeRequest(`/usuarios/${id}`, {
     method: "PUT",
-    body: JSON.stringify(usuario),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
   });
-  if (!response.ok) throw new Error("Erro ao alterar usuário");
+  if (!response.ok) {
+    let detail: any = "";
+    const ct = response.headers.get('content-type') || "";
+    try {
+      detail = ct.includes('application/json') ? await response.json() : await response.text();
+    } catch {}
+    const message = typeof detail === "string" ? detail : detail?.message || JSON.stringify(detail);
+    throw new Error(message || `Erro ao alterar usuário (${response.status})`);
+  }
   return response.json();
 };
 
