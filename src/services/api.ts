@@ -120,12 +120,32 @@ export const criarTime = async (time: Time): Promise<Time> => {
   if (time.senha_convite) params.set('senha_convite', time.senha_convite);
   if (time.imagem_time) params.set('imagem_time', time.imagem_time);
 
+  console.log("=== API criarTime ===");
+  console.log("Objeto Time recebido:", time);
+  console.log("URLSearchParams:", params.toString());
+  console.log("Corpo da requisição (decoded):", {
+    nome_time: params.get('nome_time'),
+    dono_id: params.get('dono_id'),
+    senha_convite: params.get('senha_convite'),
+    imagem_time: params.get('imagem_time')?.substring(0, 50) + '...'
+  });
+
   const response = await makeRequest('/times', {
     method: "POST",
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: params.toString(),
   });
-  if (!response.ok) throw new Error("Erro ao criar time");
+  
+  console.log("=== RESPOSTA DA API ===");
+  console.log("Status:", response.status);
+  console.log("Status Text:", response.statusText);
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Erro da API:", errorText);
+    throw new Error(`Erro ao criar time: ${response.status} - ${errorText}`);
+  }
+  
   return response.json();
 };
 

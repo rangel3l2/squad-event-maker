@@ -81,6 +81,17 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         return;
       }
 
+      // Log dos dados que serão enviados
+      console.log("=== DADOS PARA CRIAR TIME ===");
+      console.log("Nome do time:", data.name);
+      console.log("ID do dono:", usuario.id);
+      console.log("URL da imagem:", logoUrl);
+      console.log("Objeto completo:", {
+        nome_time: data.name,
+        dono_id: usuario.id,
+        imagem_time: logoUrl,
+      });
+
       // Criar time usando a API
       const novoTime = await criarTime({
         nome_time: data.name,
