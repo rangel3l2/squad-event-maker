@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { criarTime, listarUsuarios } from "@/services/api";
+import { criarTime, listarUsuarios, listarTimes } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,15 +63,28 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       const usuarios = await listarUsuarios();
       const usuario = usuarios.find(u => u.email === user.email);
 
-      if (!usuario) {
+      if (!usuario || !usuario.id) {
         toast.error("Complete suas informações de cadastro primeiro");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Verificar se já existe um time com o mesmo nome
+      const times = await listarTimes();
+      const timeExistente = times.find(
+        t => t.nome_time.toLowerCase().trim() === data.name.toLowerCase().trim()
+      );
+
+      if (timeExistente) {
+        toast.error("Já existe um time com esse nome. Por favor, escolha outro nome.");
+        setIsSubmitting(false);
         return;
       }
 
       // Criar time usando a API
       const novoTime = await criarTime({
         nome_time: data.name,
-        dono_id: usuario.id!,
+        dono_id: usuario.id,
         imagem_time: logoUrl,
       });
 
