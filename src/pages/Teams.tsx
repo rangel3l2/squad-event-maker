@@ -39,9 +39,11 @@ export default function Teams() {
         try {
           const timeUsuario = await mostrarTimeUsuario(usuario.id!);
           
-          if (timeUsuario) {
+          if (timeUsuario && timeUsuario.id != null) {
             setHasTeam(true);
             setCurrentTeamName(timeUsuario.nome_time || "");
+          } else {
+            setHasTeam(false);
           }
         } catch (error) {
           // Usuário não tem time ainda
