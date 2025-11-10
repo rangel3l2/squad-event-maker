@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { uploadImageToImgBB } from "@/services/imgbb";
 
 interface TeamLogoUploaderProps {
   onLogoChange: (logoUrl: string) => void;
@@ -27,12 +28,25 @@ export function TeamLogoUploader({ onLogoChange, currentLogo }: TeamLogoUploader
     setIsUploading(true);
     
     const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      setPreviewUrl(base64String);
-      onLogoChange(base64String);
-      setIsUploading(false);
-      toast.success("Logo carregado com sucesso!");
+    reader.onloadend = async () => {
+      try {
+        const base64String = reader.result as string;
+        setPreviewUrl(base64String);
+        
+        // Upload para ImgBB
+        console.log("Fazendo upload da imagem para ImgBB...");
+        const imageUrl = await uploadImageToImgBB(base64String);
+        console.log("URL da imagem no ImgBB:", imageUrl);
+        
+        onLogoChange(imageUrl);
+        setIsUploading(false);
+        toast.success("Logo carregado com sucesso!");
+      } catch (error) {
+        console.error("Erro no upload:", error);
+        toast.error("Erro ao fazer upload da imagem");
+        setPreviewUrl("");
+        setIsUploading(false);
+      }
     };
     reader.onerror = () => {
       toast.error("Erro ao carregar a imagem");
