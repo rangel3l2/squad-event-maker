@@ -71,14 +71,18 @@ export default function CompleteProfile() {
     try {
       const { criarUsuario } = await import("@/services/api");
       
-      const userData = {
-        nome: data.fullName,
-        token_gmail: user.email, // Usando email ao invés de user.id
+      const userData: any = {
+        nome: data.fullName.trim(),
+        token_gmail: user.email,
         turma: parseInt(data.classroom),
         periodo: parseInt(data.period),
-        url_image_perfil: avatarUrl || "",
         email: user.email,
       };
+
+      // Só adiciona url_image_perfil se tiver valor
+      if (avatarUrl && avatarUrl.trim()) {
+        userData.url_image_perfil = avatarUrl.trim();
+      }
 
       console.log("Enviando dados para API:", userData);
 
@@ -88,7 +92,18 @@ export default function CompleteProfile() {
       navigate("/teams");
     } catch (error: any) {
       console.error("Erro completo ao criar usuário:", error);
-      const errorMessage = error.response?.data?.message || error.message || "Erro desconhecido";
+      
+      // Tentar extrair mensagem de erro da API
+      let errorMessage = "Erro desconhecido";
+      if (error.response?.data) {
+        console.error("Resposta da API:", error.response.data);
+        errorMessage = typeof error.response.data === 'string' 
+          ? error.response.data 
+          : error.response.data.message || JSON.stringify(error.response.data);
+      } else {
+        errorMessage = error.message;
+      }
+      
       toast.error("Erro ao salvar dados: " + errorMessage);
     } finally {
       setIsSubmitting(false);
