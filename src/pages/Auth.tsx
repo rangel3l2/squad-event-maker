@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { listarUsuarios } from "@/services/api";
 import { toast } from "sonner";
 
 const Auth = () => {
@@ -14,18 +14,21 @@ const Auth = () => {
     const checkUserProfile = async () => {
       if (!user) return;
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('cpf, full_name')
-        .eq('id', user.id)
-        .single();
+      try {
+        // Verificar se o usuário está cadastrado na API externa
+        const usuarios = await listarUsuarios();
+        const usuario = usuarios.find(u => u.email === user.email);
 
-      if (profile?.cpf && profile?.full_name) {
-        // Usuário já completou o cadastro
-        navigate("/teams");
-      } else {
-        // Usuário precisa completar o cadastro
-        navigate("/complete-profile");
+        if (usuario) {
+          // Usuário já está cadastrado, vai para a página de times
+          navigate("/teams");
+        } else {
+          // Usuário não está cadastrado, precisa completar cadastro
+          navigate("/complete-profile");
+        }
+      } catch (error) {
+        console.error("Erro ao verificar cadastro:", error);
+        toast.error("Erro ao verificar cadastro");
       }
     };
 

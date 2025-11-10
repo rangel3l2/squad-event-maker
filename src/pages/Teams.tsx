@@ -28,7 +28,7 @@ export default function Teams() {
       try {
         // Verificar perfil completo via API
         const usuarios = await listarUsuarios();
-        const usuario = usuarios.find(u => u.token_gmail === user.id);
+        const usuario = usuarios.find(u => u.email === user.email);
 
         if (!usuario) {
           navigate("/complete-profile");
@@ -36,11 +36,16 @@ export default function Teams() {
         }
 
         // Verificar se já está em um time via API
-        const timeUsuario = await mostrarTimeUsuario(usuario.id!);
-        
-        if (timeUsuario) {
-          setHasTeam(true);
-          setCurrentTeamName(timeUsuario.nome || "");
+        try {
+          const timeUsuario = await mostrarTimeUsuario(usuario.id!);
+          
+          if (timeUsuario) {
+            setHasTeam(true);
+            setCurrentTeamName(timeUsuario.nome_time || "");
+          }
+        } catch (error) {
+          // Usuário não tem time ainda
+          setHasTeam(false);
         }
       } catch (error) {
         console.error("Error checking profile:", error);

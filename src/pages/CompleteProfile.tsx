@@ -46,7 +46,7 @@ export default function CompleteProfile() {
       try {
         const { listarUsuarios } = await import("@/services/api");
         const usuarios = await listarUsuarios();
-        const usuario = usuarios.find(u => u.token_gmail === user.id);
+        const usuario = usuarios.find(u => u.email === user.email);
 
         if (usuario) {
           navigate("/teams");

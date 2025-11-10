@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import { HeroCarousel } from "@/components/HeroCarousel";
+import { TeamsDashboard } from "@/components/TeamsDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Trophy, BookOpen, Share2 } from "lucide-react";
+import { Trophy, BookOpen } from "lucide-react";
 
 interface Event {
   id: string;
@@ -140,6 +141,13 @@ const Index = () => {
             A maior competição de futebol entre turmas de desenvolvimento web
           </p>
           <HeroCarousel />
+        </div>
+      </section>
+
+      {/* Teams Dashboard Section */}
+      <section className="py-16 px-4 bg-card/30">
+        <div className="max-w-7xl mx-auto">
+          <TeamsDashboard />
         </div>
       </section>
 

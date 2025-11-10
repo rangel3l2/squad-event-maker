@@ -61,7 +61,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     try {
       // Buscar informações do usuário na API
       const usuarios = await listarUsuarios();
-      const usuario = usuarios.find(u => u.token_gmail === user.id);
+      const usuario = usuarios.find(u => u.email === user.email);
 
       if (!usuario) {
         toast.error("Complete suas informações de cadastro primeiro");
