@@ -103,11 +103,12 @@ export default function Profile() {
         periodo: parseInt(data.period),
         url_image_perfil: avatarUrl,
         email: user.email || '',
-        token_gmail: user.id,
+        token_gmail: user.email || '', // Usando email ao invés de user.id
       });
 
       toast.success("Perfil atualizado com sucesso!");
     } catch (error: any) {
+      console.error("Erro ao atualizar perfil:", error);
       toast.error("Erro ao atualizar perfil: " + error.message);
     } finally {
       setIsSubmitting(false);

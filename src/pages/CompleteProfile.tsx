@@ -62,23 +62,34 @@ export default function CompleteProfile() {
   const onSubmit = async (data: ProfileFormData) => {
     if (!user) return;
 
+    if (!user.email) {
+      toast.error("Email não encontrado. Por favor, faça login novamente.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { criarUsuario } = await import("@/services/api");
       
-      await criarUsuario({
+      const userData = {
         nome: data.fullName,
-        token_gmail: user.id,
+        token_gmail: user.email, // Usando email ao invés de user.id
         turma: parseInt(data.classroom),
         periodo: parseInt(data.period),
         url_image_perfil: avatarUrl || "",
-        email: user.email || "",
-      });
+        email: user.email,
+      };
+
+      console.log("Enviando dados para API:", userData);
+
+      await criarUsuario(userData);
 
       toast.success("Cadastro completo! Agora você pode criar ou entrar em um time.");
       navigate("/teams");
     } catch (error: any) {
-      toast.error("Erro ao salvar dados: " + error.message);
+      console.error("Erro completo ao criar usuário:", error);
+      const errorMessage = error.response?.data?.message || error.message || "Erro desconhecido";
+      toast.error("Erro ao salvar dados: " + errorMessage);
     } finally {
       setIsSubmitting(false);
     }
