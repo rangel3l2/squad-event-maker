@@ -42,10 +42,33 @@ const Index = () => {
   const [prizes, setPrizes] = useState<Prize[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const [isUserRegistered, setIsUserRegistered] = useState(false);
+  const [checkingUser, setCheckingUser] = useState(true);
 
   useEffect(() => {
     fetchData();
-  }, []);
+    checkUserRegistration();
+  }, [user]);
+
+  const checkUserRegistration = async () => {
+    if (!user) {
+      setIsUserRegistered(false);
+      setCheckingUser(false);
+      return;
+    }
+
+    try {
+      const { listarUsuarios } = await import("@/services/api");
+      const usuarios = await listarUsuarios();
+      const usuario = usuarios.find(u => u.email === user.email);
+      setIsUserRegistered(!!usuario);
+    } catch (error) {
+      console.error("Erro ao verificar usuário:", error);
+      setIsUserRegistered(false);
+    } finally {
+      setCheckingUser(false);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -143,6 +166,70 @@ const Index = () => {
           <HeroCarousel />
         </div>
       </section>
+
+      {/* CTA Section - Cadastre-se Agora - Apenas para não cadastrados */}
+      {!checkingUser && !isUserRegistered && (
+        <section className="py-20 px-4 bg-gradient-to-b from-primary/10 via-secondary/10 to-accent/10">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                  Cadastre-se Agora!
+                </h2>
+                <p className="text-xl md:text-2xl text-muted-foreground mb-8">
+                  Entre para a maior competição de futebol entre turmas
+                </p>
+              </div>
+              
+              {!user ? (
+                <Card className="border-2 border-primary/20 shadow-glow">
+                  <CardHeader>
+                    <CardTitle className="text-2xl md:text-3xl">Comece sua jornada</CardTitle>
+                    <CardDescription className="text-lg">
+                      Siga os passos para participar
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-center gap-2 text-sm md:text-base text-muted-foreground flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">1</span>
+                        <span>Login</span>
+                      </div>
+                      <span className="text-2xl">→</span>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">2</span>
+                        <span>Cadastro</span>
+                      </div>
+                      <span className="text-2xl">→</span>
+                      <div className="flex items-center gap-2">
+                        <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">3</span>
+                        <span>Escolher Time</span>
+                      </div>
+                    </div>
+                    <Button onClick={() => navigate("/auth")} size="lg" className="w-full text-lg h-14">
+                      Começar Cadastro
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="border-2 border-primary/20 shadow-glow">
+                  <CardHeader>
+                    <CardTitle className="text-2xl md:text-3xl">Complete seu Cadastro!</CardTitle>
+                    <CardDescription className="text-lg">
+                      Preencha suas informações para continuar
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button onClick={() => navigate("/complete-profile")} size="lg" className="w-full text-lg h-14">
+                      Completar Cadastro
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Teams Dashboard Section */}
       <section className="py-16 px-4 bg-card/30">
@@ -261,68 +348,6 @@ const Index = () => {
           </div>
         </section>
       )}
-
-      {/* CTA Section - Cadastre-se Agora */}
-      <section className="py-20 px-4 bg-gradient-to-b from-primary/10 via-secondary/10 to-accent/10">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                Cadastre-se Agora!
-              </h2>
-              <p className="text-xl md:text-2xl text-muted-foreground mb-8">
-                Entre para a maior competição de futebol entre turmas
-              </p>
-            </div>
-            
-            {!user ? (
-              <Card className="border-2 border-primary/20 shadow-glow">
-                <CardHeader>
-                  <CardTitle className="text-2xl md:text-3xl">Comece sua jornada</CardTitle>
-                  <CardDescription className="text-lg">
-                    Siga os passos para participar
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-center gap-2 text-sm md:text-base text-muted-foreground flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">1</span>
-                      <span>Login</span>
-                    </div>
-                    <span className="text-2xl">→</span>
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">2</span>
-                      <span>Cadastro</span>
-                    </div>
-                    <span className="text-2xl">→</span>
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold">3</span>
-                      <span>Escolher Time</span>
-                    </div>
-                  </div>
-                  <Button onClick={() => navigate("/auth")} size="lg" className="w-full text-lg h-14">
-                    Começar Cadastro
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="border-2 border-primary/20 shadow-glow">
-                <CardHeader>
-                  <CardTitle className="text-2xl md:text-3xl">Você está logado!</CardTitle>
-                  <CardDescription className="text-lg">
-                    Continue seu cadastro ou gerencie seu time
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button onClick={() => navigate("/teams")} size="lg" className="w-full text-lg h-14">
-                    Continuar
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-      </section>
 
       {/* How it Works Section */}
       <section className="py-16 px-4 bg-card/50">
