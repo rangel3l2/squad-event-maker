@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Users } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, type Usuario, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, type Usuario, type Time } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { teamId } = useParams();
   const [time, setTime] = useState<Time | null>(null);
   const [integrantes, setIntegrantes] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,13 +36,21 @@ export default function TeamDetails() {
           return;
         }
 
-        // Buscar time do usuário
-        const timeUsuario = await mostrarTimeUsuario(usuario.id!);
-        setTime(timeUsuario);
-
+        let timeData: Time;
+        
+        // Se tem teamId na URL, busca esse time específico
+        if (teamId) {
+          timeData = await mostrarTime(Number(teamId));
+        } else {
+          // Senão, busca o time do usuário logado
+          timeData = await mostrarTimeUsuario(usuario.id!);
+        }
+        
+        setTime(timeData);
+        
         // Buscar dados dos integrantes
-        if (timeUsuario.integrantes && timeUsuario.integrantes.length > 0) {
-          const integrantesIds = timeUsuario.integrantes.map((i: any) => i.usuario_id);
+        if (timeData.integrantes && timeData.integrantes.length > 0) {
+          const integrantesIds = timeData.integrantes.map((i: any) => i.usuario_id);
           const integrantesData = usuarios.filter(u => integrantesIds.includes(u.id));
           setIntegrantes(integrantesData);
         }
@@ -55,7 +64,7 @@ export default function TeamDetails() {
     };
 
     loadTeamData();
-  }, [user, navigate]);
+  }, [user, navigate, teamId]);
 
   if (loading) {
     return (
