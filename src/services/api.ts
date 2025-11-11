@@ -286,3 +286,9 @@ export const deletarUsuario = async (usuarioId: number, confirmacao: string) => 
   if (!response.ok) throw new Error("Erro ao deletar usuário");
   return response.json();
 };
+
+// Buscar times por dono
+export const buscarTimesPorDono = async (donoId: number): Promise<Time[]> => {
+  const times = await listarTimes();
+  return times.filter(t => t.dono_id === donoId);
+};

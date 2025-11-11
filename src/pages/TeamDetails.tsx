@@ -145,13 +145,22 @@ export default function TeamDetails() {
         (i: any) => (i.usuario_id ?? i.id) === usuario.id
       );
 
+      console.log("=== SAINDO DO TIME ===");
+      console.log("Usuário:", usuario);
+      console.log("Time ID:", time.id);
+      console.log("Função do usuário:", integranteAtual?.funcao);
+
       if (integranteAtual?.funcao === "Líder") {
         // Se for líder, deletar o time inteiro
+        console.log("Usuário é líder. Deletando time...");
         await deletarTime(time.id!);
+        console.log("Time deletado com sucesso!");
         toast.success("Time deletado com sucesso!");
       } else {
         // Se não for líder, apenas remover o integrante
+        console.log("Usuário é membro. Removendo do time...");
         await removerIntegrante(time.id!, usuario.id);
+        console.log("Integrante removido com sucesso!");
         toast.success("Você saiu do time!");
       }
 
