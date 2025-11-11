@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { Users, PlusCircle, AlertCircle, Search, KeyRound } from "lucide-react";
+import { Users, PlusCircle, AlertCircle, Search } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, listarTimes, adicionarIntegrante, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, listarTimes, type Time } from "@/services/api";
 
 export default function Teams() {
   const navigate = useNavigate();
@@ -22,8 +21,6 @@ export default function Teams() {
   const [filteredTeams, setFilteredTeams] = useState<Time[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
-  const [quickInviteCode, setQuickInviteCode] = useState("");
-  const [isJoiningQuick, setIsJoiningQuick] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -119,83 +116,6 @@ export default function Teams() {
     }
   }, [searchTerm, allTeams]);
 
-  const handleQuickJoin = async () => {
-    if (!user) {
-      toast.error("Você precisa estar logado");
-      return;
-    }
-
-    if (!quickInviteCode.trim()) {
-      toast.error("Digite o código de convite");
-      return;
-    }
-
-    setIsJoiningQuick(true);
-
-    try {
-      // Verificar se usuário já tem perfil completo
-      const usuarios = await listarUsuarios();
-      const usuario = usuarios.find(u => u.email === user.email);
-
-      if (!usuario) {
-        toast.error("Você precisa completar seu cadastro primeiro para entrar em um time");
-        navigate("/complete-profile");
-        return;
-      }
-
-      // Verificar se já tem time
-      if (hasTeam) {
-        toast.error("Você deve sair do seu time atual para conseguir entrar em outro time");
-        return;
-      }
-
-      // Buscar todos os times para encontrar o que tem esse código
-      const times = await listarTimes();
-      const timeEncontrado = times.find(t => t.senha_convite === quickInviteCode.trim());
-
-      if (!timeEncontrado) {
-        toast.error("Código de convite inválido");
-        return;
-      }
-
-      // Verificar se o time já tem 4 integrantes
-      const integrantesCount = timeEncontrado.integrantes?.length || 0;
-      
-      if (integrantesCount >= 4) {
-        toast.error("Este time já atingiu o limite máximo de 4 membros");
-        return;
-      }
-
-      // Verificar se o usuário já é membro do time
-      const jaEhMembro = timeEncontrado.integrantes?.some(
-        (integrante: any) => integrante.usuario_id === usuario.id
-      );
-      
-      if (jaEhMembro) {
-        toast.error("Você já é membro deste time");
-        return;
-      }
-
-      // Entrar no time
-      await adicionarIntegrante(timeEncontrado.id!, {
-        usuario_id: usuario.id!,
-        funcao: "Membro",
-      });
-
-      toast.success(`Você entrou no time "${timeEncontrado.nome_time}" com sucesso!`);
-      setQuickInviteCode("");
-      setRefreshKey(prev => prev + 1);
-      
-      // Recarregar para atualizar o status de hasTeam
-      window.location.reload();
-    } catch (error: any) {
-      console.error("Erro ao entrar no time:", error);
-      toast.error("Erro ao entrar no time: " + error.message);
-    } finally {
-      setIsJoiningQuick(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -204,92 +124,44 @@ export default function Teams() {
         
         {mode === "select" && (
           <>
-            <div className="max-w-4xl mx-auto space-y-6">
-              {/* Card de Código Rápido */}
-              <Card className="border-primary/50">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <KeyRound className="w-6 h-6 text-primary" />
-                    <CardTitle>Entrar com Código de Convite</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Digite o código que você recebeu para entrar rapidamente em um time
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {hasTeam ? (
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        Você já está no time "{currentTeamName}". Você deve sair do seu time atual para conseguir entrar em outro time.
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Digite o código aqui"
-                        value={quickInviteCode}
-                        onChange={(e) => setQuickInviteCode(e.target.value)}
-                        className="font-mono text-lg text-center"
-                        disabled={isJoiningQuick}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && quickInviteCode.trim()) {
-                            handleQuickJoin();
-                          }
-                        }}
-                      />
-                      <Button 
-                        onClick={handleQuickJoin}
-                        disabled={isJoiningQuick || !quickInviteCode.trim()}
-                        size="lg"
-                      >
-                        {isJoiningQuick ? "Entrando..." : "Entrar"}
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Cards de Ações */}
-              {!hasTeam && (
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("join")}>
-                    <CardHeader>
-                      <Users className="w-12 h-12 mb-4 text-primary" />
-                      <CardTitle>Entrar em um Time</CardTitle>
-                      <CardDescription>
-                        Escolha um time existente e cadastre suas informações para participar
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button className="w-full">Selecionar</Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("create")}>
-                    <CardHeader>
-                      <PlusCircle className="w-12 h-12 mb-4 text-primary" />
-                      <CardTitle>Criar Novo Time</CardTitle>
-                      <CardDescription>
-                        Crie seu próprio time com logo, nome e informações personalizadas
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Button className="w-full">Criar Time</Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-
-              {hasTeam && (
+            {hasTeam ? (
+              <div className="max-w-2xl mx-auto">
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="text-lg">
                     Você já está no time "{currentTeamName}". Para entrar em outro time ou criar um novo, primeiro saia do seu time atual.
                   </AlertDescription>
                 </Alert>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("join")}>
+                  <CardHeader>
+                    <Users className="w-12 h-12 mb-4 text-primary" />
+                    <CardTitle>Entrar em um Time</CardTitle>
+                    <CardDescription>
+                      Escolha um time existente e cadastre suas informações para participar
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full">Selecionar</Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("create")}>
+                  <CardHeader>
+                    <PlusCircle className="w-12 h-12 mb-4 text-primary" />
+                    <CardTitle>Criar Novo Time</CardTitle>
+                    <CardDescription>
+                      Crie seu próprio time com logo, nome e informações personalizadas
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full">Criar Time</Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </>
         )}
 
