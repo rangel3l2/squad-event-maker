@@ -241,8 +241,13 @@ export default function TeamDetails() {
       }
 
       // Verificar código de convite
+      if (!time.senha_convite) {
+        toast.error("Este time não possui um código de convite configurado");
+        return;
+      }
+      
       if (time.senha_convite !== inviteCode.trim()) {
-        toast.error("Código de convite inválido");
+        toast.error(`Código incorreto para o time "${time.nome_time}". Verifique o código e tente novamente.`);
         return;
       }
 
