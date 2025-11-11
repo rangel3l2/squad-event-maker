@@ -3,18 +3,19 @@ const API_BASE_URL = "https://ifms.pro.br:6003";
 
 const makeRequest = async (path: string, options?: RequestInit) => {
   const url = `${API_BASE_URL}${path}`;
+  const finalHeaders = {
+    'Content-Type': 'application/json',
+    ...(options?.headers || {}),
+  } as Record<string, string>;
   console.log("=== makeRequest ===");
   console.log("URL:", url);
   console.log("Method:", options?.method);
   console.log("Body:", options?.body);
-  console.log("Headers:", options?.headers);
+  console.log("Headers (final):", finalHeaders);
   
   return fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers: finalHeaders,
   });
 };
 
