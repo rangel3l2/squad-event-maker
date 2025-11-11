@@ -238,3 +238,11 @@ export const deletarTime = async (timeId: number) => {
   if (!response.ok) throw new Error("Erro ao deletar time");
   return response.json();
 };
+
+export const deletarUsuario = async (usuarioId: number, confirmacao: string) => {
+  const response = await makeRequest(`/usuarios/${usuarioId}?confirmacao=${confirmacao}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Erro ao deletar usuário");
+  return response.json();
+};

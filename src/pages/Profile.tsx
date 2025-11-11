@@ -14,8 +14,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
-import { AlertCircle, Users, LogOut, Edit } from "lucide-react";
-import { listarUsuarios, mostrarTimeUsuario, alterarUsuario, removerIntegrante } from "@/services/api";
+import { AlertCircle, Users, LogOut, Edit, Trash2 } from "lucide-react";
+import { listarUsuarios, mostrarTimeUsuario, alterarUsuario, removerIntegrante, deletarUsuario } from "@/services/api";
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
@@ -42,6 +42,8 @@ export default function Profile() {
   const [isLeavingTeam, setIsLeavingTeam] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [teamId, setTeamId] = useState<number | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -144,6 +146,28 @@ export default function Profile() {
   const handleEditTeam = () => {
     if (currentTeam) {
       navigate(`/team-edit/${currentTeam.id}`);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!userId || deleteConfirmation !== "apagar_usuario") {
+      toast.error("Digite 'apagar_usuario' para confirmar");
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    try {
+      await deletarUsuario(userId, deleteConfirmation);
+      toast.success("Conta excluída com sucesso!");
+      
+      setTimeout(() => {
+        navigate("/auth");
+      }, 1000);
+    } catch (error: any) {
+      toast.error("Erro ao excluir conta: " + error.message);
+    } finally {
+      setIsDeletingAccount(false);
+      setDeleteConfirmation("");
     }
   };
 
@@ -298,6 +322,61 @@ export default function Profile() {
                   </Button>
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+
+          {/* Seção de Exclusão de Conta */}
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <Trash2 className="w-5 h-5" />
+                Zona de Perigo
+              </CardTitle>
+              <CardDescription>
+                Esta ação não pode ser desfeita. Todos os seus dados serão permanentemente excluídos.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Excluir Conta
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação não pode ser desfeita. Isso excluirá permanentemente sua conta
+                      e removerá seus dados dos nossos servidores.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="py-4">
+                    <label className="text-sm font-medium mb-2 block">
+                      Digite <code className="bg-muted px-2 py-1 rounded">apagar_usuario</code> para confirmar:
+                    </label>
+                    <Input
+                      value={deleteConfirmation}
+                      onChange={(e) => setDeleteConfirmation(e.target.value)}
+                      placeholder="apagar_usuario"
+                      className="font-mono"
+                    />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>
+                      Cancelar
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      disabled={isDeletingAccount || deleteConfirmation !== "apagar_usuario"}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isDeletingAccount ? "Excluindo..." : "Excluir Minha Conta"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </div>
