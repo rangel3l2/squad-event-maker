@@ -16,6 +16,7 @@ import AdminEventConfig from "./pages/AdminEventConfig";
 import AdminRules from "./pages/AdminRules";
 import AdminPrizes from "./pages/AdminPrizes";
 import Teams from "./pages/Teams";
+import TeamDetails from "./pages/TeamDetails";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/complete-profile" element={<CompleteProfile />} />
             <Route path="/events" element={<Events />} />
             <Route path="/teams" element={<Teams />} />
+            <Route path="/team-details" element={<TeamDetails />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/carousel" element={<AdminCarousel />} />

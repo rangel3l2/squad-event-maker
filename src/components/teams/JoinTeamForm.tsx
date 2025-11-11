@@ -120,7 +120,7 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
 
       toast.success(`Você entrou no time "${timeEncontrado.nome_time}" com sucesso!`);
       form.reset();
-      onSuccess();
+      navigate("/team-details");
     } catch (error: any) {
       console.error("=== ERRO AO ENTRAR NO TIME ===", error);
       toast.error("Erro ao entrar no time: " + error.message);
