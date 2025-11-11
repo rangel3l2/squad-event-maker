@@ -124,11 +124,17 @@ export const mostrarTimeUsuario = async (usuarioId: number) => {
   if (!response.ok) throw new Error("Erro ao mostrar time do usuário");
   const data = await response.json();
   
+  console.log("=== RESPOSTA mostrarTimeUsuario ===");
+  console.log("Dados completos da API:", data);
+  console.log("data.time:", data.time);
+  console.log("data.integrantes:", data.integrantes);
+  console.log("Estrutura completa:", JSON.stringify(data, null, 2));
+  
   // A API retorna { time: {...}, integrantes: [...] }
   // Vamos mesclar para manter compatibilidade
   return {
     ...data.time,
-    integrantes: data.integrantes
+    integrantes: data.integrantes || data.time?.integrantes || []
   };
 };
 
@@ -180,11 +186,17 @@ export const mostrarTime = async (timeId: number) => {
   if (!response.ok) throw new Error("Erro ao mostrar time");
   const data = await response.json();
   
+  console.log("=== RESPOSTA mostrarTime ===");
+  console.log("Dados completos da API:", data);
+  console.log("data.time:", data.time);
+  console.log("data.integrantes:", data.integrantes);
+  console.log("Estrutura completa:", JSON.stringify(data, null, 2));
+  
   // A API retorna { time: {...}, integrantes: [...] }
   // Vamos mesclar para manter compatibilidade
   return {
     ...data.time,
-    integrantes: data.integrantes
+    integrantes: data.integrantes || data.time?.integrantes || []
   };
 };
 
