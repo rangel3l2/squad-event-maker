@@ -238,49 +238,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Available Events Section */}
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            Edições da Copa
-          </h2>
-          {loading ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Carregando eventos...</p>
-            </div>
-          ) : events.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">
-              Nenhum evento disponível no momento
-            </p>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.map((event) => (
-                <Card
-                  key={event.id}
-                  className="hover:shadow-glow transition-shadow cursor-pointer"
-                  onClick={() => handleEventClick(event.id)}
-                >
-                  <CardHeader>
-                    <CardTitle>{event.name}</CardTitle>
-                    {event.edition && (
-                      <p className="text-sm font-semibold text-primary">{event.edition}</p>
-                    )}
-                    <CardDescription>{event.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(event.event_date)}
-                    </p>
-                  </CardContent>
-                  <CardFooter>
-                    <Button className="w-full">Ver Times</Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* Rules Section */}
       {rules.length > 0 && (
