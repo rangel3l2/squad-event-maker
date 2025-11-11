@@ -77,12 +77,8 @@ export default function CompleteProfile() {
         turma: parseInt(data.classroom),
         periodo: parseInt(data.period),
         email: user.email,
+        url_image_perfil: avatarUrl || undefined, // Sempre incluir, mesmo que vazio
       };
-
-      // Só adiciona url_image_perfil se tiver valor
-      if (avatarUrl && avatarUrl.trim()) {
-        userData.url_image_perfil = avatarUrl.trim();
-      }
 
       console.log("Enviando dados para API:", userData);
 

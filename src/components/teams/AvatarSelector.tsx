@@ -61,11 +61,38 @@ export function AvatarSelector({ currentAvatar, onAvatarChange, disabled = false
     }
   };
 
-  const handleAvatarTypeChange = (type: "google" | "upload") => {
+  const handleAvatarTypeChange = async (type: "google" | "upload") => {
     if (disabled) return;
     setAvatarType(type);
     if (type === "google" && googleAvatar) {
-      onAvatarChange(googleAvatar);
+      setIsUploading(true);
+      try {
+        // Converter a imagem do Google para base64 e fazer upload para ImgBB
+        console.log("Fazendo upload da imagem do Google para ImgBB...");
+        const response = await fetch(googleAvatar);
+        const blob = await response.blob();
+        
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64String = reader.result as string;
+          try {
+            const imageUrl = await uploadImageToImgBB(base64String);
+            console.log("Upload da imagem do Google bem-sucedido:", imageUrl);
+            onAvatarChange(imageUrl);
+            toast.success("Foto do Google carregada!");
+          } catch (error) {
+            console.error("Erro ao fazer upload da foto do Google:", error);
+            toast.error("Erro ao carregar foto do Google.");
+          } finally {
+            setIsUploading(false);
+          }
+        };
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        console.error("Erro ao processar imagem do Google:", error);
+        toast.error("Erro ao processar imagem.");
+        setIsUploading(false);
+      }
     }
   };
 
