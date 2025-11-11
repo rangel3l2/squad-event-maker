@@ -26,10 +26,6 @@ export const TeamsDashboard = () => {
   const [times, setTimes] = useState<Time[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchTimes();
-  }, []);
-
   const fetchTimes = async () => {
     try {
       const timesData = await listarTimes();
@@ -40,6 +36,17 @@ export const TeamsDashboard = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchTimes();
+    
+    // Atualizar a lista a cada 10 segundos
+    const interval = setInterval(() => {
+      fetchTimes();
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (

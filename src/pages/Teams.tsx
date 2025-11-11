@@ -20,6 +20,7 @@ export default function Teams() {
   const [allTeams, setAllTeams] = useState<Time[]>([]);
   const [filteredTeams, setFilteredTeams] = useState<Time[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -90,7 +91,9 @@ export default function Teams() {
   useEffect(() => {
     const loadTeams = async () => {
       try {
+        console.log("Carregando times...");
         const times = await listarTimes();
+        console.log("Times carregados:", times.length);
         setAllTeams(times);
         setFilteredTeams(times);
       } catch (error) {
@@ -99,7 +102,7 @@ export default function Teams() {
     };
     
     loadTeams();
-  }, []);
+  }, [refreshKey]); // Recarrega quando refreshKey mudar
 
   // Filtrar times conforme busca
   useEffect(() => {
@@ -167,7 +170,10 @@ export default function Teams() {
             <Button variant="outline" onClick={() => setMode("select")} className="mb-4">
               ← Voltar
             </Button>
-            <CreateTeamForm onSuccess={() => setMode("select")} />
+            <CreateTeamForm onSuccess={() => {
+              setMode("select");
+              setRefreshKey(prev => prev + 1); // Força atualização da lista
+            }} />
           </div>
         )}
 
@@ -176,7 +182,10 @@ export default function Teams() {
             <Button variant="outline" onClick={() => setMode("select")} className="mb-4">
               ← Voltar
             </Button>
-            <JoinTeamForm onSuccess={() => setMode("select")} />
+            <JoinTeamForm onSuccess={() => {
+              setMode("select");
+              setRefreshKey(prev => prev + 1); // Força atualização da lista
+            }} />
           </div>
         )}
 
