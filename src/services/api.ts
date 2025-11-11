@@ -163,12 +163,28 @@ export const listarTimesIncompletos = async () => {
 };
 
 export const adicionarIntegrante = async (timeId: number, integrante: Integrante) => {
+  console.log("=== API adicionarIntegrante ===");
+  console.log("Time ID:", timeId);
+  console.log("Integrante:", integrante);
+  console.log("URL:", `/times/${timeId}/integrantes`);
+  console.log("Body:", JSON.stringify(integrante));
+
   const response = await makeRequest(`/times/${timeId}/integrantes`, {
     method: "POST",
     body: JSON.stringify(integrante),
   });
-  if (!response.ok) throw new Error("Erro ao adicionar integrante");
-  return response.json();
+  
+  console.log("Status da resposta:", response.status);
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Erro da API:", errorText);
+    throw new Error(`Erro ao adicionar integrante: ${response.status} - ${errorText}`);
+  }
+  
+  const result = await response.json();
+  console.log("Integrante adicionado com sucesso:", result);
+  return result;
 };
 
 export const removerIntegrante = async (timeId: number, usuarioId: number) => {
