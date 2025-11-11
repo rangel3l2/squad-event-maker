@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -7,10 +7,11 @@ import { toast } from "sonner";
 import { criarTime, listarUsuarios, listarTimes } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Mail, MessageCircle } from "lucide-react";
 import { TeamLogoUploader } from "./TeamLogoUploader";
 
 const createTeamSchema = z.object({
@@ -30,6 +31,20 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const [inviteCode, setInviteCode] = useState<string>("");
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [senhaConvite, setSenhaConvite] = useState("");
+
+  // Gerar senha de 5 caracteres automaticamente
+  useEffect(() => {
+    const generateCode = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < 5; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    };
+    setSenhaConvite(generateCode());
+  }, []);
 
   const form = useForm<CreateTeamFormData>({
     resolver: zodResolver(createTeamSchema),
@@ -45,6 +60,19 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const shareViaWhatsApp = () => {
+    const message = `Olá! Você foi convidado para entrar no time. Use o código: ${inviteCode}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const shareViaEmail = () => {
+    const subject = "Convite para entrar no time";
+    const body = `Olá! Você foi convidado para entrar no time.\n\nUse o código de convite: ${inviteCode}`;
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoUrl, '_blank');
+  };
+
   const onSubmit = async (data: CreateTeamFormData) => {
     if (!user) {
       toast.error("Você precisa estar logado");
@@ -53,6 +81,11 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
 
     if (!logoUrl) {
       toast.error("O logo do time é obrigatório");
+      return;
+    }
+
+    if (!senhaConvite || senhaConvite.length !== 5) {
+      toast.error("A senha de convite deve ter exatamente 5 caracteres");
       return;
     }
 
@@ -85,10 +118,12 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       console.log("=== DADOS PARA CRIAR TIME ===");
       console.log("Nome do time:", data.name);
       console.log("ID do dono:", usuario.id);
+      console.log("Senha convite:", senhaConvite);
       console.log("URL da imagem:", logoUrl);
       console.log("Objeto completo:", {
         nome_time: data.name,
         dono_id: usuario.id,
+        senha_convite: senhaConvite,
         imagem_time: logoUrl,
       });
 
@@ -96,18 +131,24 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       const novoTime = await criarTime({
         nome_time: data.name,
         dono_id: usuario.id,
+        senha_convite: senhaConvite,
         imagem_time: logoUrl,
       });
 
-      // Mostrar o código de convite gerado
-      if (novoTime.senha_convite) {
-        setInviteCode(novoTime.senha_convite);
-        setShowInviteDialog(true);
-        toast.success("Time criado com sucesso!");
-      }
+      // Mostrar o código de convite
+      setInviteCode(senhaConvite);
+      setShowInviteDialog(true);
+      toast.success("Time criado com sucesso!");
 
       form.reset();
       setLogoUrl("");
+      // Gerar nova senha para próxima criação
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let newCode = '';
+      for (let i = 0; i < 5; i++) {
+        newCode += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      setSenhaConvite(newCode);
     } catch (error: any) {
       console.error("Error creating team:", error);
       toast.error("Erro ao criar time: " + error.message);
@@ -150,6 +191,21 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                     </FormItem>
                   )}
                 />
+
+                <div className="space-y-2">
+                  <Label htmlFor="senha-convite">Senha de Convite (5 caracteres) *</Label>
+                  <Input
+                    id="senha-convite"
+                    value={senhaConvite}
+                    onChange={(e) => setSenhaConvite(e.target.value.toUpperCase().slice(0, 5))}
+                    maxLength={5}
+                    placeholder="Ex: ABC12"
+                    required
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Esta senha será usada para convidar membros para o time
+                  </p>
+                </div>
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
@@ -189,6 +245,16 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
             <p className="text-sm text-muted-foreground text-center">
               Guarde este código em um lugar seguro. Seus amigos precisarão dele para entrar no time.
             </p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={shareViaWhatsApp} variant="outline" className="w-full">
+                <MessageCircle className="mr-2 h-4 w-4" />
+                WhatsApp
+              </Button>
+              <Button onClick={shareViaEmail} variant="outline" className="w-full">
+                <Mail className="mr-2 h-4 w-4" />
+                Email
+              </Button>
+            </div>
             <Button onClick={handleDialogClose} className="w-full">
               Entendi
             </Button>
