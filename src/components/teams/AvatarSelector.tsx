@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,40 @@ export function AvatarSelector({ currentAvatar, onAvatarChange, disabled = false
   const [isUploading, setIsUploading] = useState(false);
 
   const googleAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+
+  // Upload automático da imagem do Google ao montar o componente
+  useEffect(() => {
+    const uploadGoogleAvatar = async () => {
+      if (googleAvatar && !currentAvatar && avatarType === "google") {
+        setIsUploading(true);
+        try {
+          console.log("Upload automático da imagem do Google para ImgBB...");
+          const response = await fetch(googleAvatar);
+          const blob = await response.blob();
+          
+          const reader = new FileReader();
+          reader.onloadend = async () => {
+            const base64String = reader.result as string;
+            try {
+              const imageUrl = await uploadImageToImgBB(base64String);
+              console.log("Upload automático bem-sucedido:", imageUrl);
+              onAvatarChange(imageUrl);
+            } catch (error) {
+              console.error("Erro no upload automático:", error);
+            } finally {
+              setIsUploading(false);
+            }
+          };
+          reader.readAsDataURL(blob);
+        } catch (error) {
+          console.error("Erro ao processar imagem do Google:", error);
+          setIsUploading(false);
+        }
+      }
+    };
+
+    uploadGoogleAvatar();
+  }, [googleAvatar, currentAvatar, avatarType, onAvatarChange]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
