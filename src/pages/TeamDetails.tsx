@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Users, KeyRound, Sparkles, UserCog } from "lucide-react";
+import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirLideranca, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirLideranca, deletarTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -29,6 +29,8 @@ export default function TeamDetails() {
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [selectedNewLeader, setSelectedNewLeader] = useState<string>("");
   const [isTransferring, setIsTransferring] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -230,6 +232,25 @@ export default function TeamDetails() {
       toast.error("Erro ao transferir liderança: " + error.message);
     } finally {
       setIsTransferring(false);
+    }
+  };
+
+  const handleDeleteTeam = async () => {
+    if (!time) return;
+
+    try {
+      setIsDeleting(true);
+      
+      await deletarTime(time.id!);
+      
+      toast.success("Time deletado com sucesso!");
+      navigate("/teams");
+    } catch (error: any) {
+      console.error("Erro ao deletar time:", error);
+      toast.error("Erro ao deletar time: " + error.message);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -446,10 +467,42 @@ export default function TeamDetails() {
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
+
+                    <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                      <DialogTrigger asChild>
+                        <Button variant="destructive">
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Deletar Time
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Deletar Time</DialogTitle>
+                          <DialogDescription>
+                            Tem certeza que deseja deletar o time "{time.nome_time}"? Esta ação não pode ser desfeita.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setShowDeleteDialog(false)}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button 
+                            variant="destructive"
+                            onClick={handleDeleteTeam}
+                            disabled={isDeleting}
+                          >
+                            {isDeleting ? "Deletando..." : "Deletar Time"}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                   </>
                 )}
                 
-                {isUserInTeam && (
+                {isUserInTeam && !isLeader && (
                   <Button 
                     variant="destructive" 
                     onClick={handleLeaveTeam}

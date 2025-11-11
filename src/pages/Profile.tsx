@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { AlertCircle, Users, LogOut, Edit, Trash2 } from "lucide-react";
-import { listarUsuarios, mostrarTimeUsuario, alterarUsuario, sairDoTime, deletarUsuario } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, alterarUsuario, sairDoTime, deletarTime, deletarUsuario } from "@/services/api";
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
@@ -44,6 +44,7 @@ export default function Profile() {
   const [teamId, setTeamId] = useState<number | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isDeletingTeam, setIsDeletingTeam] = useState(false);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -180,6 +181,27 @@ export default function Profile() {
     }
   };
 
+  const handleDeleteTeam = async () => {
+    if (!teamId) return;
+
+    setIsDeletingTeam(true);
+    try {
+      await deletarTime(teamId);
+      
+      toast.success("Time deletado com sucesso!");
+      setCurrentTeam(null);
+      
+      setTimeout(() => {
+        navigate("/teams");
+      }, 1000);
+    } catch (error: any) {
+      console.error("Erro ao deletar time:", error);
+      toast.error("Erro ao deletar time: " + error.message);
+    } finally {
+      setIsDeletingTeam(false);
+    }
+  };
+
   const isCaptain = currentTeam && user && currentTeam.captain_id === user.id;
 
   return (
@@ -213,6 +235,35 @@ export default function Profile() {
                   </div>
                   
                   <div className="flex gap-2">
+                    {isCaptain && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Deletar Time
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Deletar Time</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja deletar o time "{currentTeam.name}"? Esta ação não pode ser desfeita e todos os membros serão removidos.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={handleDeleteTeam}
+                              disabled={isDeletingTeam}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {isDeletingTeam ? "Deletando..." : "Deletar Time"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                    
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive">
@@ -225,7 +276,7 @@ export default function Profile() {
                           <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
                           <AlertDialogDescription>
                             Você será removido do time "{currentTeam.name}". 
-                            {isCaptain && " Como você é o capitão, o time ficará sem capitão."}
+                            {isCaptain && " Como você é o capitão, a liderança será transferida para outro membro ou o time será deletado se não houver outros membros."}
                             {" "}Você poderá entrar em outro time ou criar um novo depois.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
