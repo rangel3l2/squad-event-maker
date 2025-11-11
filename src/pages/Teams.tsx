@@ -8,7 +8,7 @@ import { Users, PlusCircle, AlertCircle } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, mostrarTimeUsuario } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, listarTimes } from "@/services/api";
 
 export default function Teams() {
   const navigate = useNavigate();
@@ -35,20 +35,45 @@ export default function Teams() {
           return;
         }
 
-        // Verificar se já está em um time via API
+        console.log("=== VERIFICANDO SE USUÁRIO JÁ ESTÁ EM UM TIME ===");
+        console.log("ID do usuário:", usuario.id);
+
+        // Verificar se é dono de algum time
         try {
           const timeUsuario = await mostrarTimeUsuario(usuario.id!);
           
           if (timeUsuario && timeUsuario.id != null) {
+            console.log("Usuário é DONO do time:", timeUsuario.nome_time);
             setHasTeam(true);
             setCurrentTeamName(timeUsuario.nome_time || "");
-          } else {
-            setHasTeam(false);
+            return;
           }
         } catch (error) {
-          // Usuário não tem time ainda
-          setHasTeam(false);
+          console.log("Usuário não é dono de nenhum time");
         }
+
+        // Verificar se é integrante de algum time
+        const times = await listarTimes();
+        console.log("Total de times listados:", times.length);
+        
+        for (const time of times) {
+          const integrantes = time.integrantes || [];
+          console.log(`Time "${time.nome_time}" tem ${integrantes.length} integrantes`);
+          
+          const ehIntegrante = integrantes.some(
+            (integrante: any) => integrante.usuario_id === usuario.id
+          );
+          
+          if (ehIntegrante) {
+            console.log("Usuário é INTEGRANTE do time:", time.nome_time);
+            setHasTeam(true);
+            setCurrentTeamName(time.nome_time);
+            return;
+          }
+        }
+
+        console.log("Usuário NÃO está em nenhum time");
+        setHasTeam(false);
       } catch (error) {
         console.error("Error checking profile:", error);
       }
