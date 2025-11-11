@@ -106,7 +106,14 @@ export const listarUsuariosSemTime = async (): Promise<Usuario[]> => {
 export const mostrarTimeUsuario = async (usuarioId: number) => {
   const response = await makeRequest(`/usuarios/${usuarioId}/time`);
   if (!response.ok) throw new Error("Erro ao mostrar time do usuário");
-  return response.json();
+  const data = await response.json();
+  
+  // A API retorna { time: {...}, integrantes: [...] }
+  // Vamos mesclar para manter compatibilidade
+  return {
+    ...data.time,
+    integrantes: data.integrantes
+  };
 };
 
 // Times
@@ -155,7 +162,14 @@ export const criarTime = async (time: Time): Promise<Time> => {
 export const mostrarTime = async (timeId: number) => {
   const response = await makeRequest(`/times/${timeId}`);
   if (!response.ok) throw new Error("Erro ao mostrar time");
-  return response.json();
+  const data = await response.json();
+  
+  // A API retorna { time: {...}, integrantes: [...] }
+  // Vamos mesclar para manter compatibilidade
+  return {
+    ...data.time,
+    integrantes: data.integrantes
+  };
 };
 
 export const listarTimesIncompletos = async () => {
