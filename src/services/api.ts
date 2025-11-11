@@ -46,18 +46,9 @@ export const listarUsuarios = async (): Promise<Usuario[]> => {
 };
 
 export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
-  const params = new URLSearchParams();
-  params.set('nome', usuario.nome);
-  if (usuario.token_gmail) params.set('token_gmail', usuario.token_gmail);
-  params.set('turma', String(usuario.turma));
-  params.set('periodo', String(usuario.periodo));
-  if (usuario.url_image_perfil) params.set('url_image_perfil', usuario.url_image_perfil);
-  params.set('email', usuario.email);
-
   const response = await makeRequest('/usuarios', {
     method: "POST",
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
+    body: JSON.stringify(usuario),
   });
   if (!response.ok) {
     let detail: any = "";
@@ -72,18 +63,9 @@ export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
 };
 
 export const alterarUsuario = async (id: number, usuario: Partial<Usuario>): Promise<Usuario> => {
-  const params = new URLSearchParams();
-  if (usuario.nome) params.set('nome', usuario.nome);
-  if (usuario.token_gmail) params.set('token_gmail', usuario.token_gmail);
-  if (usuario.turma !== undefined) params.set('turma', String(usuario.turma));
-  if (usuario.periodo !== undefined) params.set('periodo', String(usuario.periodo));
-  if (usuario.url_image_perfil !== undefined) params.set('url_image_perfil', usuario.url_image_perfil);
-  if (usuario.email) params.set('email', usuario.email);
-
   const response = await makeRequest(`/usuarios/${id}`, {
     method: "PUT",
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
+    body: JSON.stringify(usuario),
   });
   if (!response.ok) {
     let detail: any = "";
