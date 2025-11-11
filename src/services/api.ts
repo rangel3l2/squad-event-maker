@@ -167,11 +167,15 @@ export const adicionarIntegrante = async (timeId: number, integrante: Integrante
   console.log("Time ID:", timeId);
   console.log("Integrante:", integrante);
   console.log("URL:", `/times/${timeId}/integrantes`);
-  console.log("Body:", JSON.stringify(integrante));
+  const params = new URLSearchParams();
+  params.set('usuario_id', String(integrante.usuario_id));
+  if (integrante.funcao) params.set('funcao', integrante.funcao);
+  console.log("Body (form):", params.toString());
 
   const response = await makeRequest(`/times/${timeId}/integrantes`, {
     method: "POST",
-    body: JSON.stringify(integrante),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
   });
   
   console.log("Status da resposta:", response.status);
