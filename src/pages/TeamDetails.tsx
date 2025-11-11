@@ -4,10 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft, Users, KeyRound } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, removerIntegrante, deletarTime, type Usuario, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, removerIntegrante, deletarTime, adicionarIntegrante, type Usuario, type Time } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -19,6 +20,9 @@ export default function TeamDetails() {
   const [loading, setLoading] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
   const [isUserInTeam, setIsUserInTeam] = useState(false);
+  const [userHasTeam, setUserHasTeam] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -37,6 +41,14 @@ export default function TeamDetails() {
           toast.error("Complete seu perfil primeiro");
           navigate("/complete-profile");
           return;
+        }
+
+        // Verificar se o usuário já tem um time
+        try {
+          const userTeam = await mostrarTimeUsuario(usuario.id!);
+          setUserHasTeam(!!userTeam);
+        } catch {
+          setUserHasTeam(false);
         }
 
         let timeData: Time;
@@ -173,6 +185,69 @@ export default function TeamDetails() {
     }
   };
 
+  const handleJoinTeam = async () => {
+    if (!user || !time) return;
+
+    if (!inviteCode.trim()) {
+      toast.error("Digite o código de convite");
+      return;
+    }
+
+    setIsJoining(true);
+
+    try {
+      // Buscar usuário na API
+      const usuarios = await listarUsuarios();
+      const usuario = usuarios.find(u => u.email === user.email);
+
+      if (!usuario) {
+        toast.error("Você precisa completar seu cadastro primeiro para entrar em um time");
+        navigate("/complete-profile");
+        return;
+      }
+
+      // Verificar se já tem time
+      try {
+        const userTeam = await mostrarTimeUsuario(usuario.id!);
+        if (userTeam) {
+          toast.error("Você já está em um time");
+          return;
+        }
+      } catch {
+        // Não tem time, pode continuar
+      }
+
+      // Verificar código de convite
+      if (time.senha_convite !== inviteCode.trim()) {
+        toast.error("Código de convite inválido");
+        return;
+      }
+
+      // Verificar limite de integrantes
+      const integrantesCount = time.integrantes?.length || 0;
+      if (integrantesCount >= 4) {
+        toast.error("Este time já atingiu o limite máximo de 4 membros");
+        return;
+      }
+
+      // Adicionar ao time
+      await adicionarIntegrante(time.id!, {
+        usuario_id: usuario.id!,
+        funcao: "Membro",
+      });
+
+      toast.success(`Você entrou no time "${time.nome_time}" com sucesso!`);
+      
+      // Recarregar página para atualizar status
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Erro ao entrar no time:", error);
+      toast.error("Erro ao entrar no time: " + error.message);
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-8 px-4">
@@ -231,6 +306,30 @@ export default function TeamDetails() {
                 >
                   {isLeaving ? "Saindo..." : "Sair do Time"}
                 </Button>
+              )}
+
+              {!isUserInTeam && teamId && !userHasTeam && (
+                <div className="w-full max-w-md space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <KeyRound className="w-4 h-4" />
+                    <span>Digite o código para entrar neste time</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Código de convite"
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value)}
+                      className="font-mono text-center"
+                      disabled={isJoining}
+                    />
+                    <Button 
+                      onClick={handleJoinTeam}
+                      disabled={isJoining || !inviteCode.trim()}
+                    >
+                      {isJoining ? "Entrando..." : "Entrar"}
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
           </CardHeader>

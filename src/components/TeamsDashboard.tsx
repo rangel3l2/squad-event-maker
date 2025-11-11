@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { listarTimes } from "@/services/api";
 import {
   Carousel,
@@ -23,6 +24,7 @@ interface Time {
 }
 
 export const TeamsDashboard = () => {
+  const navigate = useNavigate();
   const [times, setTimes] = useState<Time[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -90,7 +92,10 @@ export const TeamsDashboard = () => {
           {times.map((time) => (
             <CarouselItem key={time.id} className="md:basis-1/2 lg:basis-1/3">
               <div className="p-2">
-                <Card className="hover:shadow-glow transition-all duration-300 hover:scale-105">
+                <Card 
+                  className="hover:shadow-glow transition-all duration-300 hover:scale-105 cursor-pointer"
+                  onClick={() => navigate(`/team-details/${time.id}`)}
+                >
                   <CardHeader className="pb-4">
                     {time.imagem_time ? (
                       <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary/20">
