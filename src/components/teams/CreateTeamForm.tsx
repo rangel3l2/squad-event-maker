@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { criarTime, listarUsuarios, listarTimes, adicionarIntegrante, deletarTime } from "@/services/api";
+import { criarTime, listarUsuarios, listarTimes, adicionarIntegrante, deletarTime, buscarTimesPorDono } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -122,27 +122,32 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         return;
       }
 
-      // Verificar se o usuário já é dono de algum time
-      const timeDoUsuario = times.find(t => t.dono_id === usuario.id);
-      if (timeDoUsuario) {
-        // Tentar deletar o time antigo automaticamente
+      // Verificar se o usuário já é dono de algum time usando busca específica
+      console.log("=== VERIFICANDO TIMES DO DONO ===");
+      console.log("Buscando times do usuário ID:", usuario.id);
+      
+      const timesDoUsuario = await buscarTimesPorDono(usuario.id);
+      console.log("Times encontrados como dono:", timesDoUsuario);
+      
+      if (timesDoUsuario && timesDoUsuario.length > 0) {
+        const timeAntigo = timesDoUsuario[0];
         console.log("=== ENCONTRADO TIME ANTIGO ===");
-        console.log("Time antigo ID:", timeDoUsuario.id);
+        console.log("Time antigo:", timeAntigo);
         console.log("Tentando deletar automaticamente...");
         
         try {
-          if (timeDoUsuario.id) {
-            await deletarTime(timeDoUsuario.id);
+          if (timeAntigo.id) {
+            await deletarTime(timeAntigo.id);
             console.log("Time antigo deletado com sucesso");
-            toast.success("Time antigo removido. Criando novo time...");
-            // Aguardar um pouco para garantir que o backend processou a deleção
-            await new Promise(resolve => setTimeout(resolve, 500));
+            toast.success("Time anterior removido. Criando novo time...");
+            // Aguardar para garantir que o backend processou a deleção
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
         } catch (deleteError: any) {
           console.error("Erro ao deletar time antigo:", deleteError);
-          toast.error("Erro: Você já possui um time. Por favor, saia do time atual primeiro.", {
-            description: `Time: ${timeDoUsuario.nome_time}. Vá em 'Meu Time' e clique em 'Sair do Time'.`,
-            duration: 6000,
+          toast.error("Você já possui um time registrado", {
+            description: `Time: ${timeAntigo.nome_time}. Vá em 'Meu Time', saia do time e tente novamente.`,
+            duration: 8000,
           });
           setIsSubmitting(false);
           return;
