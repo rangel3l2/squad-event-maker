@@ -28,6 +28,7 @@ export interface Time {
   dono_id: number;
   senha_convite?: string;
   imagem_time?: string;
+  integrantes?: Integrante[];
 }
 
 export interface Integrante {

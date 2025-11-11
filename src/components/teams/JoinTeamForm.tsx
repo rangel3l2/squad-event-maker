@@ -62,6 +62,23 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
         return;
       }
 
+      // Verificar se o time já tem 4 integrantes
+      const integrantesCount = timeEncontrado.integrantes?.length || 0;
+      if (integrantesCount >= 4) {
+        toast.error("Este time já atingiu o limite máximo de 4 membros");
+        return;
+      }
+
+      // Verificar se o usuário já é membro do time
+      const jaEhMembro = timeEncontrado.integrantes?.some(
+        (integrante: any) => integrante.usuario_id === usuario.id
+      );
+      
+      if (jaEhMembro) {
+        toast.error("Você já é membro deste time");
+        return;
+      }
+
       // Entrar no time via API
       await adicionarIntegrante(timeEncontrado.id!, {
         usuario_id: usuario.id!,
