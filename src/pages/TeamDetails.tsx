@@ -62,7 +62,7 @@ export default function TeamDetails() {
         console.log("Quantidade de integrantes:", timeData.integrantes?.length);
         
         if (timeData.integrantes && timeData.integrantes.length > 0) {
-          const integrantesIds = timeData.integrantes.map((i: any) => i.usuario_id);
+          const integrantesIds = timeData.integrantes.map((i: any) => i.usuario_id ?? i.id);
           console.log("IDs dos integrantes:", integrantesIds);
           
           const integrantesData = usuarios.filter(u => integrantesIds.includes(u.id));
@@ -143,7 +143,7 @@ export default function TeamDetails() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Integrantes ({time.quantidade || 0}/4)
+              Integrantes ({integrantes.length || time.qtd_integrantes || time.quantidade || 0}/4)
             </CardTitle>
           </CardHeader>
           <CardContent>

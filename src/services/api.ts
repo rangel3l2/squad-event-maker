@@ -30,6 +30,7 @@ export interface Time {
   imagem_time?: string;
   integrantes?: Integrante[];
   quantidade?: number;
+  qtd_integrantes?: number;
 }
 
 export interface Integrante {

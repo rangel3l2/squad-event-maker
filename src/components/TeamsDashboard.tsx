@@ -19,6 +19,7 @@ interface Time {
   senha_convite?: string;
   imagem_time?: string;
   integrantes?: any[];
+  qtd_integrantes?: number;
 }
 
 export const TeamsDashboard = () => {
@@ -104,7 +105,7 @@ export const TeamsDashboard = () => {
                   <CardContent className="text-center">
                     <Badge variant="secondary" className="text-sm">
                       <Users className="w-3 h-3 mr-1" />
-                      {time.integrantes?.length || 0} membros
+                      {time.qtd_integrantes ?? time.integrantes?.length ?? 0} membros
                     </Badge>
                   </CardContent>
                 </Card>
