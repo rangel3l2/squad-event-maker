@@ -59,42 +59,60 @@ export default function TeamDetails() {
         
         setTime(timeData);
         
-        // Buscar dados dos integrantes
         console.log("=== PROCESSANDO INTEGRANTES ===");
         console.log("timeData.integrantes:", timeData.integrantes);
-        console.log("Quantidade de integrantes:", timeData.integrantes?.length);
+
+        // Determinar contagem de integrantes (API pode retornar em campos diferentes)
+        const countApi = Number(
+          (timeData as any).qtd_integrantes ?? (timeData as any).quantidade ?? (timeData.integrantes?.length || 0)
+        ) || 0;
+
+        // Preparar lista de integrantes com fallback para buscar detalhes se necessário
+        let integrantesLista: any[] = Array.isArray(timeData.integrantes) ? timeData.integrantes : [];
+
+        if (integrantesLista.length === 0 && countApi > 0 && timeData.id) {
+          console.log("Integrantes vazio, mas contagem > 0. Buscando detalhes do time por ID...");
+          try {
+            const detalhe = await mostrarTime(timeData.id);
+            integrantesLista = Array.isArray(detalhe.integrantes) ? detalhe.integrantes : [];
+            console.log("Integrantes obtidos via fallback:", integrantesLista);
+          } catch (e) {
+            console.warn("Falha ao buscar detalhes do time:", e);
+          }
+        }
         
-        // Sempre processar integrantes, mesmo se a lista vier vazia
-        console.log("=== PROCESSANDO INTEGRANTES ===");
-        console.log("timeData.integrantes:", timeData.integrantes);
-        
-        if (timeData.integrantes && timeData.integrantes.length > 0) {
-          // Guardar os integrantes com suas funções
-          setIntegrantesComFuncao(timeData.integrantes);
-          
-          const integrantesIds = timeData.integrantes.map((i: any) => i.usuario_id ?? i.id);
+        if (integrantesLista.length > 0) {
+          setIntegrantesComFuncao(integrantesLista);
+
+          const integrantesIds = integrantesLista.map((i: any) => i.usuario_id ?? i.id);
           console.log("IDs dos integrantes:", integrantesIds);
-          
+
           const integrantesData = usuarios.filter(u => integrantesIds.includes(u.id));
           console.log("Dados dos integrantes encontrados:", integrantesData);
-          
+
           setIntegrantes(integrantesData);
 
           // Verificar se o usuário logado está neste time
-          const usuarioEstaNoTime = integrantesIds.includes(usuario.id);
-          setIsUserInTeam(usuarioEstaNoTime);
-          console.log("Usuário está neste time?", usuarioEstaNoTime);
+          if (teamId) {
+            const usuarioEstaNoTime = integrantesIds.includes(usuario.id);
+            setIsUserInTeam(usuarioEstaNoTime);
+            console.log("Usuário está neste time?", usuarioEstaNoTime);
+          } else {
+            // Quando é o time do usuário, já sabemos que ele pertence ao time
+            setIsUserInTeam(true);
+          }
         } else {
           console.log("Lista de integrantes vazia ou undefined");
           setIntegrantes([]);
           setIntegrantesComFuncao([]);
-          setIsUserInTeam(false);
+          // Se estivermos na visualização do próprio time, mantém true
+          setIsUserInTeam(!teamId);
         }
         
         console.log("=== DADOS DO TIME ===");
-        console.log("time.qtd_integrantes:", timeData.qtd_integrantes);
-        console.log("time.quantidade:", timeData.quantidade);
-        console.log("integrantes no array:", timeData.integrantes?.length || 0);
+        console.log("time.qtd_integrantes:", (timeData as any).qtd_integrantes);
+        console.log("time.quantidade:", (timeData as any).quantidade);
+        console.log("integrantes no array:", integrantesLista.length || 0);
       } catch (error: any) {
         console.error("Erro ao carregar dados do time:", error);
         toast.error("Erro ao carregar dados do time");

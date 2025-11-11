@@ -123,19 +123,40 @@ export const mostrarTimeUsuario = async (usuarioId: number) => {
   const response = await makeRequest(`/usuarios/${usuarioId}/time`);
   if (!response.ok) throw new Error("Erro ao mostrar time do usuário");
   const data = await response.json();
-  
+
   console.log("=== RESPOSTA mostrarTimeUsuario ===");
   console.log("Dados completos da API:", data);
-  console.log("data.time:", data.time);
-  console.log("data.integrantes:", data.integrantes);
-  console.log("Estrutura completa:", JSON.stringify(data, null, 2));
+  console.log("data.time:", data?.time);
+  console.log("data.integrantes:", data?.integrantes);
   
-  // A API retorna { time: {...}, integrantes: [...] }
-  // Vamos mesclar para manter compatibilidade
+  const baseTime = (data && typeof data === 'object' ? (data.time || data) : {}) || {};
+  let integrantes = Array.isArray(data?.integrantes)
+    ? data.integrantes
+    : Array.isArray((baseTime as any).integrantes)
+      ? (baseTime as any).integrantes
+      : [];
+
+  // Se não vier a lista mas houver id do time, buscar detalhes do time
+  if ((!integrantes || integrantes.length === 0) && (baseTime as any)?.id) {
+    try {
+      const detResp = await makeRequest(`/times/${(baseTime as any).id}`);
+      if (detResp.ok) {
+        const det = await detResp.json();
+        integrantes = Array.isArray(det?.integrantes) ? det.integrantes : [];
+        console.log("Integrantes carregados via fallback /times/:id:", integrantes);
+      }
+    } catch (e) {
+      console.warn("Falha no fallback de integrantes:", e);
+    }
+  }
+
+  const qtd = (baseTime as any)?.qtd_integrantes ?? (baseTime as any)?.quantidade ?? (integrantes?.length || 0);
+
   return {
-    ...data.time,
-    integrantes: data.integrantes || data.time?.integrantes || []
-  };
+    ...(baseTime || {}),
+    integrantes: integrantes || [],
+    qtd_integrantes: qtd,
+  } as Time;
 };
 
 // Times
@@ -188,16 +209,23 @@ export const mostrarTime = async (timeId: number) => {
   
   console.log("=== RESPOSTA mostrarTime ===");
   console.log("Dados completos da API:", data);
-  console.log("data.time:", data.time);
-  console.log("data.integrantes:", data.integrantes);
-  console.log("Estrutura completa:", JSON.stringify(data, null, 2));
+  console.log("data.time:", data?.time);
+  console.log("data.integrantes:", data?.integrantes);
   
-  // A API retorna { time: {...}, integrantes: [...] }
-  // Vamos mesclar para manter compatibilidade
+  const baseTime = (data && typeof data === 'object' ? (data.time || data) : {}) || {};
+  const integrantes = Array.isArray(data?.integrantes)
+    ? data.integrantes
+    : Array.isArray((baseTime as any).integrantes)
+      ? (baseTime as any).integrantes
+      : [];
+
+  const qtd = (baseTime as any)?.qtd_integrantes ?? (baseTime as any)?.quantidade ?? (integrantes?.length || 0);
+
   return {
-    ...data.time,
-    integrantes: data.integrantes || data.time?.integrantes || []
-  };
+    ...(baseTime || {}),
+    integrantes: integrantes || [],
+    qtd_integrantes: qtd,
+  } as Time;
 };
 
 export const listarTimesIncompletos = async () => {
