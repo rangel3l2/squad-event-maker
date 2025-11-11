@@ -40,19 +40,38 @@ export default function TeamDetails() {
         
         // Se tem teamId na URL, busca esse time específico
         if (teamId) {
+          console.log("=== BUSCANDO TIME POR ID ===");
+          console.log("Team ID:", teamId);
           timeData = await mostrarTime(Number(teamId));
+          console.log("Time encontrado:", timeData);
+          console.log("Integrantes no time:", timeData.integrantes);
         } else {
           // Senão, busca o time do usuário logado
+          console.log("=== BUSCANDO TIME DO USUÁRIO ===");
+          console.log("Usuario ID:", usuario.id);
           timeData = await mostrarTimeUsuario(usuario.id!);
+          console.log("Time do usuário:", timeData);
+          console.log("Integrantes no time:", timeData.integrantes);
         }
         
         setTime(timeData);
         
         // Buscar dados dos integrantes
+        console.log("=== PROCESSANDO INTEGRANTES ===");
+        console.log("timeData.integrantes:", timeData.integrantes);
+        console.log("Quantidade de integrantes:", timeData.integrantes?.length);
+        
         if (timeData.integrantes && timeData.integrantes.length > 0) {
           const integrantesIds = timeData.integrantes.map((i: any) => i.usuario_id);
+          console.log("IDs dos integrantes:", integrantesIds);
+          
           const integrantesData = usuarios.filter(u => integrantesIds.includes(u.id));
+          console.log("Dados dos integrantes encontrados:", integrantesData);
+          
           setIntegrantes(integrantesData);
+        } else {
+          console.log("Nenhum integrante encontrado no time");
+          setIntegrantes([]);
         }
       } catch (error: any) {
         console.error("Erro ao carregar dados do time:", error);
