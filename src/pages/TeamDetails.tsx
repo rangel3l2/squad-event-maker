@@ -230,15 +230,43 @@ export default function TeamDetails() {
       }
 
       // Verificar se já tem time
+      console.log("=== VERIFICANDO SE USUÁRIO JÁ TEM TIME ===");
+      console.log("Usuario ID:", usuario.id);
+      
       try {
         const userTeam = await mostrarTimeUsuario(usuario.id!);
-        if (userTeam) {
-          toast.error("Você já está em um time");
+        console.log("Resultado mostrarTimeUsuario:", userTeam);
+        console.log("userTeam.id:", userTeam?.id);
+        console.log("userTeam.nome_time:", userTeam?.nome_time);
+        
+        if (userTeam && userTeam.id != null) {
+          console.log("Usuário JÁ TEM TIME:", userTeam.nome_time);
+          toast.error(`Você já está no time "${userTeam.nome_time}". Saia desse time primeiro para entrar em outro.`);
           return;
         }
-      } catch {
-        // Não tem time, pode continuar
+      } catch (error) {
+        console.log("Erro ao buscar time do usuário (pode ser normal se não tiver time):", error);
       }
+
+      // Verificar também se é integrante de algum time
+      console.log("=== VERIFICANDO SE É INTEGRANTE DE ALGUM TIME ===");
+      const todosOsTimes = await listarTimes();
+      console.log("Total de times para verificar:", todosOsTimes.length);
+      
+      for (const timeVerificar of todosOsTimes) {
+        const integrantes = timeVerificar.integrantes || [];
+        const ehIntegrante = integrantes.some(
+          (integrante: any) => integrante.usuario_id === usuario.id
+        );
+        
+        if (ehIntegrante) {
+          console.log("Usuário É INTEGRANTE do time:", timeVerificar.nome_time);
+          toast.error(`Você já está no time "${timeVerificar.nome_time}". Saia desse time primeiro para entrar em outro.`);
+          return;
+        }
+      }
+      
+      console.log("Usuário NÃO está em nenhum time. Pode continuar.");
 
       // Verificar código de convite
       if (!time.senha_convite) {
