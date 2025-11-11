@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { criarTime, listarUsuarios, listarTimes } from "@/services/api";
+import { criarTime, listarUsuarios, listarTimes, adicionarIntegrante } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -134,6 +134,24 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         senha_convite: senhaConvite,
         imagem_time: logoUrl,
       });
+
+      console.log("Time criado:", novoTime);
+
+      // Buscar o time recém-criado pelo código de convite
+      const timesAtualizados = await listarTimes();
+      const timeCriado = timesAtualizados.find(t => t.senha_convite === senhaConvite);
+
+      if (timeCriado && timeCriado.id) {
+        console.log("Adicionando criador como Líder do time:", timeCriado.id);
+        
+        // Adicionar o criador como integrante com função "Líder"
+        await adicionarIntegrante(timeCriado.id, {
+          usuario_id: usuario.id,
+          funcao: "Líder"
+        });
+
+        console.log("Criador adicionado como Líder com sucesso!");
+      }
 
       // Mostrar o código de convite
       setInviteCode(senhaConvite);
