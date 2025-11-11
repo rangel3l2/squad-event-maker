@@ -15,11 +15,8 @@ export default function ServerAuthorization() {
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    // Verificar se já foi autorizado anteriormente
-    const wasAuthorized = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (wasAuthorized === "true") {
-      checkServerConnection(true);
-    }
+    // Tentar verificar conexão automaticamente
+    checkServerConnection(true);
   }, []);
 
   const checkServerConnection = async (silent = false) => {
@@ -32,15 +29,12 @@ export default function ServerAuthorization() {
       
       if (response.ok) {
         setIsAuthorized(true);
-        localStorage.setItem(AUTH_STORAGE_KEY, "true");
         if (!silent) {
           toast.success("Servidor autorizado com sucesso!");
-          setTimeout(() => {
-            navigate("/auth");
-          }, 1500);
-        } else {
-          navigate("/auth");
         }
+        setTimeout(() => {
+          navigate("/");
+        }, silent ? 0 : 1500);
       } else {
         throw new Error("Servidor não respondeu corretamente");
       }
@@ -49,7 +43,6 @@ export default function ServerAuthorization() {
         toast.error("Não foi possível conectar ao servidor. Por favor, autorize o certificado primeiro.");
       }
       setIsAuthorized(false);
-      localStorage.removeItem(AUTH_STORAGE_KEY);
     } finally {
       setIsChecking(false);
     }
@@ -57,9 +50,33 @@ export default function ServerAuthorization() {
 
   const handleAuthorize = () => {
     // Abrir URL da API em nova aba para autorizar certificado
-    const authWindow = window.open(`${API_BASE_URL}/usuarios`, '_blank');
+    window.open(API_BASE_URL, '_blank');
     
-    toast.info("Após autorizar o certificado na nova aba, volte aqui e clique em 'Verificar Conexão'");
+    toast.info("Após autorizar o certificado na nova aba, volte aqui e a página recarregará automaticamente");
+    
+    // Verificar periodicamente se a autorização foi feita
+    const intervalId = setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/usuarios`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+          clearInterval(intervalId);
+          setIsAuthorized(true);
+          toast.success("Servidor autorizado com sucesso!");
+          setTimeout(() => {
+            navigate("/");
+          }, 1500);
+        }
+      } catch (error) {
+        // Ainda não autorizado, continuar verificando
+      }
+    }, 2000);
+
+    // Limpar intervalo após 2 minutos
+    setTimeout(() => clearInterval(intervalId), 120000);
   };
 
   return (
@@ -96,7 +113,7 @@ export default function ServerAuthorization() {
                 <li>Você verá um aviso de segurança do navegador</li>
                 <li>Clique em "Avançado" ou "Advanced"</li>
                 <li>Clique em "Prosseguir para ifms.pro.br" ou "Proceed to ifms.pro.br"</li>
-                <li>Volte para esta página e clique em "Verificar Conexão"</li>
+                <li>Volte para esta aba e aguarde - a verificação será automática</li>
               </ol>
             </div>
 
@@ -111,24 +128,21 @@ export default function ServerAuthorization() {
                 Autorizar Servidor
               </Button>
 
-              <Button 
-                onClick={() => checkServerConnection(false)}
-                variant="secondary"
-                size="lg"
-                className="w-full"
-                disabled={isChecking}
-              >
-                {isChecking ? (
-                  <>Verificando...</>
-                ) : isAuthorized ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Conexão Autorizada
-                  </>
-                ) : (
-                  <>Verificar Conexão</>
-                )}
-              </Button>
+              {!isAuthorized && (
+                <Button 
+                  onClick={() => checkServerConnection(false)}
+                  variant="secondary"
+                  size="lg"
+                  className="w-full"
+                  disabled={isChecking}
+                >
+                  {isChecking ? (
+                    <>Verificando...</>
+                  ) : (
+                    <>Verificar Conexão Manualmente</>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
 

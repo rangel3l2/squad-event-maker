@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const AUTH_STORAGE_KEY = "ifms_server_authorized";
+const API_BASE_URL = "https://ifms.pro.br:6003";
 
 interface ServerAuthGuardProps {
   children: React.ReactNode;
@@ -13,19 +13,28 @@ export default function ServerAuthGuard({ children }: ServerAuthGuardProps) {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    const checkAuthorization = () => {
+    const checkAuthorization = async () => {
       // Não verificar se já estiver na página de autorização
       if (location.pathname === "/server-auth") {
         setIsChecking(false);
         return;
       }
 
-      const isAuthorized = localStorage.getItem(AUTH_STORAGE_KEY) === "true";
-      
-      if (!isAuthorized) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/usuarios`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        // Se conseguiu fazer a requisição, está autorizado
+        if (response.ok || response.status === 404 || response.status === 500) {
+          setIsChecking(false);
+        } else {
+          throw new Error("Servidor não autorizado");
+        }
+      } catch (error) {
+        // Se deu erro de SSL/conexão, redirecionar para autorização
         navigate("/server-auth");
-      } else {
-        setIsChecking(false);
       }
     };
 
