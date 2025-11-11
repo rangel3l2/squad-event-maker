@@ -18,6 +18,7 @@ export default function TeamDetails() {
   const [integrantesComFuncao, setIntegrantesComFuncao] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isUserInTeam, setIsUserInTeam] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -74,10 +75,16 @@ export default function TeamDetails() {
           console.log("Dados dos integrantes encontrados:", integrantesData);
           
           setIntegrantes(integrantesData);
+
+          // Verificar se o usuário logado está neste time
+          const usuarioEstaNoTime = integrantesIds.includes(usuario.id);
+          setIsUserInTeam(usuarioEstaNoTime);
+          console.log("Usuário está neste time?", usuarioEstaNoTime);
         } else {
           console.log("Nenhum integrante encontrado no time");
           setIntegrantes([]);
           setIntegrantesComFuncao([]);
+          setIsUserInTeam(false);
         }
       } catch (error: any) {
         console.error("Erro ao carregar dados do time:", error);
@@ -180,13 +187,15 @@ export default function TeamDetails() {
               )}
               <CardTitle className="text-3xl">{time.nome_time}</CardTitle>
               
-              <Button 
-                variant="destructive" 
-                onClick={handleLeaveTeam}
-                disabled={isLeaving}
-              >
-                {isLeaving ? "Saindo..." : "Sair do Time"}
-              </Button>
+              {isUserInTeam && (
+                <Button 
+                  variant="destructive" 
+                  onClick={handleLeaveTeam}
+                  disabled={isLeaving}
+                >
+                  {isLeaving ? "Saindo..." : "Sair do Time"}
+                </Button>
+              )}
             </div>
           </CardHeader>
         </Card>
