@@ -280,10 +280,57 @@ export const deletarTime = async (timeId: number) => {
 };
 
 export const deletarUsuario = async (usuarioId: number, confirmacao: string) => {
+  console.log("=== DELETANDO USUÁRIO ===");
+  console.log("Usuario ID:", usuarioId);
+  
+  // Primeiro, buscar todos os times
+  const times = await listarTimes();
+  console.log("Total de times encontrados:", times.length);
+  
+  // Para cada time, verificar se o usuário está como integrante
+  for (const time of times) {
+    if (!time.id) continue;
+    
+    try {
+      // Buscar detalhes do time incluindo integrantes
+      const timeDetalhado = await mostrarTime(time.id);
+      const integrantes = timeDetalhado.integrantes || [];
+      
+      // Verificar se o usuário está neste time
+      const integranteEncontrado = integrantes.find(
+        (i: any) => (i.usuario_id ?? i.id) === usuarioId
+      );
+      
+      if (integranteEncontrado) {
+        console.log(`Usuário encontrado no time: ${time.nome_time} (ID: ${time.id})`);
+        console.log("Função do usuário:", integranteEncontrado.funcao);
+        
+        // Se for líder, deletar o time inteiro
+        if (integranteEncontrado.funcao === "Líder" || time.dono_id === usuarioId) {
+          console.log("Usuário é líder. Deletando time...");
+          await deletarTime(time.id);
+          console.log(`Time ${time.nome_time} deletado`);
+        } else {
+          // Se for membro, apenas remover do time
+          console.log("Usuário é membro. Removendo do time...");
+          await removerIntegrante(time.id, usuarioId);
+          console.log(`Usuário removido do time ${time.nome_time}`);
+        }
+      }
+    } catch (error) {
+      console.warn(`Erro ao processar time ${time.id}:`, error);
+      // Continua para os próximos times mesmo se houver erro
+    }
+  }
+  
+  // Agora deletar o usuário
+  console.log("Todos os times processados. Deletando usuário...");
   const response = await makeRequest(`/usuarios/${usuarioId}?confirmacao=${confirmacao}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error("Erro ao deletar usuário");
+  
+  console.log("Usuário deletado com sucesso!");
   return response.json();
 };
 
