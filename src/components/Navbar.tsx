@@ -19,12 +19,6 @@ const Navbar = () => {
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link to="/events">
-                <Button variant="ghost" size="sm">
-                  <Users className="w-4 h-4 mr-2" />
-                  Eventos
-                </Button>
-              </Link>
               <Link to="/teams">
                 <Button variant="ghost" size="sm">
                   <Users className="w-4 h-4 mr-2" />
