@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { AlertCircle, Users, LogOut, Edit, Trash2 } from "lucide-react";
-import { listarUsuarios, mostrarTimeUsuario, alterarUsuario, removerIntegrante, deletarUsuario } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, alterarUsuario, sairDoTime, deletarUsuario } from "@/services/api";
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
@@ -128,9 +128,9 @@ export default function Profile() {
 
     setIsLeavingTeam(true);
     try {
-      await removerIntegrante(teamId, userId);
-
-      toast.success("Você saiu do time com sucesso!");
+      const resultado = await sairDoTime(teamId, userId);
+      
+      toast.success(resultado.message);
       setCurrentTeam(null);
       
       setTimeout(() => {

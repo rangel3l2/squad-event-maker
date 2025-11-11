@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Users, KeyRound, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, removerIntegrante, deletarTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -188,30 +188,13 @@ export default function TeamDetails() {
         return;
       }
 
-      // Verificar se o usuário é o líder
-      const integranteAtual = integrantesComFuncao.find(
-        (i: any) => (i.usuario_id ?? i.id) === usuario.id
-      );
-
       console.log("=== SAINDO DO TIME ===");
       console.log("Usuário:", usuario);
       console.log("Time ID:", time.id);
-      console.log("Função do usuário:", integranteAtual?.funcao);
-
-      if (integranteAtual?.funcao === "Líder") {
-        // Se for líder, deletar o time inteiro
-        console.log("Usuário é líder. Deletando time...");
-        await deletarTime(time.id!);
-        console.log("Time deletado com sucesso!");
-        toast.success("Time deletado com sucesso!");
-      } else {
-        // Se não for líder, apenas remover o integrante
-        console.log("Usuário é membro. Removendo do time...");
-        await removerIntegrante(time.id!, usuario.id);
-        console.log("Integrante removido com sucesso!");
-        toast.success("Você saiu do time!");
-      }
-
+      
+      const resultado = await sairDoTime(time.id!, usuario.id);
+      
+      toast.success(resultado.message);
       navigate("/teams");
     } catch (error: any) {
       console.error("Erro ao sair do time:", error);

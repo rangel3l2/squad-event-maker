@@ -271,6 +271,85 @@ export const removerIntegrante = async (timeId: number, usuarioId: number) => {
   return response.json();
 };
 
+// Nova função para gerenciar saída de membro com transferência de liderança
+export const sairDoTime = async (timeId: number, usuarioId: number) => {
+  console.log("=== INICIANDO SAÍDA DO TIME ===");
+  console.log("Time ID:", timeId);
+  console.log("Usuário ID:", usuarioId);
+  
+  // Buscar informações do time
+  const time = await mostrarTime(timeId);
+  console.log("Time encontrado:", time);
+  console.log("Dono do time:", time.dono_id);
+  console.log("Integrantes do time:", time.integrantes);
+  
+  const isDono = time.dono_id === usuarioId;
+  console.log("Usuário é dono?", isDono);
+  
+  if (isDono) {
+    // Se é o dono, verificar quantos integrantes tem
+    const outrosIntegrantes = (time.integrantes as any[])?.filter(
+      (i: any) => (i.usuario_id ?? i.id) !== usuarioId
+    ) || [];
+    
+    console.log("Outros integrantes:", outrosIntegrantes);
+    
+    if (outrosIntegrantes.length > 0) {
+      // Transferir liderança para o primeiro integrante
+      const novoLider = outrosIntegrantes[0];
+      const novoLiderId = (novoLider as any).usuario_id ?? (novoLider as any).id;
+      
+      console.log("Transferindo liderança para:", novoLiderId);
+      
+      // Atualizar o dono do time
+      await atualizarTime(timeId, {
+        dono_id: novoLiderId
+      });
+      
+      console.log("Liderança transferida com sucesso");
+      
+      // Atualizar função do novo líder para "Líder"
+      try {
+        // Primeiro remover o antigo líder
+        await removerIntegrante(timeId, usuarioId);
+        
+        // Atualizar a função do novo líder se necessário
+        // A API pode não ter endpoint para isso, então apenas logamos
+        console.log("Integrante removido. Novo líder:", novoLiderId);
+      } catch (error) {
+        console.error("Erro ao remover integrante:", error);
+        throw error;
+      }
+      
+      return { 
+        success: true, 
+        message: "Liderança transferida com sucesso",
+        novoLiderId 
+      };
+    } else {
+      // Sem outros integrantes, deletar o time
+      console.log("Sem outros integrantes. Deletando time...");
+      await deletarTime(timeId);
+      console.log("Time deletado com sucesso");
+      
+      return { 
+        success: true, 
+        message: "Time deletado com sucesso" 
+      };
+    }
+  } else {
+    // Não é dono, apenas remover
+    console.log("Usuário não é dono. Removendo do time...");
+    await removerIntegrante(timeId, usuarioId);
+    console.log("Integrante removido com sucesso");
+    
+    return { 
+      success: true, 
+      message: "Você saiu do time com sucesso" 
+    };
+  }
+};
+
 export const deletarTime = async (timeId: number) => {
   const response = await makeRequest(`/times/${timeId}`, {
     method: "DELETE",
