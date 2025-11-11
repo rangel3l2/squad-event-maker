@@ -143,7 +143,7 @@ export default function TeamDetails() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Integrantes ({integrantes.length}/4)
+              Integrantes ({time.quantidade || 0}/4)
             </CardTitle>
           </CardHeader>
           <CardContent>

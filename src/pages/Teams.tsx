@@ -233,7 +233,7 @@ export default function Teams() {
                       <CardContent>
                         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                           <Users className="w-4 h-4" />
-                          <span>{time.integrantes?.length || 0}/4 membros</span>
+                          <span>{time.quantidade || 0}/4 membros</span>
                         </div>
                       </CardContent>
                     </Card>
