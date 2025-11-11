@@ -64,6 +64,10 @@ export default function TeamDetails() {
         console.log("timeData.integrantes:", timeData.integrantes);
         console.log("Quantidade de integrantes:", timeData.integrantes?.length);
         
+        // Sempre processar integrantes, mesmo se a lista vier vazia
+        console.log("=== PROCESSANDO INTEGRANTES ===");
+        console.log("timeData.integrantes:", timeData.integrantes);
+        
         if (timeData.integrantes && timeData.integrantes.length > 0) {
           // Guardar os integrantes com suas funções
           setIntegrantesComFuncao(timeData.integrantes);
@@ -81,11 +85,16 @@ export default function TeamDetails() {
           setIsUserInTeam(usuarioEstaNoTime);
           console.log("Usuário está neste time?", usuarioEstaNoTime);
         } else {
-          console.log("Nenhum integrante encontrado no time");
+          console.log("Lista de integrantes vazia ou undefined");
           setIntegrantes([]);
           setIntegrantesComFuncao([]);
           setIsUserInTeam(false);
         }
+        
+        console.log("=== DADOS DO TIME ===");
+        console.log("time.qtd_integrantes:", timeData.qtd_integrantes);
+        console.log("time.quantidade:", timeData.quantidade);
+        console.log("integrantes no array:", timeData.integrantes?.length || 0);
       } catch (error: any) {
         console.error("Erro ao carregar dados do time:", error);
         toast.error("Erro ao carregar dados do time");
@@ -205,7 +214,7 @@ export default function TeamDetails() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Integrantes ({integrantes.length || time.qtd_integrantes || time.quantidade || 0}/4)
+              Integrantes ({time.qtd_integrantes || time.quantidade || integrantes.length}/4)
             </CardTitle>
           </CardHeader>
           <CardContent>
