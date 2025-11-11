@@ -23,58 +23,67 @@ serve(async (req) => {
       );
     }
 
-    const { prompt, teamName } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const { prompt, teamName, baseImage } = await req.json();
+    const GEMINI_API_KEY = Deno.env.get("generateImageGemini");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!GEMINI_API_KEY) {
+      throw new Error("generateImageGemini API key is not configured");
     }
 
     console.log("Generating logo for team:", teamName);
+    console.log("Has base image:", !!baseImage);
 
     const enhancedPrompt = `Create a professional sports team logo for "${teamName}". ${prompt}. The logo should be: modern, bold, suitable for a sports team, with clear shapes and strong colors. Make it simple enough to work at small sizes but detailed enough to be interesting. Centered composition on transparent or white background.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
-        messages: [
-          {
-            role: "user",
-            content: enhancedPrompt
-          }
-        ],
-        modalities: ["image", "text"]
-      }),
+    // Prepare the request body for Gemini API
+    const requestBody: any = {
+      contents: [
+        {
+          parts: []
+        }
+      ],
+      generationConfig: {
+        temperature: 1,
+        topP: 0.95,
+        topK: 40,
+        maxOutputTokens: 8192,
+      }
+    };
+
+    // Add text prompt
+    requestBody.contents[0].parts.push({
+      text: enhancedPrompt
     });
 
+    // Add base image if provided
+    if (baseImage) {
+      // Remove data URL prefix if present
+      const base64Data = baseImage.includes(',') ? baseImage.split(',')[1] : baseImage;
+      
+      requestBody.contents[0].parts.push({
+        inline_data: {
+          mime_type: "image/png",
+          data: base64Data
+        }
+      });
+    }
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      }
+    );
+
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 
-          {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required. Please add credits to your Lovable AI workspace." }), 
-          {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("Gemini API error:", response.status, errorText);
       return new Response(
-        JSON.stringify({ error: "AI gateway error" }), 
+        JSON.stringify({ error: `Gemini API error: ${response.status}` }), 
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -85,11 +94,25 @@ serve(async (req) => {
     const data = await response.json();
     console.log("Logo generated successfully");
 
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    // Extract the base64 image from the response
+    const parts = data.candidates?.[0]?.content?.parts;
+    let imageData = null;
 
-    if (!imageUrl) {
-      throw new Error("No image URL in response");
+    if (parts) {
+      for (const part of parts) {
+        if (part.inline_data) {
+          imageData = part.inline_data.data;
+          break;
+        }
+      }
     }
+
+    if (!imageData) {
+      throw new Error("No image data in response");
+    }
+
+    // Return the image as base64 data URL
+    const imageUrl = `data:image/png;base64,${imageData}`;
 
     return new Response(
       JSON.stringify({ imageUrl }),

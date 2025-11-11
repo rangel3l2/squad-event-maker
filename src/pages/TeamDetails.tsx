@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Users, KeyRound } from "lucide-react";
+import { ArrowLeft, Users, KeyRound, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { listarUsuarios, mostrarTimeUsuario, mostrarTime, removerIntegrante, deletarTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
 
@@ -23,6 +23,7 @@ export default function TeamDetails() {
   const [userHasTeam, setUserHasTeam] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
+  const [isLeader, setIsLeader] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -132,9 +133,21 @@ export default function TeamDetails() {
             const usuarioEstaNoTime = integrantesIds.includes(usuario.id);
             setIsUserInTeam(usuarioEstaNoTime);
             console.log("Usuário está neste time?", usuarioEstaNoTime);
+            
+            // Check if user is leader
+            const integranteAtual = integrantesLista.find(
+              (i: any) => (i.usuario_id ?? i.id) === usuario.id
+            );
+            setIsLeader(integranteAtual?.funcao === "Líder");
           } else {
             // Quando é o time do usuário, já sabemos que ele pertence ao time
             setIsUserInTeam(true);
+            
+            // Check if user is leader
+            const integranteAtual = integrantesLista.find(
+              (i: any) => (i.usuario_id ?? i.id) === usuario.id
+            );
+            setIsLeader(integranteAtual?.funcao === "Líder");
           }
         } else {
           console.log("Lista de integrantes vazia ou undefined");
@@ -354,15 +367,27 @@ export default function TeamDetails() {
               )}
               <CardTitle className="text-3xl">{time.nome_time}</CardTitle>
               
-              {isUserInTeam && (
-                <Button 
-                  variant="destructive" 
-                  onClick={handleLeaveTeam}
-                  disabled={isLeaving}
-                >
-                  {isLeaving ? "Saindo..." : "Sair do Time"}
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {isUserInTeam && isLeader && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate(`/logo-editor/${teamId || time.id}`)}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Editar Logo
+                  </Button>
+                )}
+                
+                {isUserInTeam && (
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleLeaveTeam}
+                    disabled={isLeaving}
+                  >
+                    {isLeaving ? "Saindo..." : "Sair do Time"}
+                  </Button>
+                )}
+              </div>
 
               {!isUserInTeam && teamId && !userHasTeam && (
                 <div className="w-full max-w-md space-y-3">

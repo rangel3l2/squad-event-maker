@@ -279,6 +279,32 @@ export const deletarTime = async (timeId: number) => {
   return response.json();
 };
 
+export const atualizarTime = async (timeId: number, time: Partial<Time>): Promise<Time> => {
+  const params = new URLSearchParams();
+  if (time.nome_time !== undefined) params.set('nome_time', time.nome_time);
+  if (time.senha_convite !== undefined) params.set('senha_convite', time.senha_convite);
+  if (time.imagem_time !== undefined) params.set('imagem_time', time.imagem_time);
+
+  console.log("=== API atualizarTime ===");
+  console.log("Time ID:", timeId);
+  console.log("Dados para atualizar:", time);
+  console.log("URLSearchParams:", params.toString());
+
+  const response = await makeRequest(`/times/${timeId}`, {
+    method: "PUT",
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Erro da API:", errorText);
+    throw new Error(`Erro ao atualizar time: ${response.status} - ${errorText}`);
+  }
+  
+  return response.json();
+};
+
 export const deletarUsuario = async (usuarioId: number, confirmacao: string) => {
   console.log("=== DELETANDO USUÁRIO ===");
   console.log("Usuario ID:", usuarioId);

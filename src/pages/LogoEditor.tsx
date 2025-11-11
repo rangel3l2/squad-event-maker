@@ -7,6 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { listarUsuarios, mostrarTime, type Time, atualizarTime } from "@/services/api";
 import { 
   Download, 
   Square, 
@@ -16,11 +19,16 @@ import {
   Trash2,
   Sparkles,
   Upload,
-  Save
+  Save,
+  ArrowLeft
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { uploadImageToImgBB } from "@/services/imgbb";
 
 export default function LogoEditor() {
+  const { teamId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [activeColor, setActiveColor] = useState("#8B5CF6");
@@ -30,6 +38,9 @@ export default function LogoEditor() {
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [saturation, setSaturation] = useState(100);
+  const [team, setTeam] = useState<Time | null>(null);
+  const [isLeader, setIsLeader] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -47,6 +58,43 @@ export default function LogoEditor() {
       canvas.dispose();
     };
   }, []);
+
+  // Load team data if teamId is provided
+  useEffect(() => {
+    const loadTeamData = async () => {
+      if (!teamId || !user) return;
+
+      try {
+        const teamData = await mostrarTime(Number(teamId));
+        setTeam(teamData);
+        setTeamName(teamData.nome_time);
+
+        // Check if user is the leader
+        const usuarios = await listarUsuarios();
+        const usuario = usuarios.find(u => u.email === user.email);
+        
+        if (usuario && teamData.integrantes) {
+          const integrante = teamData.integrantes.find(
+            (i: any) => (i.usuario_id ?? i.id) === usuario.id
+          );
+          setIsLeader(integrante?.funcao === "Líder");
+        }
+
+        // Load existing logo if available
+        if (teamData.imagem_time && fabricCanvas) {
+          const img = await FabricImage.fromURL(teamData.imagem_time);
+          img.scaleToWidth(400);
+          img.set({ left: 200, top: 100 });
+          fabricCanvas.add(img);
+          fabricCanvas.renderAll();
+        }
+      } catch (error) {
+        console.error("Error loading team:", error);
+      }
+    };
+
+    loadTeamData();
+  }, [teamId, user, fabricCanvas]);
 
   useEffect(() => {
     if (!fabricCanvas) return;
@@ -138,8 +186,19 @@ export default function LogoEditor() {
 
     setIsGenerating(true);
     try {
+      // Get base image from canvas if exists
+      let baseImage = null;
+      const activeObject = fabricCanvas?.getActiveObject();
+      if (activeObject && activeObject.type === 'image') {
+        baseImage = (activeObject as FabricImage).toDataURL();
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-logo', {
-        body: { prompt: aiPrompt, teamName }
+        body: { 
+          prompt: aiPrompt, 
+          teamName,
+          baseImage 
+        }
       });
 
       if (error) throw error;
@@ -155,13 +214,7 @@ export default function LogoEditor() {
       toast.success("Logo gerado com IA!");
     } catch (error: any) {
       console.error("Error generating logo:", error);
-      if (error.message?.includes("429")) {
-        toast.error("Limite de requisições atingido. Tente novamente mais tarde.");
-      } else if (error.message?.includes("402")) {
-        toast.error("Créditos insuficientes. Adicione créditos ao seu workspace.");
-      } else {
-        toast.error("Erro ao gerar logo com IA");
-      }
+      toast.error("Erro ao gerar logo com IA");
     } finally {
       setIsGenerating(false);
     }
@@ -203,6 +256,43 @@ export default function LogoEditor() {
     toast.success("Logo baixado!");
   };
 
+  const saveToTeam = async () => {
+    if (!fabricCanvas) return;
+    
+    const dataURL = fabricCanvas.toDataURL({
+      format: 'png',
+      quality: 1,
+      multiplier: 2,
+    });
+
+    if (teamId && team && isLeader) {
+      // Save directly to team if user is leader
+      setIsSaving(true);
+      try {
+        const imageUrl = await uploadImageToImgBB(dataURL);
+        
+        // Update team with new logo using API
+        await atualizarTime(Number(teamId), {
+          nome_time: team.nome_time,
+          imagem_time: imageUrl,
+        });
+
+        toast.success("Logo atualizado no time!");
+        navigate(`/team-details/${teamId}`);
+      } catch (error) {
+        console.error("Error updating team logo:", error);
+        toast.error("Erro ao atualizar logo do time");
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
+      // Store in localStorage to use in team creation
+      localStorage.setItem('team_logo_draft', dataURL);
+      toast.success("Logo salvo! Use-o ao criar seu time.");
+      navigate('/teams');
+    }
+  };
+
   const clearCanvas = () => {
     if (!fabricCanvas) return;
     fabricCanvas.clear();
@@ -216,7 +306,20 @@ export default function LogoEditor() {
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8 text-center">Editor de Logos</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate(teamId ? `/team-details/${teamId}` : '/teams')}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+            <h1 className="text-4xl font-bold">
+              {teamId ? `Editar Logo - ${teamName}` : 'Editor de Logos'}
+            </h1>
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* AI Generation Panel */}
@@ -290,7 +393,16 @@ export default function LogoEditor() {
               </div>
 
               <div className="flex gap-2 mt-4">
-                <Button onClick={downloadLogo} className="flex-1">
+                <Button 
+                  onClick={saveToTeam} 
+                  className="flex-1" 
+                  variant="default"
+                  disabled={isSaving}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {isSaving ? "Salvando..." : (teamId && isLeader ? "Atualizar Logo do Time" : "Salvar para Time")}
+                </Button>
+                <Button onClick={downloadLogo} className="flex-1" variant="outline">
                   <Download className="w-4 h-4 mr-2" />
                   Baixar
                 </Button>

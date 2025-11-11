@@ -11,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Copy, Check, Mail, MessageCircle } from "lucide-react";
+import { Copy, Check, Mail, MessageCircle, Sparkles } from "lucide-react";
 import { TeamLogoUploader } from "./TeamLogoUploader";
+import { useNavigate } from "react-router-dom";
 
 const createTeamSchema = z.object({
   name: z.string().trim().min(3, "Nome deve ter pelo menos 3 caracteres").max(50, "Nome deve ter no máximo 50 caracteres"),
@@ -26,6 +27,7 @@ interface CreateTeamFormProps {
 
 export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string>("");
   const [inviteCode, setInviteCode] = useState<string>("");
@@ -44,6 +46,12 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       return code;
     };
     setSenhaConvite(generateCode());
+
+    // Check if there's a saved logo draft
+    const savedLogo = localStorage.getItem('team_logo_draft');
+    if (savedLogo) {
+      setLogoUrl(savedLogo);
+    }
   }, []);
 
   const form = useForm<CreateTeamFormData>({
@@ -227,6 +235,18 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Logo do Time *</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate('/logo-editor')}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Criar com Editor IA
+                  </Button>
+                </div>
                 <TeamLogoUploader
                   currentLogo={logoUrl}
                   onLogoChange={setLogoUrl}
