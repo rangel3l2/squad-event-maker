@@ -89,51 +89,46 @@ export default function Teams() {
         <h1 className="text-4xl font-bold text-center mb-8">Frontend Teams Cup</h1>
         
         {mode === "select" && (
-          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
-            <Card className={hasTeam ? "opacity-50" : "hover:shadow-lg transition-shadow cursor-pointer"} onClick={() => !hasTeam && setMode("join")}>
-              <CardHeader>
-                <Users className="w-12 h-12 mb-4 text-primary" />
-                <CardTitle>Entrar em um Time</CardTitle>
-                <CardDescription>
-                  Escolha um time existente e cadastre suas informações para participar
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {hasTeam ? (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Você já está no time "{currentTeamName}". Para entrar em outro time, primeiro saia do seu time atual através do seu perfil.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <Button className="w-full">Selecionar</Button>
-                )}
-              </CardContent>
-            </Card>
+          <>
+            {hasTeam ? (
+              <div className="max-w-2xl mx-auto">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-lg">
+                    Você já está no time "{currentTeamName}". Para entrar em outro time ou criar um novo, primeiro saia do seu time atual através do seu perfil.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            ) : (
+              <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("join")}>
+                  <CardHeader>
+                    <Users className="w-12 h-12 mb-4 text-primary" />
+                    <CardTitle>Entrar em um Time</CardTitle>
+                    <CardDescription>
+                      Escolha um time existente e cadastre suas informações para participar
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full">Selecionar</Button>
+                  </CardContent>
+                </Card>
 
-            <Card className={hasTeam ? "opacity-50" : "hover:shadow-lg transition-shadow cursor-pointer"} onClick={() => !hasTeam && setMode("create")}>
-              <CardHeader>
-                <PlusCircle className="w-12 h-12 mb-4 text-primary" />
-                <CardTitle>Criar Novo Time</CardTitle>
-                <CardDescription>
-                  Crie seu próprio time com logo, nome e informações personalizadas
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {hasTeam ? (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Você já está no time "{currentTeamName}". Para criar um novo time, primeiro saia do seu time atual através do seu perfil.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <Button className="w-full">Criar Time</Button>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("create")}>
+                  <CardHeader>
+                    <PlusCircle className="w-12 h-12 mb-4 text-primary" />
+                    <CardTitle>Criar Novo Time</CardTitle>
+                    <CardDescription>
+                      Crie seu próprio time com logo, nome e informações personalizadas
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full">Criar Time</Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </>
         )}
 
         {mode === "create" && (
