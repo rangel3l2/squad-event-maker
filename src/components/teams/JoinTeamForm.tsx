@@ -98,12 +98,22 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
       console.log("=== ADICIONANDO INTEGRANTE ===");
       console.log("Time ID:", timeEncontrado.id);
       console.log("Usuario ID:", usuario.id);
+      console.log("Tipo do Usuario ID:", typeof usuario.id);
+      console.log("Usuario completo:", JSON.stringify(usuario));
+      
+      if (!usuario.id) {
+        toast.error("ID do usuário não encontrado");
+        return;
+      }
       
       // Entrar no time via API
-      const resultado = await adicionarIntegrante(timeEncontrado.id!, {
-        usuario_id: usuario.id!,
+      const integranteData = {
+        usuario_id: usuario.id,
         funcao: "Membro",
-      });
+      };
+      console.log("Dados do integrante a serem enviados:", JSON.stringify(integranteData));
+      
+      const resultado = await adicionarIntegrante(timeEncontrado.id!, integranteData);
       
       console.log("=== RESULTADO DA ADIÇÃO ===");
       console.log(resultado);
