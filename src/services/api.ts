@@ -3,6 +3,12 @@ const API_BASE_URL = "https://ifms.pro.br:6003";
 
 const makeRequest = async (path: string, options?: RequestInit) => {
   const url = `${API_BASE_URL}${path}`;
+  console.log("=== makeRequest ===");
+  console.log("URL:", url);
+  console.log("Method:", options?.method);
+  console.log("Body:", options?.body);
+  console.log("Headers:", options?.headers);
+  
   return fetch(url, {
     ...options,
     headers: {
