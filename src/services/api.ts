@@ -46,6 +46,10 @@ export const listarUsuarios = async (): Promise<Usuario[]> => {
 };
 
 export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
+  console.log("=== API criarUsuario ===");
+  console.log("Objeto Usuario recebido:", usuario);
+  console.log("JSON stringificado:", JSON.stringify(usuario));
+  
   const response = await makeRequest('/usuarios', {
     method: "POST",
     body: JSON.stringify(usuario),
