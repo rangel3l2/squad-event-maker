@@ -200,3 +200,11 @@ export const removerIntegrante = async (timeId: number, usuarioId: number) => {
   if (!response.ok) throw new Error("Erro ao remover integrante");
   return response.json();
 };
+
+export const deletarTime = async (timeId: number) => {
+  const response = await makeRequest(`/times/${timeId}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Erro ao deletar time");
+  return response.json();
+};

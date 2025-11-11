@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Users } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, type Usuario, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, removerIntegrante, deletarTime, type Usuario, type Time } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -15,7 +15,9 @@ export default function TeamDetails() {
   const { teamId } = useParams();
   const [time, setTime] = useState<Time | null>(null);
   const [integrantes, setIntegrantes] = useState<Usuario[]>([]);
+  const [integrantesComFuncao, setIntegrantesComFuncao] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -62,6 +64,9 @@ export default function TeamDetails() {
         console.log("Quantidade de integrantes:", timeData.integrantes?.length);
         
         if (timeData.integrantes && timeData.integrantes.length > 0) {
+          // Guardar os integrantes com suas funções
+          setIntegrantesComFuncao(timeData.integrantes);
+          
           const integrantesIds = timeData.integrantes.map((i: any) => i.usuario_id ?? i.id);
           console.log("IDs dos integrantes:", integrantesIds);
           
@@ -72,6 +77,7 @@ export default function TeamDetails() {
         } else {
           console.log("Nenhum integrante encontrado no time");
           setIntegrantes([]);
+          setIntegrantesComFuncao([]);
         }
       } catch (error: any) {
         console.error("Erro ao carregar dados do time:", error);
@@ -84,6 +90,45 @@ export default function TeamDetails() {
 
     loadTeamData();
   }, [user, navigate, teamId]);
+
+  const handleLeaveTeam = async () => {
+    if (!user || !time) return;
+
+    try {
+      setIsLeaving(true);
+      
+      // Buscar usuário na API
+      const usuarios = await listarUsuarios();
+      const usuario = usuarios.find(u => u.email === user.email);
+
+      if (!usuario?.id) {
+        toast.error("Usuário não encontrado");
+        return;
+      }
+
+      // Verificar se o usuário é o líder
+      const integranteAtual = integrantesComFuncao.find(
+        (i: any) => (i.usuario_id ?? i.id) === usuario.id
+      );
+
+      if (integranteAtual?.funcao === "Líder") {
+        // Se for líder, deletar o time inteiro
+        await deletarTime(time.id!);
+        toast.success("Time deletado com sucesso!");
+      } else {
+        // Se não for líder, apenas remover o integrante
+        await removerIntegrante(time.id!, usuario.id);
+        toast.success("Você saiu do time!");
+      }
+
+      navigate("/teams");
+    } catch (error: any) {
+      console.error("Erro ao sair do time:", error);
+      toast.error("Erro ao sair do time: " + error.message);
+    } finally {
+      setIsLeaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -134,6 +179,14 @@ export default function TeamDetails() {
                 />
               )}
               <CardTitle className="text-3xl">{time.nome_time}</CardTitle>
+              
+              <Button 
+                variant="destructive" 
+                onClick={handleLeaveTeam}
+                disabled={isLeaving}
+              >
+                {isLeaving ? "Saindo..." : "Sair do Time"}
+              </Button>
             </div>
           </CardHeader>
         </Card>
@@ -153,25 +206,39 @@ export default function TeamDetails() {
                   Nenhum integrante ainda
                 </p>
               ) : (
-                integrantes.map((integrante) => (
-                  <div
-                    key={integrante.id}
-                    className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                  >
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={integrante.url_image_perfil || undefined} />
-                      <AvatarFallback>
-                        {integrante.nome.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="font-semibold">{integrante.nome}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Turma {integrante.turma} - Período {integrante.periodo}
-                      </p>
+                integrantes.map((integrante) => {
+                  const integranteComFuncao = integrantesComFuncao.find(
+                    (i: any) => (i.usuario_id ?? i.id) === integrante.id
+                  );
+                  const funcao = integranteComFuncao?.funcao || "Membro";
+                  
+                  return (
+                    <div
+                      key={integrante.id}
+                      className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                    >
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={integrante.url_image_perfil || undefined} />
+                        <AvatarFallback>
+                          {integrante.nome.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold">{integrante.nome}</p>
+                          {funcao === "Líder" && (
+                            <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                              {funcao}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Turma {integrante.turma} - Período {integrante.periodo}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </CardContent>
