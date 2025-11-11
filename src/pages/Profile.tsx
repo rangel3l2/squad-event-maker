@@ -35,7 +35,7 @@ interface TeamInfo {
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentTeam, setCurrentTeam] = useState<TeamInfo | null>(null);
@@ -157,13 +157,22 @@ export default function Profile() {
 
     setIsDeletingAccount(true);
     try {
+      // Deletar usuário e remover de todos os times
       await deletarUsuario(userId, deleteConfirmation);
-      toast.success("Conta excluída com sucesso!");
       
+      console.log("Conta excluída. Fazendo logout...");
+      
+      // Fazer logout do Google/Supabase
+      await signOut();
+      
+      toast.success("Conta excluída com sucesso! Você será desconectado.");
+      
+      // Aguardar um pouco para o logout processar
       setTimeout(() => {
         navigate("/auth");
-      }, 1000);
+      }, 1500);
     } catch (error: any) {
+      console.error("Erro ao excluir conta:", error);
       toast.error("Erro ao excluir conta: " + error.message);
     } finally {
       setIsDeletingAccount(false);
