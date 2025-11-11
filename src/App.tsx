@@ -21,6 +21,7 @@ import Teams from "./pages/Teams";
 import TeamDetails from "./pages/TeamDetails";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import EventTeams from "./pages/EventTeams";
 
 const queryClient = new QueryClient();
 
@@ -48,7 +49,7 @@ const App = () => (
               <Route path="/admin/config" element={<AdminEventConfig />} />
               <Route path="/admin/rules" element={<AdminRules />} />
               <Route path="/admin/prizes" element={<AdminPrizes />} />
-              <Route path="/events/:eventId" element={<Events />} />
+              <Route path="/event/:eventId" element={<EventTeams />} />
               <Route path="/logo-editor/:teamId" element={<LogoEditor />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
