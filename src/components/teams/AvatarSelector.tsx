@@ -4,6 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { uploadImageToImgBB } from "@/services/imgbb";
+import { toast } from "sonner";
 
 interface AvatarSelectorProps {
   currentAvatar?: string | null;
@@ -20,7 +22,7 @@ export function AvatarSelector({ currentAvatar, onAvatarChange, disabled = false
 
   const googleAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) return;
     const file = e.target.files?.[0];
     if (!file) return;
@@ -28,14 +30,35 @@ export function AvatarSelector({ currentAvatar, onAvatarChange, disabled = false
     setUploadedFile(file);
     setIsUploading(true);
     
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      setPreviewUrl(base64String);
-      onAvatarChange(base64String);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result as string;
+        setPreviewUrl(base64String);
+        
+        try {
+          // Fazer upload para ImgBB e obter apenas a URL
+          console.log("Fazendo upload da imagem do perfil para ImgBB...");
+          const imageUrl = await uploadImageToImgBB(base64String);
+          console.log("Upload do perfil bem-sucedido:", imageUrl);
+          
+          // Retornar apenas a URL, não o base64
+          onAvatarChange(imageUrl);
+          toast.success("Foto carregada com sucesso!");
+        } catch (error) {
+          console.error("Erro ao fazer upload da foto:", error);
+          toast.error("Erro ao carregar foto. Tente novamente.");
+          setPreviewUrl("");
+        } finally {
+          setIsUploading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Erro ao processar arquivo:", error);
+      toast.error("Erro ao processar arquivo.");
       setIsUploading(false);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const handleAvatarTypeChange = (type: "google" | "upload") => {
