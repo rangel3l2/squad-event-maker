@@ -271,6 +271,25 @@ export const removerIntegrante = async (timeId: number, usuarioId: number) => {
   return response.json();
 };
 
+// Nova função para transferir liderança manualmente
+export const transferirLideranca = async (timeId: number, novoLiderId: number) => {
+  console.log("=== TRANSFERINDO LIDERANÇA ===");
+  console.log("Time ID:", timeId);
+  console.log("Novo Líder ID:", novoLiderId);
+  
+  // Atualizar o dono do time
+  await atualizarTime(timeId, {
+    dono_id: novoLiderId
+  });
+  
+  console.log("Liderança transferida com sucesso");
+  
+  return { 
+    success: true, 
+    message: "Liderança transferida com sucesso" 
+  };
+};
+
 // Nova função para gerenciar saída de membro com transferência de liderança
 export const sairDoTime = async (timeId: number, usuarioId: number) => {
   console.log("=== INICIANDO SAÍDA DO TIME ===");

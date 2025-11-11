@@ -6,9 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Users, KeyRound, Sparkles } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Users, KeyRound, Sparkles, UserCog } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirLideranca, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -24,6 +26,9 @@ export default function TeamDetails() {
   const [inviteCode, setInviteCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [isLeader, setIsLeader] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [selectedNewLeader, setSelectedNewLeader] = useState<string>("");
+  const [isTransferring, setIsTransferring] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -204,6 +209,30 @@ export default function TeamDetails() {
     }
   };
 
+  const handleTransferLeadership = async () => {
+    if (!user || !time || !selectedNewLeader) return;
+
+    try {
+      setIsTransferring(true);
+      
+      const novoLiderId = parseInt(selectedNewLeader);
+      
+      await transferirLideranca(time.id!, novoLiderId);
+      
+      toast.success("Liderança transferida com sucesso!");
+      setShowTransferDialog(false);
+      setSelectedNewLeader("");
+      
+      // Recarregar dados do time
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Erro ao transferir liderança:", error);
+      toast.error("Erro ao transferir liderança: " + error.message);
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+
   const handleJoinTeam = async () => {
     if (!user || !time) return;
 
@@ -352,13 +381,72 @@ export default function TeamDetails() {
               
               <div className="flex gap-2">
                 {isUserInTeam && isLeader && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate(`/logo-editor/${teamId || time.id}`)}
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Editar Logo
-                  </Button>
+                  <>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate(`/logo-editor/${teamId || time.id}`)}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Editar Logo
+                    </Button>
+                    
+                    <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline">
+                          <UserCog className="w-4 h-4 mr-2" />
+                          Transferir Liderança
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Transferir Liderança</DialogTitle>
+                          <DialogDescription>
+                            Escolha um membro do time para se tornar o novo líder
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <Select value={selectedNewLeader} onValueChange={setSelectedNewLeader}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o novo líder" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {integrantesComFuncao
+                                .filter((i: any) => {
+                                  const membroId = i.usuario_id ?? i.id;
+                                  return membroId !== time.dono_id;
+                                })
+                                .map((integrante: any) => {
+                                  const membroId = integrante.usuario_id ?? integrante.id;
+                                  const membro = integrantes.find(u => u.id === membroId);
+                                  return (
+                                    <SelectItem key={membroId} value={String(membroId)}>
+                                      {membro?.nome || "Membro sem nome"}
+                                    </SelectItem>
+                                  );
+                                })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <DialogFooter>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              setShowTransferDialog(false);
+                              setSelectedNewLeader("");
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button 
+                            onClick={handleTransferLeadership}
+                            disabled={!selectedNewLeader || isTransferring}
+                          >
+                            {isTransferring ? "Transferindo..." : "Confirmar Transferência"}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </>
                 )}
                 
                 {isUserInTeam && (
