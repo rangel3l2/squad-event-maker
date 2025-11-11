@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Users, KeyRound } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, removerIntegrante, deletarTime, adicionarIntegrante, type Usuario, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, removerIntegrante, deletarTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -43,13 +43,36 @@ export default function TeamDetails() {
           return;
         }
 
-        // Verificar se o usuário já tem um time
+        // Verificar se o usuário já tem um time (mesmo que não seja o dono)
+        let usuarioTemTime = false;
+        
+        // Verificar se é dono de algum time
         try {
           const userTeam = await mostrarTimeUsuario(usuario.id!);
-          setUserHasTeam(!!userTeam);
+          if (userTeam && userTeam.id != null) {
+            usuarioTemTime = true;
+          }
         } catch {
-          setUserHasTeam(false);
+          // Não é dono de nenhum time
         }
+
+        // Verificar se é integrante de algum time
+        if (!usuarioTemTime) {
+          const times = await listarTimes();
+          for (const time of times) {
+            const integrantes = time.integrantes || [];
+            const ehIntegrante = integrantes.some(
+              (integrante: any) => integrante.usuario_id === usuario.id
+            );
+            
+            if (ehIntegrante) {
+              usuarioTemTime = true;
+              break;
+            }
+          }
+        }
+        
+        setUserHasTeam(usuarioTemTime);
 
         let timeData: Time;
         
