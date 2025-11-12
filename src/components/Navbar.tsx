@@ -11,7 +11,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img 
-            src="/cortedIMage.JPG" 
+            src="/cortedIMage.png" 
             alt="Squad Event Maker Logo" 
             className="h-12 object-contain"
           />
