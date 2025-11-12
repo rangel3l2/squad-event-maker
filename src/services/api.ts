@@ -469,23 +469,17 @@ export const transferirDono = async (timeId: number, novoDonoId: number): Promis
   console.log("Time ID:", timeId);
   console.log("Novo Dono ID:", novoDonoId);
 
-  const params = new URLSearchParams();
-  params.set('novo_dono_id', String(novoDonoId));
-
-  const url = `/times/${timeId}/transferir-dono`;
+  const url = `/times/${timeId}/transferir-dono?novo_dono_id=${novoDonoId}`;
   const method = "PUT";
   const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-  const body = params.toString();
 
   console.log("URL:", url);
   console.log("Method:", method);
   console.log("Headers:", headers);
-  console.log("Body:", body);
 
   const response = await makeRequest(url, {
     method,
     headers,
-    body,
   });
 
   if (!response.ok) {
