@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirLideranca, deletarTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -25,6 +25,7 @@ export default function TeamDetails() {
   const [userHasTeam, setUserHasTeam] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
+  const [isLeader, setIsLeader] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [selectedNewLeader, setSelectedNewLeader] = useState<string>("");
   const [isTransferring, setIsTransferring] = useState(false);
@@ -140,14 +141,20 @@ export default function TeamDetails() {
             setIsUserInTeam(usuarioEstaNoTime);
             console.log("Usuário está neste time?", usuarioEstaNoTime);
             
-            // Atualizar a lógica para determinar se o usuário é líder com base no dono_id
-            setIsLeader(usuario.id === timeData.dono_id);
+            // Check if user is leader
+            const integranteAtual = integrantesLista.find(
+              (i: any) => (i.usuario_id ?? i.id) === usuario.id
+            );
+            setIsLeader(integranteAtual?.funcao === "Líder");
           } else {
             // Quando é o time do usuário, já sabemos que ele pertence ao time
             setIsUserInTeam(true);
             
-            // Atualizar a lógica para determinar se o usuário é líder com base no dono_id
-            setIsLeader(usuario.id === timeData.dono_id);
+            // Check if user is leader
+            const integranteAtual = integrantesLista.find(
+              (i: any) => (i.usuario_id ?? i.id) === usuario.id
+            );
+            setIsLeader(integranteAtual?.funcao === "Líder");
           }
         } else {
           console.log("Lista de integrantes vazia ou undefined");
@@ -209,15 +216,15 @@ export default function TeamDetails() {
 
     try {
       setIsTransferring(true);
-
+      
       const novoLiderId = parseInt(selectedNewLeader);
-
-      await transferirDono(time.id!, novoLiderId);
-
+      
+      await transferirLideranca(time.id!, novoLiderId);
+      
       toast.success("Liderança transferida com sucesso!");
       setShowTransferDialog(false);
       setSelectedNewLeader("");
-
+      
       // Recarregar dados do time
       window.location.reload();
     } catch (error: any) {
@@ -368,8 +375,6 @@ export default function TeamDetails() {
     );
   }
 
-  const isLeader = user?.id === time?.dono_id;
-
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -393,9 +398,7 @@ export default function TeamDetails() {
                   className="w-48 h-48 object-contain rounded-lg"
                 />
               )}
-              <CardTitle className="text-3xl">
-                {time.nome_time} {isLeader && <span className="text-sm text-primary">(Líder)</span>}
-              </CardTitle>
+              <CardTitle className="text-3xl">{time.nome_time}</CardTitle>
               
               <div className="flex gap-2">
                 {isUserInTeam && isLeader && (
