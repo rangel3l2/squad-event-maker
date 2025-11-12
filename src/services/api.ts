@@ -463,3 +463,26 @@ export const buscarTimesPorDono = async (donoId: number): Promise<Time[]> => {
   const times = await listarTimes();
   return times.filter(t => t.dono_id === donoId);
 };
+
+export const transferirDono = async (timeId: number, novoDonoId: number): Promise<void> => {
+  console.log("=== API transferirDono ===");
+  console.log("Time ID:", timeId);
+  console.log("Novo Dono ID:", novoDonoId);
+
+  const params = new URLSearchParams();
+  params.set('novo_dono_id', String(novoDonoId));
+
+  const response = await makeRequest(`/times/${timeId}/transferir-dono`, {
+    method: "PUT",
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Erro da API:", errorText);
+    throw new Error(`Erro ao transferir dono: ${response.status} - ${errorText}`);
+  }
+
+  console.log("Dono transferido com sucesso");
+};

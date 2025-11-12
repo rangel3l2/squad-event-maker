@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,18 +7,68 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
+# Node.js dependencies
+node_modules/
+
+# Build output
+dist/
 dist-ssr
-*.local
+build/
 
 # Editor directories and files
-.vscode/*
+.vscode/
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# OS generated files
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Package manager lock files
+package-lock.json
+yarn.lock
+bun.lockb
+
+# Coverage reports
+coverage/
+
+# Miscellaneous
+*.bak
+*.tmp
+*.temp
+*.old
+*.orig
+*.rej
+*.patch
+*.swp
+*.swo
+*.pid
+*.seed
+*.pid.lock
+*.tgz
+*.tar.gz
+*.zip
+
+# Supabase generated files
+supabase/.temp
+supabase/.cache
+
+# Ignore public files that are generated
+public/robots.txt
+public/favicon.ico
+
+# Ignore migrations
+migrations/*.sql
+
+# Ignore compiled TypeScript files
+*.tsbuildinfo
