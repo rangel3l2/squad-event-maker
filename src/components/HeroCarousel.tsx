@@ -9,14 +9,14 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 
-import image1 from "@/assets/WhatsApp Image 2025-11-11 at 23.42.51.jpeg";
-import image2 from "@/assets/WhatsApp Image 2025-11-12 at 00.10.12 (1).jpeg";
-import image3 from "@/assets/WhatsApp Image 2025-11-12 at 00.10.12 (2).jpeg";
-import image4 from "@/assets/WhatsApp Image 2025-11-12 at 00.10.12.jpeg";
-import image5 from "@/assets/WhatsApp Image 2025-11-12 at 00.10.13.jpeg";
-
 export const HeroCarousel = () => {
-  const images = [image1, image2, image3, image4, image5];
+  const images = [
+    "/assets/WhatsApp Image 2025-11-11 at 23.42.51.jpeg",
+    "/assets/WhatsApp Image 2025-11-12 at 00.10.12 (1).jpeg",
+    "/assets/WhatsApp Image 2025-11-12 at 00.10.12 (2).jpeg",
+    "/assets/WhatsApp Image 2025-11-12 at 00.10.12.jpeg",
+    "/assets/WhatsApp Image 2025-11-12 at 00.10.13.jpeg",
+  ];
 
   return (
     <div className="w-full max-w-5xl mx-auto">
