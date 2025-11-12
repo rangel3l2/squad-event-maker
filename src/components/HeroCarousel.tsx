@@ -9,34 +9,14 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 
-interface CarouselImage {
-  id: string;
-  image_url: string;
-  video_url?: string;
-  media_type: string;
-  display_order: number;
-}
+import image1 from "@/assets/WhatsApp Image 2025-11-11 at 23.42.51.jpeg";
+import image2 from "@/assets/WhatsApp Image 2025-11-12 at 00.10.12 (1).jpeg";
+import image3 from "@/assets/WhatsApp Image 2025-11-12 at 00.10.12 (2).jpeg";
+import image4 from "@/assets/WhatsApp Image 2025-11-12 at 00.10.12.jpeg";
+import image5 from "@/assets/WhatsApp Image 2025-11-12 at 00.10.13.jpeg";
 
 export const HeroCarousel = () => {
-  const [images, setImages] = useState<CarouselImage[]>([]);
-
-  useEffect(() => {
-    fetchImages();
-  }, []);
-
-  const fetchImages = async () => {
-    const { data, error } = await supabase
-      .from("carousel_images")
-      .select("*")
-      .eq("is_active", true)
-      .order("display_order");
-
-    if (!error && data) {
-      setImages(data);
-    }
-  };
-
-  if (images.length === 0) return null;
+  const images = [image1, image2, image3, image4, image5];
 
   return (
     <div className="w-full max-w-5xl mx-auto">
@@ -49,25 +29,14 @@ export const HeroCarousel = () => {
         className="w-full"
       >
         <CarouselContent>
-          {images.map((image) => (
-            <CarouselItem key={image.id}>
+          {images.map((image, index) => (
+            <CarouselItem key={index}>
               <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border shadow-card bg-muted">
-                {image.media_type === 'video' ? (
-                  <video
-                    src={image.video_url}
-                    className="w-full h-full object-contain"
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                  />
-                ) : (
-                  <img
-                    src={image.image_url}
-                    alt="Frontend Teams Cup"
-                    className="w-full h-full object-contain"
-                  />
-                )}
+                <img
+                  src={image}
+                  alt={`Carousel Image ${index + 1}`}
+                  className="w-full h-full object-contain"
+                />
               </div>
             </CarouselItem>
           ))}
