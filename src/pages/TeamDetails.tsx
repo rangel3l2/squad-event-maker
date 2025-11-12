@@ -141,20 +141,14 @@ export default function TeamDetails() {
             setIsUserInTeam(usuarioEstaNoTime);
             console.log("Usuário está neste time?", usuarioEstaNoTime);
             
-            // Check if user is leader
-            const integranteAtual = integrantesLista.find(
-              (i: any) => (i.usuario_id ?? i.id) === usuario.id
-            );
-            setIsLeader(integranteAtual?.funcao === "Líder");
+            // Check if user is leader based on dono_id
+            setIsLeader(timeData.dono_id === usuario.id);
           } else {
             // Quando é o time do usuário, já sabemos que ele pertence ao time
             setIsUserInTeam(true);
             
-            // Check if user is leader
-            const integranteAtual = integrantesLista.find(
-              (i: any) => (i.usuario_id ?? i.id) === usuario.id
-            );
-            setIsLeader(integranteAtual?.funcao === "Líder");
+            // Check if user is leader based on dono_id
+            setIsLeader(timeData.dono_id === usuario.id);
           }
         } else {
           console.log("Lista de integrantes vazia ou undefined");
@@ -556,10 +550,7 @@ export default function TeamDetails() {
                 </p>
               ) : (
                 integrantes.map((integrante) => {
-                  const integranteComFuncao = integrantesComFuncao.find(
-                    (i: any) => (i.usuario_id ?? i.id) === integrante.id
-                  );
-                  const funcao = integranteComFuncao?.funcao || "Membro";
+                  const isOwner = time.dono_id === integrante.id;
                   
                   return (
                     <div
@@ -575,9 +566,9 @@ export default function TeamDetails() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-semibold">{integrante.nome}</p>
-                          {funcao === "Líder" && (
+                          {isOwner && (
                             <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                              {funcao}
+                              Líder
                             </span>
                           )}
                         </div>
