@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Carousel,
   CarouselContent,
@@ -10,13 +9,32 @@ import {
 import Autoplay from "embla-carousel-autoplay";
 
 export const HeroCarousel = () => {
-  const images = [
-    "/assets/WhatsApp%20Image%202025-11-11%20at%2023.42.51.jpeg",
-    "/assets/WhatsApp%20Image%202025-11-12%20at%2000.10.12%20(1).jpeg",
-    "/assets/WhatsApp%20Image%202025-11-12%20at%2000.10.12%20(2).jpeg",
-    "/assets/WhatsApp%20Image%202025-11-12%20at%2000.10.12.jpeg",
-    "/assets/WhatsApp%20Image%202025-11-12%20at%2000.10.13.jpeg",
-  ];
+  const [images, setImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    // Importar todas as imagens da pasta assets
+    const loadImages = async () => {
+      const imageModules = import.meta.glob<{ default: string }>(
+        "/public/assets/*.{jpeg,jpg,png,gif}",
+        { eager: true }
+      );
+      
+      const imageArray = Object.values(imageModules).map((module) => module.default);
+      setImages(imageArray);
+    };
+
+    loadImages();
+  }, []);
+
+  if (images.length === 0) {
+    return (
+      <div className="w-full max-w-5xl mx-auto">
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border shadow-card bg-muted flex items-center justify-center">
+          <p className="text-muted-foreground">Carregando imagens...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-5xl mx-auto">
@@ -36,6 +54,7 @@ export const HeroCarousel = () => {
                   src={image}
                   alt={`Carousel Image ${index + 1}`}
                   className="w-full h-full object-contain"
+                  loading="lazy"
                 />
               </div>
             </CarouselItem>
