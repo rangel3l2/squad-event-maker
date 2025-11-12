@@ -11,11 +11,11 @@ import Autoplay from "embla-carousel-autoplay";
 
 export const HeroCarousel = () => {
   const images = [
-    "/assets/WhatsApp Image 2025-11-11 at 23.42.51.jpeg",
-    "/assets/WhatsApp Image 2025-11-12 at 00.10.12 (1).jpeg",
-    "/assets/WhatsApp Image 2025-11-12 at 00.10.12 (2).jpeg",
-    "/assets/WhatsApp Image 2025-11-12 at 00.10.12.jpeg",
-    "/assets/WhatsApp Image 2025-11-12 at 00.10.13.jpeg",
+    "/assets/WhatsApp%20Image%202025-11-11%20at%2023.42.51.jpeg",
+    "/assets/WhatsApp%20Image%202025-11-12%20at%2000.10.12%20(1).jpeg",
+    "/assets/WhatsApp%20Image%202025-11-12%20at%2000.10.12%20(2).jpeg",
+    "/assets/WhatsApp%20Image%202025-11-12%20at%2000.10.12.jpeg",
+    "/assets/WhatsApp%20Image%202025-11-12%20at%2000.10.13.jpeg",
   ];
 
   return (
