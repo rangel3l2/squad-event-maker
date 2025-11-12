@@ -145,9 +145,17 @@ export default function CompleteProfile() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Turma *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: 3" type="number" min="1" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a turma" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="1">Turma 1 (Manhã)</SelectItem>
+                        <SelectItem value="2">Turma 2 (Tarde)</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -170,6 +178,8 @@ export default function CompleteProfile() {
                         <SelectItem value="2">2º Período</SelectItem>
                         <SelectItem value="3">3º Período</SelectItem>
                         <SelectItem value="4">4º Período</SelectItem>
+                        <SelectItem value="5">5º Período</SelectItem>
+                        <SelectItem value="6">6º Período</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
