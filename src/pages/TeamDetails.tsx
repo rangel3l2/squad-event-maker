@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirLideranca, deletarTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -216,15 +216,15 @@ export default function TeamDetails() {
 
     try {
       setIsTransferring(true);
-      
+
       const novoLiderId = parseInt(selectedNewLeader);
-      
-      await transferirLideranca(time.id!, novoLiderId);
-      
+
+      await transferirDono(time.id!, novoLiderId);
+
       toast.success("Liderança transferida com sucesso!");
       setShowTransferDialog(false);
       setSelectedNewLeader("");
-      
+
       // Recarregar dados do time
       window.location.reload();
     } catch (error: any) {
