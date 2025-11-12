@@ -25,7 +25,6 @@ export default function TeamDetails() {
   const [userHasTeam, setUserHasTeam] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [isJoining, setIsJoining] = useState(false);
-  const [isLeader, setIsLeader] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [selectedNewLeader, setSelectedNewLeader] = useState<string>("");
   const [isTransferring, setIsTransferring] = useState(false);
@@ -369,6 +368,8 @@ export default function TeamDetails() {
     );
   }
 
+  const isLeader = user?.id === time?.dono_id;
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -392,7 +393,9 @@ export default function TeamDetails() {
                   className="w-48 h-48 object-contain rounded-lg"
                 />
               )}
-              <CardTitle className="text-3xl">{time.nome_time}</CardTitle>
+              <CardTitle className="text-3xl">
+                {time.nome_time} {isLeader && <span className="text-sm text-primary">(Líder)</span>}
+              </CardTitle>
               
               <div className="flex gap-2">
                 {isUserInTeam && isLeader && (
