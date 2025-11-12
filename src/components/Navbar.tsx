@@ -8,12 +8,12 @@ const Navbar = () => {
 
   return (
     <nav className="border-b border-border/50 backdrop-blur-lg bg-background/80 sticky top-0 z-50">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+        <Link to="/" className="flex items-center justify-center py-2">
           <img 
             src="/cortedIMage.png" 
             alt="Squad Event Maker Logo" 
-            className="h-12 object-contain"
+            className="h-16 w-auto max-w-xs object-contain"
           />
         </Link>
 
