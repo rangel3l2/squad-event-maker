@@ -141,20 +141,14 @@ export default function TeamDetails() {
             setIsUserInTeam(usuarioEstaNoTime);
             console.log("Usuário está neste time?", usuarioEstaNoTime);
             
-            // Check if user is leader
-            const integranteAtual = integrantesLista.find(
-              (i: any) => (i.usuario_id ?? i.id) === usuario.id
-            );
-            setIsLeader(integranteAtual?.funcao === "Líder");
+            // Atualizar a lógica para determinar se o usuário é líder com base no dono_id
+            setIsLeader(usuario.id === timeData.dono_id);
           } else {
             // Quando é o time do usuário, já sabemos que ele pertence ao time
             setIsUserInTeam(true);
             
-            // Check if user is leader
-            const integranteAtual = integrantesLista.find(
-              (i: any) => (i.usuario_id ?? i.id) === usuario.id
-            );
-            setIsLeader(integranteAtual?.funcao === "Líder");
+            // Atualizar a lógica para determinar se o usuário é líder com base no dono_id
+            setIsLeader(usuario.id === timeData.dono_id);
           }
         } else {
           console.log("Lista de integrantes vazia ou undefined");
