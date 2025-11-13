@@ -47,16 +47,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    const siteUrl = window.location.origin.includes('vercel.app')
-      ? 'https://squad-event-maker.vercel.app'
-      : window.location.origin.includes('lovable.app')
-        ? 'https://squad-event-maker.lovable.app'
-        : window.location.origin;
+    // Detecta automaticamente o ambiente atual e redireciona para a mesma URL
+    const redirectUrl = window.location.origin;
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: siteUrl,
+        redirectTo: redirectUrl,
       },
     });
 
