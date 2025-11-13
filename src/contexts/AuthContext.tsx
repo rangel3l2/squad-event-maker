@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const siteUrl = window.location.origin.includes('vercel.app')
       ? 'https://squad-event-maker.vercel.app'
       : window.location.origin.includes('lovable.app')
-        ? 'https://preview--squad-event-maker.lovable.app'
+        ? 'https://squad-event-maker.lovable.app'
         : window.location.origin;
 
     const { error } = await supabase.auth.signInWithOAuth({
