@@ -47,24 +47,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    // Captura a URL completa atual (incluindo preview, vercel, etc.)
-    const currentUrl = window.location.href.split('?')[0].split('#')[0];
-    const redirectUrl = currentUrl.endsWith('/') ? currentUrl : `${currentUrl}/`;
-    
-    console.log('🔍 URL atual detectada:', window.location.href);
-    console.log('🔍 Origin:', window.location.origin);
-    console.log('🔍 Redirect URL configurada:', redirectUrl);
-
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: redirectUrl,
-      },
     });
-
-    if (error) {
-      console.error('❌ Erro no login Google:', error);
-    }
 
     return { error };
   };
