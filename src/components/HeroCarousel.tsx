@@ -30,7 +30,7 @@ export const HeroCarousel = () => {
     return (
       <div className="w-full max-w-5xl mx-auto">
         <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border shadow-card bg-muted flex items-center justify-center">
-          <p className="text-muted-foreground">Carregando imagens....</p>
+          <p className="text-muted-foreground">Carregando imagens...</p>
         </div>
       </div>
     );
