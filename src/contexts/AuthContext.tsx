@@ -21,12 +21,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -47,10 +47,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
+    // Detecta automaticamente a origem do site
+    let redirectBaseUrl = window.location.origin;
+
+    // Mas, por segurança, força o domínio correto caso precise
+    if (redirectBaseUrl.includes("vercel.app")) {
+      redirectBaseUrl = "https://squad-event-maker.vercel.app";
+    } else if (redirectBaseUrl.includes("lovable.app")) {
+      redirectBaseUrl = "https://squad-event-maker.lovable.app";
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: `${redirectBaseUrl}/`,
       },
     });
 
