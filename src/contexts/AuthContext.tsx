@@ -47,20 +47,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    // Detecta automaticamente a origem do site
-    let redirectBaseUrl = window.location.origin;
-
-    // Mas, por segurança, força o domínio correto caso precise
-    if (redirectBaseUrl.includes("vercel.app")) {
-      redirectBaseUrl = "https://squad-event-maker.vercel.app";
-    } else if (redirectBaseUrl.includes("lovable.app")) {
-      redirectBaseUrl = "https://squad-event-maker.lovable.app";
-    }
-
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${redirectBaseUrl}/`,
+        redirectTo: `${window.location.origin}/`,
       },
     });
 
