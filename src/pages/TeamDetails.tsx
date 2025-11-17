@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica } from "@/services/api";
+import CodeViewer from "@/components/CodeViewer";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -795,59 +796,29 @@ export default function TeamDetails() {
 
                     {/* Arquivos CSS */}
                     {dinamicaFiles.filter(f => f.tipo === 'css').length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                          Arquivos CSS
-                        </h3>
-                        <div className="space-y-3">
-                          {dinamicaFiles.filter(f => f.tipo === 'css').map((file, index) => (
-                            <Card key={index}>
-                              <CardHeader className="pb-3">
-                                <CardTitle className="text-sm">{file.nome}</CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <a 
-                                  href={file.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-primary hover:underline"
-                                >
-                                  Visualizar CSS
-                                </a>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
+                      <div className="space-y-3">
+                        {dinamicaFiles.filter(f => f.tipo === 'css').map((file, index) => (
+                          <CodeViewer 
+                            key={index}
+                            url={file.url}
+                            type="css"
+                            title={file.nome}
+                          />
+                        ))}
                       </div>
                     )}
 
                     {/* Arquivos HTML */}
                     {dinamicaFiles.filter(f => f.tipo === 'html').length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                          Arquivos HTML
-                        </h3>
-                        <div className="space-y-3">
-                          {dinamicaFiles.filter(f => f.tipo === 'html').map((file, index) => (
-                            <Card key={index}>
-                              <CardHeader className="pb-3">
-                                <CardTitle className="text-sm">{file.nome}</CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <a 
-                                  href={file.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-primary hover:underline"
-                                >
-                                  Visualizar HTML
-                                </a>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
+                      <div className="space-y-3">
+                        {dinamicaFiles.filter(f => f.tipo === 'html').map((file, index) => (
+                          <CodeViewer 
+                            key={index}
+                            url={file.url}
+                            type="html"
+                            title={file.nome}
+                          />
+                        ))}
                       </div>
                     )}
 
