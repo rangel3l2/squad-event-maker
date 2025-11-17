@@ -411,15 +411,13 @@ export default function TeamDetails() {
   const handleDinamicaClick = async (dinamica: Dinamica) => {
     setSelectedDinamica(dinamica);
     setLoadingFiles(true);
-    setDinamicaGif(null);
+    
+    // Usar o GIF que já vem na resposta da dinâmica
+    setDinamicaGif(dinamica.gif || null);
     
     try {
-      const [files, gifUrl] = await Promise.all([
-        buscarImagensDinamica(dinamica.code_pasta),
-        buscarGifDinamica(dinamica.code_pasta)
-      ]);
+      const files = await buscarImagensDinamica(dinamica.code_pasta);
       setDinamicaFiles(files);
-      setDinamicaGif(gifUrl);
     } catch (error: any) {
       toast.error("Erro ao carregar arquivos da dinâmica");
       console.error(error);
