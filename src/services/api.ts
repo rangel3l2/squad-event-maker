@@ -521,7 +521,15 @@ export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas
   console.log("=== API buscarDinamicasTime ===");
   console.log("Time ID:", timeId);
 
-  const response = await makeRequest(`/time/dinamicas?time_id=${timeId}`);
+  // Usar porta 6005 para a rota de dinâmicas
+  const url = `https://ifms.pro.br:6005/time/dinamicas?time_id=${timeId}`;
+  console.log("URL completa:", url);
+  
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
   if (!response.ok) {
     const errorText = await response.text();
