@@ -1,4 +1,6 @@
 // Direct HTTPS connection to external API
+import { supabase } from '@/integrations/supabase/client';
+
 const API_BASE_URL = "https://ifms.pro.br:6005";
 
 const makeRequest = async (path: string, options?: RequestInit) => {
@@ -640,17 +642,15 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoD
 // Buscar GIF da dinâmica
 export const buscarGifDinamica = async (codePasta: string): Promise<{ gif: string | null }> => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/api-proxy-gif?code_pasta=${encodeURIComponent(codePasta)}`, {
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
+    const { data, error } = await supabase.functions.invoke('api-proxy-gif', {
+      body: { code_pasta: codePasta }
     });
 
-    if (!response.ok) {
+    if (error) {
+      console.error("Erro ao buscar GIF:", error);
       return { gif: null };
     }
 
-    const data = await response.json();
     return { gif: data?.gif || null };
   } catch (error) {
     console.error("Erro ao buscar GIF:", error);

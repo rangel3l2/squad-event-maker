@@ -12,8 +12,19 @@ serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const codePasta = url.searchParams.get('code_pasta');
+    let codePasta: string | null = null;
+    
+    // Tentar pegar do body (POST) primeiro
+    if (req.method === 'POST') {
+      const body = await req.json();
+      codePasta = body.code_pasta;
+    }
+    
+    // Se não tiver no body, tentar query parameter (GET)
+    if (!codePasta) {
+      const url = new URL(req.url);
+      codePasta = url.searchParams.get('code_pasta');
+    }
     
     if (!codePasta) {
       return new Response(
