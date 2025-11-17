@@ -639,34 +639,19 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoD
 
 // Buscar GIF da dinâmica
 export const buscarGifDinamica = async (codePasta: string): Promise<{ gif: string | null }> => {
-  console.log("=== API buscarGifDinamica (direct) ===");
-  console.log("Code Pasta:", codePasta);
-
-  const url = `${API_BASE_URL}/obter-gif?code_pasta=${encodeURIComponent(codePasta)}`;
-  console.log("URL completa:", url);
-
   try {
-    const response = await fetch(url);
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/api-proxy-gif?code_pasta=${encodeURIComponent(codePasta)}`, {
+      headers: {
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+    });
 
     if (!response.ok) {
-      console.log("GIF não encontrado ou erro na requisição");
       return { gif: null };
     }
 
-    const contentType = response.headers.get('content-type');
-    console.log("Content-Type da resposta:", contentType);
-
-    // Se for JSON, processar normalmente
-    if (contentType?.includes('application/json')) {
-      const data = await response.json();
-      console.log("GIF recebido (JSON):", data);
-      return { gif: data?.gif || data?.url || null };
-    }
-    
-    // Se não for JSON, pode ser arquivo binário ou texto
-    // Neste caso, não há GIF disponível
-    console.log("Resposta não é JSON - GIF não disponível ou formato incorreto");
-    return { gif: null };
+    const data = await response.json();
+    return { gif: data?.gif || null };
   } catch (error) {
     console.error("Erro ao buscar GIF:", error);
     return { gif: null };
