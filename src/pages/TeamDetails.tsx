@@ -208,11 +208,19 @@ export default function TeamDetails() {
         console.log("integrantes no array:", integrantesLista.length || 0);
 
         // Buscar dinâmicas do time
-        if (timeData.id) {
+        console.log("=== VERIFICANDO BUSCA DE DINÂMICAS ===");
+        console.log("timeData:", timeData);
+        console.log("timeData.id:", timeData.id);
+        console.log("teamId da URL:", teamId);
+        
+        const timeIdParaDinamicas = timeData.id || (teamId ? parseInt(teamId) : null);
+        console.log("timeIdParaDinamicas calculado:", timeIdParaDinamicas);
+        
+        if (timeIdParaDinamicas) {
           console.log("=== BUSCANDO DINÂMICAS DO TIME ===");
-          console.log("Time ID para dinâmicas:", timeData.id);
+          console.log("Time ID para dinâmicas:", timeIdParaDinamicas);
           try {
-            const dinamicasData = await buscarDinamicasTime(timeData.id);
+            const dinamicasData = await buscarDinamicasTime(timeIdParaDinamicas);
             console.log("Dados de dinâmicas recebidos:", dinamicasData);
             setDinamicas(dinamicasData.dinamicas || []);
             console.log("Dinâmicas carregadas:", dinamicasData.dinamicas?.length || 0);
@@ -221,6 +229,9 @@ export default function TeamDetails() {
             // Não mostra erro para o usuário, apenas não carrega as dinâmicas
             setDinamicas([]);
           }
+        } else {
+          console.log("=== NÃO FOI POSSÍVEL BUSCAR DINÂMICAS ===");
+          console.log("Razão: timeData.id e teamId não disponíveis");
         }
       } catch (error: any) {
         console.error("=== ERRO GERAL NO CARREGAMENTO ===");
