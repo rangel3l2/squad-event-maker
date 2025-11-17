@@ -50,6 +50,11 @@ export interface Dinamica {
   tipo: number;
   status: boolean;
   code_pasta: string;
+  gif?: string;
+  base?: string;
+  html?: string;
+  css?: string;
+  pontuacao?: string;
   configuracao: {
     id: number;
     margin_cor: number;
