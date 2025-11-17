@@ -8,7 +8,7 @@ import { TeamsDashboard } from "@/components/TeamsDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Trophy, BookOpen, Tv } from "lucide-react";
+import { Trophy, BookOpen } from "lucide-react";
 
 interface Event {
   id: string;
@@ -164,18 +164,6 @@ const Index = () => {
             A maior competição de futebol entre turmas de desenvolvimento web
           </p>
           <HeroCarousel />
-          
-          {/* Botão Acompanhe Agora */}
-          <div className="mt-8">
-            <Button 
-              onClick={() => navigate("/tv-display")} 
-              size="lg" 
-              className="text-lg h-14 px-8 gap-2 shadow-lg hover:shadow-xl transition-all"
-            >
-              <Tv className="w-5 h-5" />
-              Acompanhe Agora
-            </Button>
-          </div>
         </div>
       </section>
 
