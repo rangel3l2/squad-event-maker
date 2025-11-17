@@ -9,10 +9,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy, FileCode, FileText, Award } from "lucide-react";
+import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy, FileCode, FileText, Award, Image, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica } from "@/services/api";
 import CodeViewer from "@/components/CodeViewer";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -35,6 +36,8 @@ export default function TeamDetails() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [dinamicas, setDinamicas] = useState<Dinamica[]>([]);
   const [selectedDinamica, setSelectedDinamica] = useState<Dinamica | null>(null);
+  const [gifUrl, setGifUrl] = useState<string | null>(null);
+  const [loadingGif, setLoadingGif] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -417,9 +420,23 @@ export default function TeamDetails() {
     }
   };
 
-  const handleDinamicaClick = (dinamica: Dinamica) => {
+  const handleDinamicaClick = async (dinamica: Dinamica) => {
     console.log("Dinâmica clicada:", dinamica);
     setSelectedDinamica(dinamica);
+    
+    // Buscar GIF se existir code_pasta
+    if (dinamica.code_pasta) {
+      setLoadingGif(true);
+      try {
+        const gifData = await buscarGifDinamica(dinamica.code_pasta);
+        setGifUrl(gifData.gif);
+      } catch (error) {
+        console.error("Erro ao buscar GIF:", error);
+        setGifUrl(null);
+      } finally {
+        setLoadingGif(false);
+      }
+    }
   };
 
   if (loading) {
@@ -717,8 +734,11 @@ export default function TeamDetails() {
         </Card>
 
         {/* Dialog para exibir conteúdo da dinâmica */}
-        <Dialog open={selectedDinamica !== null} onOpenChange={() => setSelectedDinamica(null)}>
-          <DialogContent className="max-w-6xl max-h-[90vh]">
+        <Dialog open={selectedDinamica !== null} onOpenChange={() => {
+          setSelectedDinamica(null);
+          setGifUrl(null);
+        }}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl">
                 {selectedDinamica?.evento.toUpperCase()}
@@ -729,8 +749,8 @@ export default function TeamDetails() {
             </DialogHeader>
             
             <Tabs defaultValue="evolucao" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="evolucao" disabled={!selectedDinamica?.gif}>
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="evolucao" disabled={loadingGif || !gifUrl}>
                   <Sparkles className="w-4 h-4 mr-2" />
                   Evolução
                 </TabsTrigger>
@@ -739,131 +759,126 @@ export default function TeamDetails() {
                   HTML
                 </TabsTrigger>
                 <TabsTrigger value="css" disabled={!selectedDinamica?.css}>
-                  <FileCode className="w-4 h-4 mr-2" />
+                  <FileText className="w-4 h-4 mr-2" />
                   CSS
                 </TabsTrigger>
                 <TabsTrigger value="pontuacao" disabled={!selectedDinamica?.pontuacao}>
                   <Award className="w-4 h-4 mr-2" />
                   Pontuação
                 </TabsTrigger>
+                <TabsTrigger value="resultado" disabled={!selectedDinamica?.imagem_pronta}>
+                  <Image className="w-4 h-4 mr-2" />
+                  Resultado
+                </TabsTrigger>
+                <TabsTrigger value="correcao" disabled={!selectedDinamica?.correcao || selectedDinamica.correcao.length === 0}>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Correção
+                </TabsTrigger>
               </TabsList>
 
-              {/* GIF de Evolução */}
-              <TabsContent value="evolucao" className="mt-4 max-h-[60vh] overflow-y-auto">
-                {selectedDinamica?.gif ? (
-                  <div className="space-y-4">
-                    <div className="relative rounded-lg overflow-hidden border bg-muted flex items-center justify-center min-h-[400px]">
-                      <img 
-                        src={selectedDinamica.gif} 
-                        alt="Evolução da dinâmica"
-                        className="max-w-full h-auto"
-                        onError={(e) => {
-                          console.error("Erro ao carregar GIF:", selectedDinamica.gif);
-                          e.currentTarget.src = "";
-                          e.currentTarget.alt = "Erro ao carregar GIF";
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => window.open(selectedDinamica.gif, '_blank')}
-                      >
-                        Abrir em nova aba
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">
-                    GIF não disponível
-                  </p>
-                )}
-              </TabsContent>
-
-              {/* HTML */}
-              <TabsContent value="html" className="mt-4 max-h-[60vh] overflow-y-auto">
-                {selectedDinamica?.html ? (
-                  <div className="space-y-4">
-                    <CodeViewer 
-                      url={selectedDinamica.html}
-                      type="html"
-                      title="index.html"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => window.open(selectedDinamica.html, '_blank')}
-                      >
-                        Abrir em nova aba
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">
-                    HTML não disponível
-                  </p>
-                )}
-              </TabsContent>
-
-              {/* CSS */}
-              <TabsContent value="css" className="mt-4 max-h-[60vh] overflow-y-auto">
-                {selectedDinamica?.css ? (
-                  <div className="space-y-4">
-                    <CodeViewer 
-                      url={selectedDinamica.css}
-                      type="css"
-                      title="style.css"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => window.open(selectedDinamica.css, '_blank')}
-                      >
-                        Abrir em nova aba
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">
-                    CSS não disponível
-                  </p>
-                )}
-              </TabsContent>
-
-              {/* Pontuação */}
-              <TabsContent value="pontuacao" className="mt-4 max-h-[60vh] overflow-y-auto">
-                {selectedDinamica?.pontuacao ? (
+              <TabsContent value="evolucao" className="space-y-4">
+                {loadingGif ? (
+                  <Card>
+                    <CardContent className="py-8">
+                      <p className="text-center text-muted-foreground">Carregando GIF...</p>
+                    </CardContent>
+                  </Card>
+                ) : gifUrl ? (
                   <Card>
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Award className="w-5 h-5" />
-                        Relatório de Pontuação
-                      </CardTitle>
+                      <CardTitle>Evolução da Dinâmica</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg font-mono">
+                      <div className="flex justify-center">
+                        <img 
+                          src={gifUrl} 
+                          alt="Evolução" 
+                          className="max-w-full h-auto rounded-lg border"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </TabsContent>
+
+              <TabsContent value="html" className="space-y-4">
+                {selectedDinamica?.html && (
+                  <CodeViewer url={selectedDinamica.html} type="html" title="Código HTML" />
+                )}
+              </TabsContent>
+
+              <TabsContent value="css" className="space-y-4">
+                {selectedDinamica?.css && (
+                  <CodeViewer url={selectedDinamica.css} type="css" title="Código CSS" />
+                )}
+              </TabsContent>
+
+              <TabsContent value="pontuacao" className="space-y-4">
+                {selectedDinamica?.pontuacao && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Pontuação Detalhada</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <pre className="text-sm whitespace-pre-wrap font-mono bg-muted p-4 rounded-lg">
                         {selectedDinamica.pontuacao}
                       </pre>
                     </CardContent>
                   </Card>
-                ) : (
-                  <p className="text-center text-muted-foreground py-8">
-                    Pontuação não disponível
-                  </p>
+                )}
+              </TabsContent>
+
+              <TabsContent value="resultado" className="space-y-4">
+                {selectedDinamica?.imagem_pronta && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Resultado Final</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex justify-center">
+                        <img 
+                          src={selectedDinamica.imagem_pronta} 
+                          alt="Resultado Final" 
+                          className="max-w-full h-auto rounded-lg border"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="correcao" className="space-y-4">
+                {selectedDinamica?.correcao && selectedDinamica.correcao.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Imagens de Correção ({selectedDinamica.correcao.length})</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Carousel className="w-full max-w-4xl mx-auto">
+                        <CarouselContent>
+                          {selectedDinamica.correcao.map((url, index) => (
+                            <CarouselItem key={index}>
+                              <div className="flex justify-center p-4">
+                                <img 
+                                  src={url} 
+                                  alt={`Correção ${index + 1}`} 
+                                  className="max-w-full h-auto rounded-lg border"
+                                />
+                              </div>
+                              <p className="text-center text-sm text-muted-foreground mt-2">
+                                Imagem {index + 1} de {selectedDinamica.correcao.length}
+                              </p>
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        <CarouselPrevious />
+                        <CarouselNext />
+                      </Carousel>
+                    </CardContent>
+                  </Card>
                 )}
               </TabsContent>
             </Tabs>
-
-            {selectedDinamica?.base && (
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-xs text-muted-foreground">
-                  Base URL: <a href={selectedDinamica.base} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selectedDinamica.base}</a>
-                </p>
-              </div>
-            )}
           </DialogContent>
         </Dialog>
       </div>

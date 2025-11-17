@@ -55,6 +55,10 @@ export interface Dinamica {
   html?: string;
   css?: string;
   pontuacao?: string;
+  imagem_pronta?: string;
+  correcao_completa?: string;
+  correcao?: string[];
+  imagens_evolucao?: string[];
   configuracao: {
     id: number;
     margin_cor: number;
@@ -639,7 +643,7 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoD
 };
 
 // Buscar GIF da dinâmica
-export const buscarGifDinamica = async (codePasta: string): Promise<string | null> => {
+export const buscarGifDinamica = async (codePasta: string): Promise<{ gif: string | null }> => {
   console.log("=== API buscarGifDinamica (direct) ===");
   console.log("Code Pasta:", codePasta);
 
@@ -651,7 +655,7 @@ export const buscarGifDinamica = async (codePasta: string): Promise<string | nul
 
     if (!response.ok) {
       console.log("GIF não encontrado ou erro na requisição");
-      return null;
+      return { gif: null };
     }
 
     const contentType = response.headers.get('content-type');
@@ -661,15 +665,15 @@ export const buscarGifDinamica = async (codePasta: string): Promise<string | nul
     if (contentType?.includes('application/json')) {
       const data = await response.json();
       console.log("GIF recebido (JSON):", data);
-      return data?.gif || data?.url || null;
+      return { gif: data?.gif || data?.url || null };
     }
     
     // Se não for JSON, pode ser arquivo binário ou texto
     // Neste caso, não há GIF disponível
     console.log("Resposta não é JSON - GIF não disponível ou formato incorreto");
-    return null;
+    return { gif: null };
   } catch (error) {
     console.error("Erro ao buscar GIF:", error);
-    return null;
+    return { gif: null };
   }
 };
