@@ -531,21 +531,40 @@ export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas
   const url = `${API_BASE_URL}/time/dinamicas?time_id=${timeId}`;
   console.log("URL completa:", url);
 
-  const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  try {
+    const response = await fetch(url);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Erro da API:", errorText);
-    throw new Error(`Erro ao buscar dinâmicas: ${response.status} - ${errorText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Erro da API:", errorText);
+      throw new Error(`Erro ao buscar dinâmicas: ${response.status} - ${errorText}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    console.log("Content-Type da resposta:", contentType);
+
+    // Se não for JSON, retorna estrutura vazia
+    if (!contentType?.includes('application/json')) {
+      console.log("Resposta não é JSON - dinâmicas não disponíveis");
+      return { 
+        time: {
+          id: timeId,
+          nome_time: '',
+          imagem_time: '',
+          imagem_url: '',
+          integrantes: []
+        },
+        dinamicas: [] 
+      };
+    }
+
+    const data = await response.json();
+    console.log("Dinâmicas encontradas:", data);
+    return data;
+  } catch (error) {
+    console.error("Erro ao buscar dinâmicas:", error);
+    throw error;
   }
-
-  const data = await response.json();
-  console.log("Dinâmicas encontradas:", data);
-  return data;
 };
 
 // Buscar arquivos de uma dinâmica específica
@@ -556,52 +575,62 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoD
   const url = `${API_BASE_URL}/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`;
   console.log("URL completa:", url);
 
-  const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  try {
+    const response = await fetch(url);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Erro ao buscar arquivos:", errorText);
-    throw new Error(`Erro ao buscar arquivos: ${response.status} ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  console.log("Dados recebidos:", data);
-
-  const arquivos = Array.isArray(data) ? data : [data];
-
-  const arquivosProcessados: ArquivoDinamica[] = arquivos.map((item: any) => {
-    const nome = item.nome || item.name || 'arquivo';
-    const url = item.url || item;
-    const extensao = nome.split('.').pop()?.toLowerCase() || '';
-
-    let tipo: 'imagem' | 'texto' | 'css' | 'html' | 'gif' | 'outro' = 'outro';
-
-    if (extensao === 'gif') {
-      tipo = 'gif';
-    } else if (['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(extensao)) {
-      tipo = 'imagem';
-    } else if (['txt', 'md'].includes(extensao)) {
-      tipo = 'texto';
-    } else if (extensao === 'css') {
-      tipo = 'css';
-    } else if (['html', 'htm'].includes(extensao)) {
-      tipo = 'html';
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Erro ao buscar arquivos:", errorText);
+      throw new Error(`Erro ao buscar arquivos: ${response.status} ${response.statusText}`);
     }
 
-    return {
-      nome,
-      url: typeof url === 'string' ? url : url.url || '',
-      tipo,
-      extensao
-    };
-  });
+    const contentType = response.headers.get('content-type');
+    console.log("Content-Type da resposta:", contentType);
 
-  console.log("Arquivos processados:", arquivosProcessados);
-  return arquivosProcessados;
+    // Se não for JSON, pode ser arquivo binário
+    if (!contentType?.includes('application/json')) {
+      console.log("Resposta não é JSON - arquivos não disponíveis ou formato incorreto");
+      return [];
+    }
+
+    const data = await response.json();
+    console.log("Dados recebidos:", data);
+
+    const arquivos = Array.isArray(data) ? data : [data];
+
+    const arquivosProcessados: ArquivoDinamica[] = arquivos.map((item: any) => {
+      const nome = item.nome || item.name || 'arquivo';
+      const url = item.url || item;
+      const extensao = nome.split('.').pop()?.toLowerCase() || '';
+
+      let tipo: 'imagem' | 'texto' | 'css' | 'html' | 'gif' | 'outro' = 'outro';
+
+      if (extensao === 'gif') {
+        tipo = 'gif';
+      } else if (['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(extensao)) {
+        tipo = 'imagem';
+      } else if (['txt', 'md'].includes(extensao)) {
+        tipo = 'texto';
+      } else if (extensao === 'css') {
+        tipo = 'css';
+      } else if (['html', 'htm'].includes(extensao)) {
+        tipo = 'html';
+      }
+
+      return {
+        nome,
+        url: typeof url === 'string' ? url : url.url || '',
+        tipo,
+        extensao
+      };
+    });
+
+    console.log("Arquivos processados:", arquivosProcessados);
+    return arquivosProcessados;
+  } catch (error) {
+    console.error("Erro ao buscar imagens:", error);
+    return [];
+  }
 };
 
 // Buscar GIF da dinâmica
@@ -613,21 +642,27 @@ export const buscarGifDinamica = async (codePasta: string): Promise<string | nul
   console.log("URL completa:", url);
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       console.log("GIF não encontrado ou erro na requisição");
       return null;
     }
 
-    const data = await response.json();
-    console.log("GIF recebido:", data);
+    const contentType = response.headers.get('content-type');
+    console.log("Content-Type da resposta:", contentType);
 
-    return data?.gif || data?.url || null;
+    // Se for JSON, processar normalmente
+    if (contentType?.includes('application/json')) {
+      const data = await response.json();
+      console.log("GIF recebido (JSON):", data);
+      return data?.gif || data?.url || null;
+    }
+    
+    // Se não for JSON, pode ser arquivo binário ou texto
+    // Neste caso, não há GIF disponível
+    console.log("Resposta não é JSON - GIF não disponível ou formato incorreto");
+    return null;
   } catch (error) {
     console.error("Erro ao buscar GIF:", error);
     return null;
