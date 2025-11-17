@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2 } from "lucide-react";
+import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, type Usuario, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, type Usuario, type Time, type Dinamica } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -31,6 +31,7 @@ export default function TeamDetails() {
   const [isTransferring, setIsTransferring] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [dinamicas, setDinamicas] = useState<Dinamica[]>([]);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -162,6 +163,18 @@ export default function TeamDetails() {
         console.log("time.qtd_integrantes:", (timeData as any).qtd_integrantes);
         console.log("time.quantidade:", (timeData as any).quantidade);
         console.log("integrantes no array:", integrantesLista.length || 0);
+
+        // Buscar dinâmicas do time
+        if (timeData.id) {
+          try {
+            const dinamicasData = await buscarDinamicasTime(timeData.id);
+            setDinamicas(dinamicasData.dinamicas || []);
+            console.log("Dinâmicas carregadas:", dinamicasData.dinamicas?.length || 0);
+          } catch (error) {
+            console.error("Erro ao carregar dinâmicas:", error);
+            // Não mostra erro para o usuário, apenas não carrega as dinâmicas
+          }
+        }
       } catch (error: any) {
         console.error("Erro ao carregar dados do time:", error);
         toast.error("Erro ao carregar dados do time");
@@ -579,6 +592,59 @@ export default function TeamDetails() {
                     </div>
                   );
                 })
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dinâmicas/Jogos */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Trophy className="w-5 h-5" />
+              Dinâmicas Participadas ({dinamicas.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {dinamicas.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  Nenhuma dinâmica participada ainda
+                </p>
+              ) : (
+                dinamicas.map((dinamica, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="font-semibold text-lg">{dinamica.evento.toUpperCase()}</p>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          dinamica.status 
+                            ? 'bg-green-500/10 text-green-500 border border-green-500/20' 
+                            : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                        }`}>
+                          {dinamica.status ? 'Ativa' : 'Finalizada'}
+                        </span>
+                      </div>
+                      
+                      {dinamica.configuracao && (
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <p><strong>Nome:</strong> {dinamica.configuracao.nome.join(', ')}</p>
+                          <p><strong>Descrição:</strong> {dinamica.configuracao.descr}</p>
+                          <p className="text-xs mt-2"><strong>Código:</strong> {dinamica.code_pasta}</p>
+                        </div>
+                      )}
+                      
+                      {!dinamica.configuracao && (
+                        <p className="text-sm text-muted-foreground">
+                          Código: {dinamica.code_pasta}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </CardContent>

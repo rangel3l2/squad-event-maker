@@ -45,6 +45,41 @@ export interface Integrante {
   funcao: string;
 }
 
+export interface Dinamica {
+  evento: string;
+  tipo: number;
+  status: boolean;
+  code_pasta: string;
+  configuracao: {
+    id: number;
+    margin_cor: number;
+    peso_cor: number;
+    margin_distancia: number;
+    peso_distancia: number;
+    margin_tamanho: number;
+    peso_tamanho: number;
+    penalidade: number;
+    nome: string[];
+    descr: string;
+  } | null;
+}
+
+export interface TimeDinamicas {
+  time: {
+    id: number;
+    nome_time: string;
+    imagem_time: string;
+    imagem_url: string;
+    integrantes: Array<{
+      id: number;
+      nome: string;
+      url_image_perfil: string;
+      imagem_url: string;
+    }>;
+  };
+  dinamicas: Dinamica[];
+}
+
 // Usuários
 export const listarUsuarios = async (): Promise<Usuario[]> => {
   const response = await makeRequest('/usuarios');
@@ -480,4 +515,21 @@ export const transferirDono = async (timeId: number, novoDonoId: number): Promis
   }
 
   console.log("Dono transferido com sucesso");
+};
+
+export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas> => {
+  console.log("=== API buscarDinamicasTime ===");
+  console.log("Time ID:", timeId);
+
+  const response = await makeRequest(`/time/dinamicas?time_id=${timeId}`);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Erro da API:", errorText);
+    throw new Error(`Erro ao buscar dinâmicas: ${response.status} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  console.log("Dinâmicas encontradas:", data);
+  return data;
 };
