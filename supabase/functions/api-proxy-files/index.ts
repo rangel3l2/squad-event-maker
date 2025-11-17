@@ -26,9 +26,21 @@ serve(async (req) => {
 
     console.log('Buscando arquivos para pasta:', codePasta);
     
-    // Fazer requisição para a API externa
-    const apiUrl = `https://ifms.pro.br:6005/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`;
-    const response = await fetch(apiUrl);
+    const httpsUrl = `https://ifms.pro.br:6005/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`;
+    const httpUrl = `http://ifms.pro.br:6005/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`;
+
+    let response: Response | null = null;
+    try {
+      console.log('Tentando via HTTPS:', httpsUrl);
+      response = await fetch(httpsUrl);
+    } catch (e) {
+      console.warn('Falha no HTTPS, tentando HTTP sem TLS:', String(e));
+    }
+
+    if (!response) {
+      console.log('Tentando via HTTP:', httpUrl);
+      response = await fetch(httpUrl);
+    }
     
     if (!response.ok) {
       throw new Error(`Erro da API: ${response.status}`);
