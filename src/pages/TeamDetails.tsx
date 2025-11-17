@@ -35,70 +35,80 @@ export default function TeamDetails() {
 
   useEffect(() => {
     const loadTeamData = async () => {
-      if (!user) {
+      // Se não há teamId na URL e não está logado, redireciona
+      if (!user && !teamId) {
         toast.error("Você precisa estar logado");
         navigate("/auth");
         return;
       }
 
       try {
-        // Buscar usuário na API
-        const usuarios = await listarUsuarios();
-        const usuario = usuarios.find(u => u.email === user.email);
-
-        if (!usuario) {
-          toast.error("Complete seu perfil primeiro");
-          navigate("/complete-profile");
-          return;
-        }
-
-        // Verificar se o usuário já tem um time (mesmo que não seja o dono)
-        let usuarioTemTime = false;
+        let usuario: Usuario | undefined;
         
-        // Verificar se é dono de algum time
-        try {
-          const userTeam = await mostrarTimeUsuario(usuario.id!);
-          if (userTeam && userTeam.id != null) {
-            usuarioTemTime = true;
-          }
-        } catch {
-          // Não é dono de nenhum time
-        }
+        // Buscar dados do usuário apenas se estiver logado
+        if (user) {
+          const usuarios = await listarUsuarios();
+          usuario = usuarios.find(u => u.email === user.email);
 
-        // Verificar se é integrante de algum time
-        if (!usuarioTemTime) {
-          const times = await listarTimes();
-          for (const time of times) {
-            const integrantes = time.integrantes || [];
-            const ehIntegrante = integrantes.some(
-              (integrante: any) => integrante.usuario_id === usuario.id
-            );
+          if (!usuario && !teamId) {
+            toast.error("Complete seu perfil primeiro");
+            navigate("/complete-profile");
+            return;
+          }
+
+          // Verificar se o usuário já tem um time (apenas se logado)
+          if (usuario) {
+            let usuarioTemTime = false;
             
-            if (ehIntegrante) {
-              usuarioTemTime = true;
-              break;
+            // Verificar se é dono de algum time
+            try {
+              const userTeam = await mostrarTimeUsuario(usuario.id!);
+              if (userTeam && userTeam.id != null) {
+                usuarioTemTime = true;
+              }
+            } catch {
+              // Não é dono de nenhum time
             }
+
+            // Verificar se é integrante de algum time
+            if (!usuarioTemTime) {
+              const times = await listarTimes();
+              for (const time of times) {
+                const integrantes = time.integrantes || [];
+                const ehIntegrante = integrantes.some(
+                  (integrante: any) => integrante.usuario_id === usuario.id
+                );
+                
+                if (ehIntegrante) {
+                  usuarioTemTime = true;
+                  break;
+                }
+              }
+            }
+            
+            setUserHasTeam(usuarioTemTime);
           }
         }
-        
-        setUserHasTeam(usuarioTemTime);
 
         let timeData: Time;
         
-        // Se tem teamId na URL, busca esse time específico
+        // Se tem teamId na URL, busca esse time específico (pode ser visualização pública)
         if (teamId) {
-          console.log("=== BUSCANDO TIME POR ID ===");
+          console.log("=== BUSCANDO TIME POR ID (visualização pública) ===");
           console.log("Team ID:", teamId);
           timeData = await mostrarTime(Number(teamId));
           console.log("Time encontrado:", timeData);
           console.log("Integrantes no time:", timeData.integrantes);
-        } else {
+        } else if (usuario) {
           // Senão, busca o time do usuário logado
           console.log("=== BUSCANDO TIME DO USUÁRIO ===");
           console.log("Usuario ID:", usuario.id);
           timeData = await mostrarTimeUsuario(usuario.id!);
-          console.log("Time do usuário:", timeData);
-          console.log("Integrantes no time:", timeData.integrantes);
+        } else {
+          // Não tem teamId e não está logado
+          toast.error("Você precisa estar logado");
+          navigate("/auth");
+          return;
         }
         
         setTime(timeData);
@@ -131,20 +141,22 @@ export default function TeamDetails() {
           const integrantesIds = integrantesLista.map((i: any) => i.usuario_id ?? i.id);
           console.log("IDs dos integrantes:", integrantesIds);
 
+          // Buscar dados dos usuários apenas se tivermos a lista completa
+          const usuarios = await listarUsuarios();
           const integrantesData = usuarios.filter(u => integrantesIds.includes(u.id));
           console.log("Dados dos integrantes encontrados:", integrantesData);
 
           setIntegrantes(integrantesData);
 
-          // Verificar se o usuário logado está neste time
-          if (teamId) {
+          // Verificar se o usuário logado está neste time (apenas se logado)
+          if (usuario && teamId) {
             const usuarioEstaNoTime = integrantesIds.includes(usuario.id);
             setIsUserInTeam(usuarioEstaNoTime);
             console.log("Usuário está neste time?", usuarioEstaNoTime);
             
             // Check if user is leader based on dono_id
             setIsLeader(timeData.dono_id === usuario.id);
-          } else {
+          } else if (usuario && !teamId) {
             // Quando é o time do usuário, já sabemos que ele pertence ao time
             setIsUserInTeam(true);
             
