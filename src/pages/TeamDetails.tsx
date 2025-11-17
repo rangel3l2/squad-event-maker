@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica } from "@/services/api";
 import CodeViewer from "@/components/CodeViewer";
 
 export default function TeamDetails() {
@@ -35,6 +35,7 @@ export default function TeamDetails() {
   const [dinamicas, setDinamicas] = useState<Dinamica[]>([]);
   const [selectedDinamica, setSelectedDinamica] = useState<Dinamica | null>(null);
   const [dinamicaFiles, setDinamicaFiles] = useState<ArquivoDinamica[]>([]);
+  const [dinamicaGif, setDinamicaGif] = useState<string | null>(null);
   const [loadingFiles, setLoadingFiles] = useState(false);
 
   useEffect(() => {
@@ -410,10 +411,15 @@ export default function TeamDetails() {
   const handleDinamicaClick = async (dinamica: Dinamica) => {
     setSelectedDinamica(dinamica);
     setLoadingFiles(true);
+    setDinamicaGif(null);
     
     try {
-      const files = await buscarImagensDinamica(dinamica.code_pasta);
+      const [files, gifUrl] = await Promise.all([
+        buscarImagensDinamica(dinamica.code_pasta),
+        buscarGifDinamica(dinamica.code_pasta)
+      ]);
       setDinamicaFiles(files);
+      setDinamicaGif(gifUrl);
     } catch (error: any) {
       toast.error("Erro ao carregar arquivos da dinâmica");
       console.error(error);
@@ -734,12 +740,29 @@ export default function TeamDetails() {
               </div>
             ) : (
               <div className="space-y-6 mt-4">
-                {dinamicaFiles.length === 0 ? (
+                {dinamicaFiles.length === 0 && !dinamicaGif ? (
                   <p className="text-center text-muted-foreground py-8">
                     Nenhum arquivo disponível
                   </p>
                 ) : (
                   <>
+                    {/* GIF de Evolução */}
+                    {dinamicaGif && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-primary"></span>
+                          Evolução da Dinâmica
+                        </h3>
+                        <div className="relative rounded-lg overflow-hidden border bg-muted">
+                          <img 
+                            src={dinamicaGif} 
+                            alt="Evolução da dinâmica"
+                            className="w-full h-auto"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {/* Imagens */}
                     {dinamicaFiles.filter(f => f.tipo === 'imagem').length > 0 && (
                       <div>

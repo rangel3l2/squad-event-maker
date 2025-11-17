@@ -67,7 +67,7 @@ export interface Dinamica {
 export interface ArquivoDinamica {
   nome: string;
   url: string;
-  tipo: 'imagem' | 'texto' | 'css' | 'html' | 'outro';
+  tipo: 'imagem' | 'texto' | 'css' | 'html' | 'gif' | 'outro';
   extensao: string;
 }
 
@@ -581,9 +581,11 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoD
     const url = item.url || item;
     const extensao = nome.split('.').pop()?.toLowerCase() || '';
     
-    let tipo: 'imagem' | 'texto' | 'css' | 'html' | 'outro' = 'outro';
+    let tipo: 'imagem' | 'texto' | 'css' | 'html' | 'gif' | 'outro' = 'outro';
     
-    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(extensao)) {
+    if (extensao === 'gif') {
+      tipo = 'gif';
+    } else if (['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(extensao)) {
       tipo = 'imagem';
     } else if (['txt', 'md'].includes(extensao)) {
       tipo = 'texto';
@@ -603,4 +605,35 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoD
   
   console.log("Arquivos processados:", arquivosProcessados);
   return arquivosProcessados;
+};
+
+// Buscar GIF da dinâmica
+export const buscarGifDinamica = async (codePasta: string): Promise<string | null> => {
+  console.log("=== API buscarGifDinamica ===");
+  console.log("Code Pasta:", codePasta);
+
+  const url = `https://ifms.pro.br:6005/obter-gif?code_pasta=${encodeURIComponent(codePasta)}`;
+  console.log("URL completa:", url);
+  
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.log("GIF não encontrado ou erro na requisição");
+      return null;
+    }
+
+    const data = await response.json();
+    console.log("GIF recebido:", data);
+    
+    // Retorna a URL do GIF se existir
+    return data?.gif || data?.url || null;
+  } catch (error) {
+    console.error("Erro ao buscar GIF:", error);
+    return null;
+  }
 };
