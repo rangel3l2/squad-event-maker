@@ -525,20 +525,15 @@ export const transferirDono = async (timeId: number, novoDonoId: number): Promis
 };
 
 export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas> => {
-  console.log("=== API buscarDinamicasTime ===");
+  console.log("=== API buscarDinamicasTime (direct) ===");
   console.log("Time ID:", timeId);
 
-  // Usar edge function como proxy para evitar erro de SSL
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  
-  const url = `${SUPABASE_URL}/functions/v1/api-proxy-dinamicas?time_id=${timeId}`;
+  const url = `${API_BASE_URL}/time/dinamicas?time_id=${timeId}`;
   console.log("URL completa:", url);
-  
+
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
     },
   });
 
@@ -555,20 +550,15 @@ export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas
 
 // Buscar arquivos de uma dinâmica específica
 export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoDinamica[]> => {
-  console.log("=== API buscarImagensDinamica ===");
+  console.log("=== API buscarImagensDinamica (direct) ===");
   console.log("Code Pasta:", codePasta);
 
-  // Usar edge function como proxy para evitar erro de SSL
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  
-  const url = `${SUPABASE_URL}/functions/v1/api-proxy-files?code_pasta=${encodeURIComponent(codePasta)}`;
+  const url = `${API_BASE_URL}/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`;
   console.log("URL completa:", url);
-  
+
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
     },
   });
 
@@ -580,18 +570,16 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoD
 
   const data = await response.json();
   console.log("Dados recebidos:", data);
-  
-  // Se data não for um array, transforma em array
+
   const arquivos = Array.isArray(data) ? data : [data];
-  
-  // Processar cada arquivo para determinar seu tipo
+
   const arquivosProcessados: ArquivoDinamica[] = arquivos.map((item: any) => {
     const nome = item.nome || item.name || 'arquivo';
     const url = item.url || item;
     const extensao = nome.split('.').pop()?.toLowerCase() || '';
-    
+
     let tipo: 'imagem' | 'texto' | 'css' | 'html' | 'gif' | 'outro' = 'outro';
-    
+
     if (extensao === 'gif') {
       tipo = 'gif';
     } else if (['png', 'jpg', 'jpeg', 'webp', 'svg'].includes(extensao)) {
@@ -603,7 +591,7 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoD
     } else if (['html', 'htm'].includes(extensao)) {
       tipo = 'html';
     }
-    
+
     return {
       nome,
       url: typeof url === 'string' ? url : url.url || '',
@@ -611,28 +599,23 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoD
       extensao
     };
   });
-  
+
   console.log("Arquivos processados:", arquivosProcessados);
   return arquivosProcessados;
 };
 
 // Buscar GIF da dinâmica
 export const buscarGifDinamica = async (codePasta: string): Promise<string | null> => {
-  console.log("=== API buscarGifDinamica ===");
+  console.log("=== API buscarGifDinamica (direct) ===");
   console.log("Code Pasta:", codePasta);
 
-  // Usar edge function como proxy para evitar erro de SSL
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  
-  const url = `${SUPABASE_URL}/functions/v1/api-proxy-gif?code_pasta=${encodeURIComponent(codePasta)}`;
+  const url = `${API_BASE_URL}/obter-gif?code_pasta=${encodeURIComponent(codePasta)}`;
   console.log("URL completa:", url);
-  
+
   try {
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
     });
 
@@ -643,8 +626,7 @@ export const buscarGifDinamica = async (codePasta: string): Promise<string | nul
 
     const data = await response.json();
     console.log("GIF recebido:", data);
-    
-    // Retorna a URL do GIF se existir
+
     return data?.gif || data?.url || null;
   } catch (error) {
     console.error("Erro ao buscar GIF:", error);
