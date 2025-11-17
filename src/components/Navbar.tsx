@@ -2,18 +2,19 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Users, Trophy, LogOut, Settings, Palette, UserCircle } from "lucide-react";
+import logoCopa from "@/assets/logo-copa.png";
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
 
   return (
     <nav className="border-b border-border/50 backdrop-blur-lg bg-background/80 sticky top-0 z-50">
-      <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-        <Link to="/" className="flex items-center justify-center py-2">
+      <div className="container mx-auto px-4 h-24 flex items-center justify-between">
+        <Link to="/" className="flex items-center justify-center py-3">
           <img 
-            src="/cortedIMage.png" 
-            alt="Squad Event Maker Logo" 
-            className="h-16 w-auto max-w-xs object-contain"
+            src={logoCopa} 
+            alt="Frontend Teams Cup - Três Lagoas Logo" 
+            className="h-20 w-auto object-contain"
           />
         </Link>
 
