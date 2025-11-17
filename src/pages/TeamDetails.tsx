@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy, FileCode, FileText, Award } from "lucide-react";
 import { toast } from "sonner";
 import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica } from "@/services/api";
 import CodeViewer from "@/components/CodeViewer";
@@ -34,9 +35,6 @@ export default function TeamDetails() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [dinamicas, setDinamicas] = useState<Dinamica[]>([]);
   const [selectedDinamica, setSelectedDinamica] = useState<Dinamica | null>(null);
-  const [dinamicaFiles, setDinamicaFiles] = useState<ArquivoDinamica[]>([]);
-  const [dinamicaGif, setDinamicaGif] = useState<string | null>(null);
-  const [loadingFiles, setLoadingFiles] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -408,22 +406,9 @@ export default function TeamDetails() {
     }
   };
 
-  const handleDinamicaClick = async (dinamica: Dinamica) => {
+  const handleDinamicaClick = (dinamica: Dinamica) => {
+    console.log("Dinâmica clicada:", dinamica);
     setSelectedDinamica(dinamica);
-    setLoadingFiles(true);
-    
-    // Usar o GIF que já vem na resposta da dinâmica
-    setDinamicaGif(dinamica.gif || null);
-    
-    try {
-      const files = await buscarImagensDinamica(dinamica.code_pasta);
-      setDinamicaFiles(files);
-    } catch (error: any) {
-      toast.error("Erro ao carregar arquivos da dinâmica");
-      console.error(error);
-    } finally {
-      setLoadingFiles(false);
-    }
   };
 
   if (loading) {
@@ -720,159 +705,152 @@ export default function TeamDetails() {
           </CardContent>
         </Card>
 
-        {/* Dialog para exibir arquivos da dinâmica */}
+        {/* Dialog para exibir conteúdo da dinâmica */}
         <Dialog open={selectedDinamica !== null} onOpenChange={() => setSelectedDinamica(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-6xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle className="text-2xl">
                 {selectedDinamica?.evento.toUpperCase()}
               </DialogTitle>
               <DialogDescription>
-                Arquivos da dinâmica
+                Informações e arquivos da dinâmica
               </DialogDescription>
             </DialogHeader>
             
-            {loadingFiles ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              </div>
-            ) : (
-              <div className="space-y-6 mt-4">
-                {dinamicaFiles.length === 0 && !dinamicaGif ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    Nenhum arquivo disponível
-                  </p>
+            <Tabs defaultValue="evolucao" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="evolucao" disabled={!selectedDinamica?.gif}>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Evolução
+                </TabsTrigger>
+                <TabsTrigger value="html" disabled={!selectedDinamica?.html}>
+                  <FileCode className="w-4 h-4 mr-2" />
+                  HTML
+                </TabsTrigger>
+                <TabsTrigger value="css" disabled={!selectedDinamica?.css}>
+                  <FileCode className="w-4 h-4 mr-2" />
+                  CSS
+                </TabsTrigger>
+                <TabsTrigger value="pontuacao" disabled={!selectedDinamica?.pontuacao}>
+                  <Award className="w-4 h-4 mr-2" />
+                  Pontuação
+                </TabsTrigger>
+              </TabsList>
+
+              {/* GIF de Evolução */}
+              <TabsContent value="evolucao" className="mt-4 max-h-[60vh] overflow-y-auto">
+                {selectedDinamica?.gif ? (
+                  <div className="space-y-4">
+                    <div className="relative rounded-lg overflow-hidden border bg-muted flex items-center justify-center min-h-[400px]">
+                      <img 
+                        src={selectedDinamica.gif} 
+                        alt="Evolução da dinâmica"
+                        className="max-w-full h-auto"
+                        onError={(e) => {
+                          console.error("Erro ao carregar GIF:", selectedDinamica.gif);
+                          e.currentTarget.src = "";
+                          e.currentTarget.alt = "Erro ao carregar GIF";
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(selectedDinamica.gif, '_blank')}
+                      >
+                        Abrir em nova aba
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
-                  <>
-                    {/* GIF de Evolução */}
-                    {dinamicaGif && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-primary"></span>
-                          Evolução da Dinâmica
-                        </h3>
-                        <div className="relative rounded-lg overflow-hidden border bg-muted">
-                          <img 
-                            src={dinamicaGif} 
-                            alt="Evolução da dinâmica"
-                            className="w-full h-auto"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Imagens */}
-                    {dinamicaFiles.filter(f => f.tipo === 'imagem').length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-primary"></span>
-                          Imagens
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          {dinamicaFiles.filter(f => f.tipo === 'imagem').map((file, index) => (
-                            <div key={index} className="relative aspect-square rounded-lg overflow-hidden border bg-muted">
-                              <img 
-                                src={file.url} 
-                                alt={file.nome}
-                                className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                                onClick={() => window.open(file.url, '_blank')}
-                              />
-                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2 truncate">
-                                {file.nome}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Arquivos de Texto */}
-                    {dinamicaFiles.filter(f => f.tipo === 'texto').length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                          Arquivos de Texto
-                        </h3>
-                        <div className="space-y-3">
-                          {dinamicaFiles.filter(f => f.tipo === 'texto').map((file, index) => (
-                            <Card key={index}>
-                              <CardHeader className="pb-3">
-                                <CardTitle className="text-sm">{file.nome}</CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <a 
-                                  href={file.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-primary hover:underline"
-                                >
-                                  Abrir arquivo
-                                </a>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Arquivos CSS */}
-                    {dinamicaFiles.filter(f => f.tipo === 'css').length > 0 && (
-                      <div className="space-y-3">
-                        {dinamicaFiles.filter(f => f.tipo === 'css').map((file, index) => (
-                          <CodeViewer 
-                            key={index}
-                            url={file.url}
-                            type="css"
-                            title={file.nome}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Arquivos HTML */}
-                    {dinamicaFiles.filter(f => f.tipo === 'html').length > 0 && (
-                      <div className="space-y-3">
-                        {dinamicaFiles.filter(f => f.tipo === 'html').map((file, index) => (
-                          <CodeViewer 
-                            key={index}
-                            url={file.url}
-                            type="html"
-                            title={file.nome}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Outros Arquivos */}
-                    {dinamicaFiles.filter(f => f.tipo === 'outro').length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-gray-500"></span>
-                          Outros Arquivos
-                        </h3>
-                        <div className="space-y-3">
-                          {dinamicaFiles.filter(f => f.tipo === 'outro').map((file, index) => (
-                            <Card key={index}>
-                              <CardHeader className="pb-3">
-                                <CardTitle className="text-sm">{file.nome}</CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <a 
-                                  href={file.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-sm text-primary hover:underline"
-                                >
-                                  Baixar arquivo ({file.extensao})
-                                </a>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
+                  <p className="text-center text-muted-foreground py-8">
+                    GIF não disponível
+                  </p>
                 )}
+              </TabsContent>
+
+              {/* HTML */}
+              <TabsContent value="html" className="mt-4 max-h-[60vh] overflow-y-auto">
+                {selectedDinamica?.html ? (
+                  <div className="space-y-4">
+                    <CodeViewer 
+                      url={selectedDinamica.html}
+                      type="html"
+                      title="index.html"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(selectedDinamica.html, '_blank')}
+                      >
+                        Abrir em nova aba
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">
+                    HTML não disponível
+                  </p>
+                )}
+              </TabsContent>
+
+              {/* CSS */}
+              <TabsContent value="css" className="mt-4 max-h-[60vh] overflow-y-auto">
+                {selectedDinamica?.css ? (
+                  <div className="space-y-4">
+                    <CodeViewer 
+                      url={selectedDinamica.css}
+                      type="css"
+                      title="style.css"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(selectedDinamica.css, '_blank')}
+                      >
+                        Abrir em nova aba
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">
+                    CSS não disponível
+                  </p>
+                )}
+              </TabsContent>
+
+              {/* Pontuação */}
+              <TabsContent value="pontuacao" className="mt-4 max-h-[60vh] overflow-y-auto">
+                {selectedDinamica?.pontuacao ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Award className="w-5 h-5" />
+                        Relatório de Pontuação
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg font-mono">
+                        {selectedDinamica.pontuacao}
+                      </pre>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">
+                    Pontuação não disponível
+                  </p>
+                )}
+              </TabsContent>
+            </Tabs>
+
+            {selectedDinamica?.base && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground">
+                  Base URL: <a href={selectedDinamica.base} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selectedDinamica.base}</a>
+                </p>
               </div>
             )}
           </DialogContent>
