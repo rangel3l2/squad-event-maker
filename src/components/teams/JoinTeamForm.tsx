@@ -43,16 +43,9 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
     setIsJoining(true);
 
     try {
-      console.log("=== INICIANDO PROCESSO DE ENTRADA NO TIME ===");
-      console.log("Código inserido:", data.inviteCode);
-      console.log("Email do usuário logado:", user.email);
-
       // Verificar se usuário já tem perfil completo via API
       const usuarios = await listarUsuarios();
-      console.log("Total de usuários encontrados:", usuarios.length);
-      
       const usuario = usuarios.find(u => u.email === user.email);
-      console.log("Usuário encontrado:", usuario);
 
       if (!usuario) {
         toast.error("Complete seu perfil primeiro");
@@ -62,14 +55,7 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
 
       // Buscar todos os times para encontrar o que tem esse código
       const times = await listarTimes();
-      console.log("=== TIMES DISPONÍVEIS ===");
-      console.log("Total de times:", times.length);
-      times.forEach(t => {
-        console.log(`Time: ${t.nome_time}, Senha: ${t.senha_convite}, ID: ${t.id}, Integrantes:`, t.integrantes?.length || 0);
-      });
-      
       const timeEncontrado = times.find(t => t.senha_convite === data.inviteCode);
-      console.log("Time encontrado com o código:", timeEncontrado);
 
       if (!timeEncontrado) {
         toast.error("Código de convite inválido");
@@ -78,7 +64,6 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
 
       // Verificar se o time já tem 4 integrantes
       const integrantesCount = timeEncontrado.integrantes?.length || 0;
-      console.log("Quantidade de integrantes no time:", integrantesCount);
       
       if (integrantesCount >= 4) {
         toast.error("Este time já atingiu o limite máximo de 4 membros");
@@ -94,12 +79,6 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
         toast.error("Você já é membro deste time");
         return;
       }
-
-      console.log("=== ADICIONANDO INTEGRANTE ===");
-      console.log("Time ID:", timeEncontrado.id);
-      console.log("Usuario ID:", usuario.id);
-      console.log("Tipo do Usuario ID:", typeof usuario.id);
-      console.log("Usuario completo:", JSON.stringify(usuario));
       
       if (!usuario.id) {
         toast.error("ID do usuário não encontrado");
@@ -111,12 +90,8 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
         usuario_id: usuario.id,
         funcao: "Membro",
       };
-      console.log("Dados do integrante a serem enviados:", JSON.stringify(integranteData));
       
       const resultado = await adicionarIntegrante(timeEncontrado.id!, integranteData);
-      
-      console.log("=== RESULTADO DA ADIÇÃO ===");
-      console.log(resultado);
 
       toast.success(`Você entrou no time "${timeEncontrado.nome_time}" com sucesso!`);
       form.reset();

@@ -34,9 +34,7 @@ export function TeamLogoUploader({ onLogoChange, currentLogo }: TeamLogoUploader
         setPreviewUrl(base64String);
         
         // Upload para ImgBB
-        console.log("Fazendo upload da imagem para ImgBB...");
         const imageUrl = await uploadImageToImgBB(base64String);
-        console.log("URL da imagem no ImgBB:", imageUrl);
         
         onLogoChange(imageUrl);
         setIsUploading(false);

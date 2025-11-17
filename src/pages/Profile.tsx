@@ -75,8 +75,6 @@ export default function Profile() {
 
           // Buscar time do usuário
            const timeUsuario = await mostrarTimeUsuario(usuario.id!);
-           console.log("Perfil - usuario:", usuario);
-           console.log("Perfil - timeUsuario:", timeUsuario);
            if (timeUsuario && timeUsuario.id != null) {
              setTeamId(timeUsuario.id);
              setCurrentTeam({
@@ -160,8 +158,6 @@ export default function Profile() {
     try {
       // Deletar usuário e remover de todos os times
       await deletarUsuario(userId, deleteConfirmation);
-      
-      console.log("Conta excluída. Fazendo logout...");
       
       // Fazer logout do Google/Supabase
       await signOut();
