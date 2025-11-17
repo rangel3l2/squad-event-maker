@@ -14,7 +14,7 @@ const Navbar = () => {
           <img 
             src={logoCopa} 
             alt="Frontend Teams Cup - Três Lagoas Logo" 
-            className="h-20 w-auto object-contain"
+            className="h-20 w-auto object-contain animate-fade-in"
           />
         </Link>
 
