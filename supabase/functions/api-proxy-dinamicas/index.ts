@@ -26,21 +26,11 @@ serve(async (req) => {
 
     console.log('Buscando dinâmicas para time:', timeId);
     
-    const httpsUrl = `https://ifms.pro.br:6005/time/dinamicas?time_id=${timeId}`;
-    const httpUrl = `http://ifms.pro.br:6005/time/dinamicas?time_id=${timeId}`;
-
-    let response: Response | null = null;
-    try {
-      console.log('Tentando via HTTPS:', httpsUrl);
-      response = await fetch(httpsUrl);
-    } catch (e) {
-      console.warn('Falha no HTTPS, tentando HTTP sem TLS:', String(e));
-    }
-
-    if (!response) {
-      console.log('Tentando via HTTP:', httpUrl);
-      response = await fetch(httpUrl);
-    }
+    // Usar HTTP direto pois o servidor interno tem certificado SSL inválido
+    const apiUrl = `http://ifms.pro.br:6005/time/dinamicas?time_id=${timeId}`;
+    console.log('Fazendo requisição para:', apiUrl);
+    
+    const response = await fetch(apiUrl);
     
     if (!response.ok) {
       throw new Error(`Erro da API: ${response.status}`);
