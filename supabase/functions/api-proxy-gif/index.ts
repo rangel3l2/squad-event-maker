@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import JSZip from "https://esm.sh/jszip@3.10.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,7 +27,6 @@ serve(async (req) => {
 
     console.log('Buscando GIF para pasta:', codePasta);
     
-    // Usar HTTPS na porta 6005
     const apiUrl = `https://ifms.pro.br:6005/obter-gif?code_pasta=${encodeURIComponent(codePasta)}`;
     console.log('Fazendo requisição para:', apiUrl);
     
@@ -42,19 +42,52 @@ serve(async (req) => {
       );
     }
     
-    const data = await response.json();
-    console.log('GIF obtido');
+    console.log('Resposta recebida, processando ZIP...');
+    
+    // Baixar o ZIP como ArrayBuffer
+    const zipBuffer = await response.arrayBuffer();
+    console.log('ZIP baixado, tamanho:', zipBuffer.byteLength);
+    
+    // Extrair o GIF do ZIP
+    const zip = await JSZip.loadAsync(zipBuffer);
+    console.log('ZIP carregado, arquivos:', Object.keys(zip.files));
+    
+    // Procurar arquivo GIF no ZIP
+    let gifFile = null;
+    for (const fileName in zip.files) {
+      if (fileName.toLowerCase().endsWith('.gif')) {
+        gifFile = zip.files[fileName];
+        console.log('GIF encontrado:', fileName);
+        break;
+      }
+    }
+    
+    if (!gifFile) {
+      console.log('Nenhum arquivo GIF encontrado no ZIP');
+      return new Response(
+        JSON.stringify({ gif: null }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    // Extrair o GIF como base64
+    const gifBlob = await gifFile.async('base64');
+    const gifDataUrl = `data:image/gif;base64,${gifBlob}`;
+    console.log('GIF extraído e convertido para base64');
     
     return new Response(
-      JSON.stringify(data),
+      JSON.stringify({ gif: gifDataUrl }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   } catch (error) {
     console.error('Erro ao buscar GIF:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     return new Response(
-      JSON.stringify({ gif: null }),
+      JSON.stringify({ gif: null, error: errorMessage }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
