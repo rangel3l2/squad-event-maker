@@ -528,13 +528,17 @@ export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas
   console.log("=== API buscarDinamicasTime ===");
   console.log("Time ID:", timeId);
 
-  // Usar porta 6005 para a rota de dinâmicas
-  const url = `https://ifms.pro.br:6005/time/dinamicas?time_id=${timeId}`;
+  // Usar edge function como proxy para evitar erro de SSL
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  const url = `${SUPABASE_URL}/functions/v1/api-proxy-dinamicas?time_id=${timeId}`;
   console.log("URL completa:", url);
   
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
     },
   });
 
@@ -554,12 +558,17 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoD
   console.log("=== API buscarImagensDinamica ===");
   console.log("Code Pasta:", codePasta);
 
-  const url = `https://ifms.pro.br:6005/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`;
+  // Usar edge function como proxy para evitar erro de SSL
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  const url = `${SUPABASE_URL}/functions/v1/api-proxy-files?code_pasta=${encodeURIComponent(codePasta)}`;
   console.log("URL completa:", url);
   
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
     },
   });
 
@@ -612,13 +621,18 @@ export const buscarGifDinamica = async (codePasta: string): Promise<string | nul
   console.log("=== API buscarGifDinamica ===");
   console.log("Code Pasta:", codePasta);
 
-  const url = `https://ifms.pro.br:6005/obter-gif?code_pasta=${encodeURIComponent(codePasta)}`;
+  // Usar edge function como proxy para evitar erro de SSL
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  const url = `${SUPABASE_URL}/functions/v1/api-proxy-gif?code_pasta=${encodeURIComponent(codePasta)}`;
   console.log("URL completa:", url);
   
   try {
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
     });
 
