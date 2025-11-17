@@ -521,7 +521,7 @@ export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas
   console.log("=== API buscarDinamicasTime ===");
   console.log("Time ID:", timeId);
 
-  const response = await makeRequest(`/time/${timeId}`);
+  const response = await makeRequest(`/time/dinamicas?time_id=${timeId}`);
 
   if (!response.ok) {
     const errorText = await response.text();
