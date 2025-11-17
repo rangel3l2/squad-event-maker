@@ -26,8 +26,8 @@ serve(async (req) => {
 
     console.log('Buscando dinâmicas para time:', timeId);
     
-    // Usar HTTP direto pois o servidor interno tem certificado SSL inválido
-    const apiUrl = `http://ifms.pro.br:6005/time/dinamicas?time_id=${timeId}`;
+    // Usar HTTPS na porta 6005
+    const apiUrl = `https://ifms.pro.br:6005/time/dinamicas?time_id=${timeId}`;
     console.log('Fazendo requisição para:', apiUrl);
     
     const response = await fetch(apiUrl);

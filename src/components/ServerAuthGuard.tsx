@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const API_BASE_URL = "https://ifms.pro.br:6003";
+const API_BASE_URL = "https://ifms.pro.br:6005";
 
 interface ServerAuthGuardProps {
   children: React.ReactNode;

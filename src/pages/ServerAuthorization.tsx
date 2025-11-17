@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
-const API_BASE_URL = "https://ifms.pro.br:6003";
+const API_BASE_URL = "https://ifms.pro.br:6005";
 const AUTH_STORAGE_KEY = "ifms_server_authorized";
 
 export default function ServerAuthorization() {

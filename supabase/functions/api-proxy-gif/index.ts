@@ -26,8 +26,8 @@ serve(async (req) => {
 
     console.log('Buscando GIF para pasta:', codePasta);
     
-    // Usar HTTP direto pois o servidor interno tem certificado SSL inválido
-    const apiUrl = `http://ifms.pro.br:6005/obter-gif?code_pasta=${encodeURIComponent(codePasta)}`;
+    // Usar HTTPS na porta 6005
+    const apiUrl = `https://ifms.pro.br:6005/obter-gif?code_pasta=${encodeURIComponent(codePasta)}`;
     console.log('Fazendo requisição para:', apiUrl);
     
     const response = await fetch(apiUrl);
