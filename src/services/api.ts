@@ -541,3 +541,28 @@ export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas
   console.log("Dinâmicas encontradas:", data);
   return data;
 };
+
+// Buscar imagens de uma dinâmica específica
+export const buscarImagensDinamica = async (codePasta: string): Promise<string[]> => {
+  console.log("=== API buscarImagensDinamica ===");
+  console.log("Code Pasta:", codePasta);
+
+  const url = `https://ifms.pro.br:6005/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`;
+  console.log("URL completa:", url);
+  
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Erro ao buscar imagens:", errorText);
+    throw new Error(`Erro ao buscar imagens: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  console.log("Imagens recebidas:", data);
+  return data;
+};

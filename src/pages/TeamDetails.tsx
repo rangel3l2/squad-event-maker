@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, type Usuario, type Time, type Dinamica } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, type Usuario, type Time, type Dinamica } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -32,6 +32,9 @@ export default function TeamDetails() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [dinamicas, setDinamicas] = useState<Dinamica[]>([]);
+  const [selectedDinamica, setSelectedDinamica] = useState<Dinamica | null>(null);
+  const [dinamicaImages, setDinamicaImages] = useState<string[]>([]);
+  const [loadingImages, setLoadingImages] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -403,6 +406,21 @@ export default function TeamDetails() {
     }
   };
 
+  const handleDinamicaClick = async (dinamica: Dinamica) => {
+    setSelectedDinamica(dinamica);
+    setLoadingImages(true);
+    
+    try {
+      const images = await buscarImagensDinamica(dinamica.code_pasta);
+      setDinamicaImages(images);
+    } catch (error: any) {
+      toast.error("Erro ao carregar imagens da dinâmica");
+      console.error(error);
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto py-8 px-4">
@@ -661,7 +679,8 @@ export default function TeamDetails() {
                 dinamicas.map((dinamica, index) => (
                   <div
                     key={index}
-                    className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                    onClick={() => handleDinamicaClick(dinamica)}
+                    className="flex items-start gap-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
@@ -695,6 +714,44 @@ export default function TeamDetails() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Dialog para exibir imagens da dinâmica */}
+        <Dialog open={selectedDinamica !== null} onOpenChange={() => setSelectedDinamica(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">
+                {selectedDinamica?.evento.toUpperCase()}
+              </DialogTitle>
+              <DialogDescription>
+                Imagens da dinâmica
+              </DialogDescription>
+            </DialogHeader>
+            
+            {loadingImages ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                {dinamicaImages.length === 0 ? (
+                  <p className="col-span-full text-center text-muted-foreground py-8">
+                    Nenhuma imagem disponível
+                  </p>
+                ) : (
+                  dinamicaImages.map((imageUrl, idx) => (
+                    <div key={idx} className="aspect-square rounded-lg overflow-hidden border">
+                      <img 
+                        src={imageUrl} 
+                        alt={`Imagem ${idx + 1}`}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform"
+                      />
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
