@@ -28,7 +28,6 @@ export function AvatarSelector({ currentAvatar, onAvatarChange, disabled = false
       if (googleAvatar && !currentAvatar && avatarType === "google") {
         setIsUploading(true);
         try {
-          console.log("Upload automático da imagem do Google para ImgBB...");
           const response = await fetch(googleAvatar);
           const blob = await response.blob();
           
@@ -37,7 +36,6 @@ export function AvatarSelector({ currentAvatar, onAvatarChange, disabled = false
             const base64String = reader.result as string;
             try {
               const imageUrl = await uploadImageToImgBB(base64String);
-              console.log("Upload automático bem-sucedido:", imageUrl);
               onAvatarChange(imageUrl);
             } catch (error) {
               console.error("Erro no upload automático:", error);
@@ -72,9 +70,7 @@ export function AvatarSelector({ currentAvatar, onAvatarChange, disabled = false
         
         try {
           // Fazer upload para ImgBB e obter apenas a URL
-          console.log("Fazendo upload da imagem do perfil para ImgBB...");
           const imageUrl = await uploadImageToImgBB(base64String);
-          console.log("Upload do perfil bem-sucedido:", imageUrl);
           
           // Retornar apenas a URL, não o base64
           onAvatarChange(imageUrl);

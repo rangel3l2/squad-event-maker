@@ -123,22 +123,14 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       }
 
       // Verificar se o usuário já é dono de algum time usando busca específica
-      console.log("=== VERIFICANDO TIMES DO DONO ===");
-      console.log("Buscando times do usuário ID:", usuario.id);
-      
       const timesDoUsuario = await buscarTimesPorDono(usuario.id);
-      console.log("Times encontrados como dono:", timesDoUsuario);
       
       if (timesDoUsuario && timesDoUsuario.length > 0) {
         const timeAntigo = timesDoUsuario[0];
-        console.log("=== ENCONTRADO TIME ANTIGO ===");
-        console.log("Time antigo:", timeAntigo);
-        console.log("Tentando deletar automaticamente...");
         
         try {
           if (timeAntigo.id) {
             await deletarTime(timeAntigo.id);
-            console.log("Time antigo deletado com sucesso");
             toast.success("Time anterior removido. Criando novo time...");
             // Aguardar para garantir que o backend processou a deleção
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -154,19 +146,6 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         }
       }
 
-      // Log dos dados que serão enviados
-      console.log("=== DADOS PARA CRIAR TIME ===");
-      console.log("Nome do time:", data.name);
-      console.log("ID do dono:", usuario.id);
-      console.log("Senha convite:", senhaConvite);
-      console.log("URL da imagem:", logoUrl);
-      console.log("Objeto completo:", {
-        nome_time: data.name,
-        dono_id: usuario.id,
-        senha_convite: senhaConvite,
-        imagem_time: logoUrl,
-      });
-
       // Criar time usando a API
       const novoTime = await criarTime({
         nome_time: data.name,
@@ -175,22 +154,16 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         imagem_time: logoUrl,
       });
 
-      console.log("Time criado:", novoTime);
-
       // Buscar o time recém-criado pelo código de convite
       const timesAtualizados = await listarTimes();
       const timeCriado = timesAtualizados.find(t => t.senha_convite === senhaConvite);
 
       if (timeCriado && timeCriado.id) {
-        console.log("Adicionando criador como Líder do time:", timeCriado.id);
-        
         // Adicionar o criador como integrante com função "Líder"
         await adicionarIntegrante(timeCriado.id, {
           usuario_id: usuario.id,
           funcao: "Líder"
         });
-
-        console.log("Criador adicionado como Líder com sucesso!");
       }
 
       // Mostrar o código de convite

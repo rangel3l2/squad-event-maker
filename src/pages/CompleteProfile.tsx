@@ -80,8 +80,6 @@ export default function CompleteProfile() {
         url_image_perfil: avatarUrl || "", // String vazia se não tiver
       };
 
-      console.log("Enviando dados para API:", userData);
-
       await criarUsuario(userData);
 
       toast.success("Cadastro completo! Agora você pode criar ou entrar em um time.");

@@ -7,11 +7,6 @@ const makeRequest = async (path: string, options?: RequestInit) => {
     'Content-Type': 'application/json',
     ...(options?.headers || {}),
   } as Record<string, string>;
-  console.log("=== makeRequest ===");
-  console.log("URL:", url);
-  console.log("Method:", options?.method);
-  console.log("Body:", options?.body);
-  console.log("Headers (final):", finalHeaders);
   
   return fetch(url, {
     ...options,

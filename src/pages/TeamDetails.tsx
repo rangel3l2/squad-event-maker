@@ -41,13 +41,8 @@ export default function TeamDetails() {
 
   useEffect(() => {
     const loadTeamData = async () => {
-      console.log("=== CARREGANDO DADOS DO TIME ===");
-      console.log("User:", user);
-      console.log("TeamId from URL:", teamId);
-      
       // Se não há teamId na URL e não está logado, redireciona
       if (!user && !teamId) {
-        console.log("Sem user e sem teamId - redirecionando para auth");
         toast.error("Você precisa estar logado");
         navigate("/auth");
         return;
@@ -56,17 +51,12 @@ export default function TeamDetails() {
       try {
         let usuario: Usuario | undefined;
         
-        console.log("=== INÍCIO DO CARREGAMENTO ===");
-        
         // Buscar dados do usuário apenas se estiver logado
         if (user) {
-          console.log("Usuário logado, buscando dados do usuário...");
           const usuarios = await listarUsuarios();
           usuario = usuarios.find(u => u.email === user.email);
-          console.log("Dados do usuário encontrados:", usuario);
 
           if (!usuario && !teamId) {
-            console.log("Usuário não encontrado e sem teamId");
             toast.error("Complete seu perfil primeiro");
             navigate("/complete-profile");
             return;
@@ -110,12 +100,8 @@ export default function TeamDetails() {
         
         // Se tem teamId na URL, busca esse time específico (pode ser visualização pública)
         if (teamId) {
-          console.log("=== BUSCANDO TIME POR ID (visualização pública) ===");
-          console.log("Team ID da URL:", teamId);
           try {
             timeData = await mostrarTime(Number(teamId));
-            console.log("Time encontrado via mostrarTime:", timeData);
-            console.log("Integrantes no time:", timeData.integrantes);
           } catch (error) {
             console.error("Erro ao buscar time por ID:", error);
             toast.error("Erro ao carregar dados do time");
@@ -124,11 +110,8 @@ export default function TeamDetails() {
           }
         } else if (usuario) {
           // Senão, busca o time do usuário logado
-          console.log("=== BUSCANDO TIME DO USUÁRIO ===");
-          console.log("Usuario ID:", usuario.id);
           try {
             timeData = await mostrarTimeUsuario(usuario.id!);
-            console.log("Time do usuário encontrado:", timeData);
           } catch (error) {
             console.error("Erro ao buscar time do usuário:", error);
             toast.error("Você não está em nenhum time");
@@ -137,18 +120,11 @@ export default function TeamDetails() {
           }
         } else {
           // Não tem teamId e não está logado
-          console.log("Sem teamId e sem usuário");
           toast.error("Você precisa estar logado");
           navigate("/auth");
           return;
         }
-        
-        console.log("=== TIME CARREGADO COM SUCESSO ===");
-        console.log("Time data:", timeData);
         setTime(timeData);
-        
-        console.log("=== PROCESSANDO INTEGRANTES ===");
-        console.log("timeData.integrantes:", timeData.integrantes);
 
         // Determinar contagem de integrantes (API pode retornar em campos diferentes)
         const countApi = Number(
@@ -198,51 +174,28 @@ export default function TeamDetails() {
             setIsLeader(timeData.dono_id === usuario.id);
           }
         } else {
-          console.log("Lista de integrantes vazia ou undefined");
           setIntegrantes([]);
           setIntegrantesComFuncao([]);
           // Se estivermos na visualização do próprio time, mantém true
           setIsUserInTeam(!teamId);
         }
-        
-        console.log("=== DADOS DO TIME ===");
-        console.log("time.qtd_integrantes:", (timeData as any).qtd_integrantes);
-        console.log("time.quantidade:", (timeData as any).quantidade);
-        console.log("integrantes no array:", integrantesLista.length || 0);
 
         // Buscar dinâmicas do time
-        console.log("=== VERIFICANDO BUSCA DE DINÂMICAS ===");
-        console.log("timeData:", timeData);
-        console.log("timeData.id:", timeData.id);
-        console.log("teamId da URL:", teamId);
-        
         const timeIdParaDinamicas = timeData.id || (teamId ? parseInt(teamId) : null);
-        console.log("timeIdParaDinamicas calculado:", timeIdParaDinamicas);
         
         if (timeIdParaDinamicas) {
-          console.log("=== BUSCANDO DINÂMICAS DO TIME ===");
-          console.log("Time ID para dinâmicas:", timeIdParaDinamicas);
           try {
             const dinamicasData = await buscarDinamicasTime(timeIdParaDinamicas);
-            console.log("Dados de dinâmicas recebidos:", dinamicasData);
             setDinamicas(dinamicasData.dinamicas || []);
-            console.log("Dinâmicas carregadas:", dinamicasData.dinamicas?.length || 0);
           } catch (error) {
             console.error("Erro ao carregar dinâmicas:", error);
-            // Não mostra erro para o usuário, apenas não carrega as dinâmicas
             setDinamicas([]);
           }
-        } else {
-          console.log("=== NÃO FOI POSSÍVEL BUSCAR DINÂMICAS ===");
-          console.log("Razão: timeData.id e teamId não disponíveis");
         }
       } catch (error: any) {
-        console.error("=== ERRO GERAL NO CARREGAMENTO ===");
-        console.error("Erro completo:", error);
+        console.error("Erro ao carregar dados do time:", error);
         toast.error("Erro ao carregar dados do time: " + (error.message || "Erro desconhecido"));
-        // Não navega para outra página, apenas mostra o erro
       } finally {
-        console.log("=== FINALIZANDO CARREGAMENTO ===");
         setLoading(false);
       }
     };
@@ -264,10 +217,6 @@ export default function TeamDetails() {
         toast.error("Usuário não encontrado");
         return;
       }
-
-      console.log("=== SAINDO DO TIME ===");
-      console.log("Usuário:", usuario);
-      console.log("Time ID:", time.id);
       
       const resultado = await sairDoTime(time.id!, usuario.id);
       
@@ -421,7 +370,6 @@ export default function TeamDetails() {
   };
 
   const handleDinamicaClick = async (dinamica: Dinamica) => {
-    console.log("Dinâmica clicada:", dinamica);
     setSelectedDinamica(dinamica);
     
     // Buscar GIF se existir code_pasta
