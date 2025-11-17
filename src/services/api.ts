@@ -64,6 +64,13 @@ export interface Dinamica {
   } | null;
 }
 
+export interface ArquivoDinamica {
+  nome: string;
+  url: string;
+  tipo: 'imagem' | 'texto' | 'css' | 'html' | 'outro';
+  extensao: string;
+}
+
 export interface TimeDinamicas {
   time: {
     id: number;
@@ -542,8 +549,8 @@ export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas
   return data;
 };
 
-// Buscar imagens de uma dinâmica específica
-export const buscarImagensDinamica = async (codePasta: string): Promise<string[]> => {
+// Buscar arquivos de uma dinâmica específica
+export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoDinamica[]> => {
   console.log("=== API buscarImagensDinamica ===");
   console.log("Code Pasta:", codePasta);
 
@@ -558,11 +565,42 @@ export const buscarImagensDinamica = async (codePasta: string): Promise<string[]
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("Erro ao buscar imagens:", errorText);
-    throw new Error(`Erro ao buscar imagens: ${response.status} ${response.statusText}`);
+    console.error("Erro ao buscar arquivos:", errorText);
+    throw new Error(`Erro ao buscar arquivos: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
-  console.log("Imagens recebidas:", data);
-  return data;
+  console.log("Dados recebidos:", data);
+  
+  // Se data não for um array, transforma em array
+  const arquivos = Array.isArray(data) ? data : [data];
+  
+  // Processar cada arquivo para determinar seu tipo
+  const arquivosProcessados: ArquivoDinamica[] = arquivos.map((item: any) => {
+    const nome = item.nome || item.name || 'arquivo';
+    const url = item.url || item;
+    const extensao = nome.split('.').pop()?.toLowerCase() || '';
+    
+    let tipo: 'imagem' | 'texto' | 'css' | 'html' | 'outro' = 'outro';
+    
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(extensao)) {
+      tipo = 'imagem';
+    } else if (['txt', 'md'].includes(extensao)) {
+      tipo = 'texto';
+    } else if (extensao === 'css') {
+      tipo = 'css';
+    } else if (['html', 'htm'].includes(extensao)) {
+      tipo = 'html';
+    }
+    
+    return {
+      nome,
+      url: typeof url === 'string' ? url : url.url || '',
+      tipo,
+      extensao
+    };
+  });
+  
+  console.log("Arquivos processados:", arquivosProcessados);
+  return arquivosProcessados;
 };

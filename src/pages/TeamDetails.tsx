@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, type Usuario, type Time, type Dinamica } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -33,8 +33,8 @@ export default function TeamDetails() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [dinamicas, setDinamicas] = useState<Dinamica[]>([]);
   const [selectedDinamica, setSelectedDinamica] = useState<Dinamica | null>(null);
-  const [dinamicaImages, setDinamicaImages] = useState<string[]>([]);
-  const [loadingImages, setLoadingImages] = useState(false);
+  const [dinamicaFiles, setDinamicaFiles] = useState<ArquivoDinamica[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -408,16 +408,16 @@ export default function TeamDetails() {
 
   const handleDinamicaClick = async (dinamica: Dinamica) => {
     setSelectedDinamica(dinamica);
-    setLoadingImages(true);
+    setLoadingFiles(true);
     
     try {
-      const images = await buscarImagensDinamica(dinamica.code_pasta);
-      setDinamicaImages(images);
+      const files = await buscarImagensDinamica(dinamica.code_pasta);
+      setDinamicaFiles(files);
     } catch (error: any) {
-      toast.error("Erro ao carregar imagens da dinâmica");
+      toast.error("Erro ao carregar arquivos da dinâmica");
       console.error(error);
     } finally {
-      setLoadingImages(false);
+      setLoadingFiles(false);
     }
   };
 
@@ -715,7 +715,7 @@ export default function TeamDetails() {
           </CardContent>
         </Card>
 
-        {/* Dialog para exibir imagens da dinâmica */}
+        {/* Dialog para exibir arquivos da dinâmica */}
         <Dialog open={selectedDinamica !== null} onOpenChange={() => setSelectedDinamica(null)}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
@@ -723,30 +723,163 @@ export default function TeamDetails() {
                 {selectedDinamica?.evento.toUpperCase()}
               </DialogTitle>
               <DialogDescription>
-                Imagens da dinâmica
+                Arquivos da dinâmica
               </DialogDescription>
             </DialogHeader>
             
-            {loadingImages ? (
+            {loadingFiles ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                {dinamicaImages.length === 0 ? (
-                  <p className="col-span-full text-center text-muted-foreground py-8">
-                    Nenhuma imagem disponível
+              <div className="space-y-6 mt-4">
+                {dinamicaFiles.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Nenhum arquivo disponível
                   </p>
                 ) : (
-                  dinamicaImages.map((imageUrl, idx) => (
-                    <div key={idx} className="aspect-square rounded-lg overflow-hidden border">
-                      <img 
-                        src={imageUrl} 
-                        alt={`Imagem ${idx + 1}`}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform"
-                      />
-                    </div>
-                  ))
+                  <>
+                    {/* Imagens */}
+                    {dinamicaFiles.filter(f => f.tipo === 'imagem').length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-primary"></span>
+                          Imagens
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {dinamicaFiles.filter(f => f.tipo === 'imagem').map((file, index) => (
+                            <div key={index} className="relative aspect-square rounded-lg overflow-hidden border bg-muted">
+                              <img 
+                                src={file.url} 
+                                alt={file.nome}
+                                className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
+                                onClick={() => window.open(file.url, '_blank')}
+                              />
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2 truncate">
+                                {file.nome}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Arquivos de Texto */}
+                    {dinamicaFiles.filter(f => f.tipo === 'texto').length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                          Arquivos de Texto
+                        </h3>
+                        <div className="space-y-3">
+                          {dinamicaFiles.filter(f => f.tipo === 'texto').map((file, index) => (
+                            <Card key={index}>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-sm">{file.nome}</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <a 
+                                  href={file.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-primary hover:underline"
+                                >
+                                  Abrir arquivo
+                                </a>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Arquivos CSS */}
+                    {dinamicaFiles.filter(f => f.tipo === 'css').length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                          Arquivos CSS
+                        </h3>
+                        <div className="space-y-3">
+                          {dinamicaFiles.filter(f => f.tipo === 'css').map((file, index) => (
+                            <Card key={index}>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-sm">{file.nome}</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <a 
+                                  href={file.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-primary hover:underline"
+                                >
+                                  Visualizar CSS
+                                </a>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Arquivos HTML */}
+                    {dinamicaFiles.filter(f => f.tipo === 'html').length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                          Arquivos HTML
+                        </h3>
+                        <div className="space-y-3">
+                          {dinamicaFiles.filter(f => f.tipo === 'html').map((file, index) => (
+                            <Card key={index}>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-sm">{file.nome}</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <a 
+                                  href={file.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-primary hover:underline"
+                                >
+                                  Visualizar HTML
+                                </a>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Outros Arquivos */}
+                    {dinamicaFiles.filter(f => f.tipo === 'outro').length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-gray-500"></span>
+                          Outros Arquivos
+                        </h3>
+                        <div className="space-y-3">
+                          {dinamicaFiles.filter(f => f.tipo === 'outro').map((file, index) => (
+                            <Card key={index}>
+                              <CardHeader className="pb-3">
+                                <CardTitle className="text-sm">{file.nome}</CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <a 
+                                  href={file.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-primary hover:underline"
+                                >
+                                  Baixar arquivo ({file.extensao})
+                                </a>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
