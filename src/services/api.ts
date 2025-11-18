@@ -658,7 +658,7 @@ export const buscarGifDinamica = async (codePasta: string): Promise<{ gif: strin
   }
 };
 
-// Interface para os dados completos de uma submissão
+// Interface para os dados completos de uma submissão (URLs já vêm completas da API)
 export interface SubmissaoDinamica {
   integranteId?: number;
   integranteNome?: string;
