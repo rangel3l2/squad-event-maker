@@ -657,3 +657,72 @@ export const buscarGifDinamica = async (codePasta: string): Promise<{ gif: strin
     return { gif: null };
   }
 };
+
+// Interface para os dados completos de uma submissão
+export interface SubmissaoDinamica {
+  integranteId: number;
+  integranteNome: string;
+  base: string;
+  gif: string | null;
+  html: string;
+  css: string;
+  pontuacao: string;
+  imagem_pronta: string;
+  correcao_completa: string;
+  correcao: string[];
+  imagens_evolucao: string[];
+}
+
+// Buscar dados completos de submissão de um integrante
+export const buscarSubmissaoDinamica = async (
+  codePasta: string,
+  timeId: number,
+  integranteId: number
+): Promise<SubmissaoDinamica | null> => {
+  try {
+    const url = `${API_BASE_URL}/uploads/${codePasta}/${timeId}_${integranteId}/`;
+    console.log("Buscando submissão em:", url);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.error(`Erro ao buscar submissão: ${response.status}`);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    return {
+      integranteId,
+      integranteNome: "",
+      ...data
+    };
+  } catch (error) {
+    console.error("Erro ao buscar submissão:", error);
+    return null;
+  }
+};
+
+// Buscar todas as submissões de uma dinâmica para um time
+export const buscarTodasSubmissoesDinamica = async (
+  codePasta: string,
+  timeId: number,
+  integrantes: Usuario[]
+): Promise<SubmissaoDinamica[]> => {
+  try {
+    const submissoes = await Promise.all(
+      integrantes.map(async (integrante) => {
+        const submissao = await buscarSubmissaoDinamica(codePasta, timeId, integrante.id!);
+        if (submissao) {
+          submissao.integranteNome = integrante.nome;
+        }
+        return submissao;
+      })
+    );
+    
+    return submissoes.filter((s): s is SubmissaoDinamica => s !== null);
+  } catch (error) {
+    console.error("Erro ao buscar todas as submissões:", error);
+    return [];
+  }
+};

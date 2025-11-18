@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy, FileCode, FileText, Award, Image, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, buscarTodasSubmissoesDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica, type SubmissaoDinamica } from "@/services/api";
 import CodeViewer from "@/components/CodeViewer";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
@@ -36,8 +36,9 @@ export default function TeamDetails() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [dinamicas, setDinamicas] = useState<Dinamica[]>([]);
   const [selectedDinamica, setSelectedDinamica] = useState<Dinamica | null>(null);
-  const [gifUrl, setGifUrl] = useState<string | null>(null);
-  const [loadingGif, setLoadingGif] = useState(false);
+  const [submissoes, setSubmissoes] = useState<SubmissaoDinamica[]>([]);
+  const [selectedSubmissao, setSelectedSubmissao] = useState<SubmissaoDinamica | null>(null);
+  const [loadingSubmissoes, setLoadingSubmissoes] = useState(false);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -371,18 +372,27 @@ export default function TeamDetails() {
 
   const handleDinamicaClick = async (dinamica: Dinamica) => {
     setSelectedDinamica(dinamica);
+    setLoadingSubmissoes(true);
     
-    // Buscar GIF se existir code_pasta
-    if (dinamica.code_pasta) {
-      setLoadingGif(true);
+    // Buscar todas as submissões dos integrantes para esta dinâmica
+    if (dinamica.code_pasta && time?.id) {
       try {
-        const gifData = await buscarGifDinamica(dinamica.code_pasta);
-        setGifUrl(gifData.gif);
+        const submissoesData = await buscarTodasSubmissoesDinamica(
+          dinamica.code_pasta,
+          time.id,
+          integrantes
+        );
+        setSubmissoes(submissoesData);
+        
+        // Selecionar a primeira submissão por padrão
+        if (submissoesData.length > 0) {
+          setSelectedSubmissao(submissoesData[0]);
+        }
       } catch (error) {
-        console.error("Erro ao buscar GIF:", error);
-        setGifUrl(null);
+        console.error("Erro ao buscar submissões:", error);
+        setSubmissoes([]);
       } finally {
-        setLoadingGif(false);
+        setLoadingSubmissoes(false);
       }
     }
   };
@@ -684,7 +694,8 @@ export default function TeamDetails() {
         {/* Dialog para exibir conteúdo da dinâmica */}
         <Dialog open={selectedDinamica !== null} onOpenChange={() => {
           setSelectedDinamica(null);
-          setGifUrl(null);
+          setSubmissoes([]);
+          setSelectedSubmissao(null);
         }}>
           <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -692,92 +703,99 @@ export default function TeamDetails() {
                 {selectedDinamica?.evento.toUpperCase()}
               </DialogTitle>
               <DialogDescription>
-                Informações e arquivos da dinâmica
+                Submissões de todos os integrantes
               </DialogDescription>
             </DialogHeader>
             
-            <Tabs defaultValue="evolucao" className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="evolucao" disabled={loadingGif || !gifUrl}>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Evolução
-                </TabsTrigger>
-                <TabsTrigger value="html" disabled={!selectedDinamica?.html}>
-                  <FileCode className="w-4 h-4 mr-2" />
-                  HTML
-                </TabsTrigger>
-                <TabsTrigger value="css" disabled={!selectedDinamica?.css}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  CSS
-                </TabsTrigger>
-                <TabsTrigger value="pontuacao" disabled={!selectedDinamica?.pontuacao}>
-                  <Award className="w-4 h-4 mr-2" />
-                  Pontuação
-                </TabsTrigger>
-                <TabsTrigger value="resultado" disabled={!selectedDinamica?.imagem_pronta}>
-                  <Image className="w-4 h-4 mr-2" />
-                  Resultado
-                </TabsTrigger>
-                <TabsTrigger value="correcao" disabled={!selectedDinamica?.correcao || selectedDinamica.correcao.length === 0}>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Correção
-                </TabsTrigger>
-              </TabsList>
+            {/* Seletor de integrante */}
+            {loadingSubmissoes ? (
+              <div className="py-4 text-center text-muted-foreground">
+                Carregando submissões...
+              </div>
+            ) : submissoes.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <Select 
+                    value={selectedSubmissao?.integranteId.toString()}
+                    onValueChange={(value) => {
+                      const submissao = submissoes.find(s => s.integranteId.toString() === value);
+                      setSelectedSubmissao(submissao || null);
+                    }}
+                  >
+                    <SelectTrigger className="w-[300px]">
+                      <SelectValue placeholder="Selecione um integrante" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {submissoes.map((submissao) => (
+                        <SelectItem 
+                          key={submissao.integranteId} 
+                          value={submissao.integranteId.toString()}
+                        >
+                          {submissao.integranteNome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ) : (
+              <div className="py-4 text-center text-muted-foreground">
+                Nenhuma submissão encontrada
+              </div>
+            )}
+            
+            {selectedSubmissao && (
+              <Tabs defaultValue="html" className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="html">
+                    <FileCode className="w-4 h-4 mr-2" />
+                    HTML
+                  </TabsTrigger>
+                  <TabsTrigger value="css">
+                    <FileText className="w-4 h-4 mr-2" />
+                    CSS
+                  </TabsTrigger>
+                  <TabsTrigger value="pontuacao">
+                    <Award className="w-4 h-4 mr-2" />
+                    Pontuação
+                  </TabsTrigger>
+                  <TabsTrigger value="resultado">
+                    <Image className="w-4 h-4 mr-2" />
+                    Resultado
+                  </TabsTrigger>
+                  <TabsTrigger value="correcao" disabled={!selectedSubmissao.correcao || selectedSubmissao.correcao.length === 0}>
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Correção
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="evolucao" className="space-y-4">
-                {loadingGif ? (
-                  <Card>
-                    <CardContent className="py-8">
-                      <p className="text-center text-muted-foreground">Carregando GIF...</p>
-                    </CardContent>
-                  </Card>
-                ) : gifUrl ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Evolução da Dinâmica</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex justify-center">
-                        <img 
-                          src={gifUrl} 
-                          alt="Evolução" 
-                          className="max-w-full h-auto rounded-lg border"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : null}
-              </TabsContent>
+                <TabsContent value="html" className="space-y-4">
+                  {selectedSubmissao.html && (
+                    <CodeViewer url={selectedSubmissao.html} type="html" title="Código HTML" />
+                  )}
+                </TabsContent>
 
-              <TabsContent value="html" className="space-y-4">
-                {selectedDinamica?.html && (
-                  <CodeViewer url={selectedDinamica.html} type="html" title="Código HTML" />
-                )}
-              </TabsContent>
+                <TabsContent value="css" className="space-y-4">
+                  {selectedSubmissao.css && (
+                    <CodeViewer url={selectedSubmissao.css} type="css" title="Código CSS" />
+                  )}
+                </TabsContent>
 
-              <TabsContent value="css" className="space-y-4">
-                {selectedDinamica?.css && (
-                  <CodeViewer url={selectedDinamica.css} type="css" title="Código CSS" />
-                )}
-              </TabsContent>
-
-              <TabsContent value="pontuacao" className="space-y-4">
-                {selectedDinamica?.pontuacao && (
+                <TabsContent value="pontuacao" className="space-y-4">
                   <Card>
                     <CardHeader>
                       <CardTitle>Pontuação Detalhada</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <pre className="text-sm whitespace-pre-wrap font-mono bg-muted p-4 rounded-lg">
-                        {selectedDinamica.pontuacao}
+                        {selectedSubmissao.pontuacao}
                       </pre>
                     </CardContent>
                   </Card>
-                )}
-              </TabsContent>
+                </TabsContent>
 
-              <TabsContent value="resultado" className="space-y-4">
-                {selectedDinamica?.imagem_pronta && (
+                <TabsContent value="resultado" className="space-y-4">
                   <Card>
                     <CardHeader>
                       <CardTitle>Resultado Final</CardTitle>
@@ -785,48 +803,48 @@ export default function TeamDetails() {
                     <CardContent>
                       <div className="flex justify-center">
                         <img 
-                          src={selectedDinamica.imagem_pronta} 
+                          src={selectedSubmissao.imagem_pronta} 
                           alt="Resultado Final" 
                           className="max-w-full h-auto rounded-lg border"
                         />
                       </div>
                     </CardContent>
                   </Card>
-                )}
-              </TabsContent>
+                </TabsContent>
 
-              <TabsContent value="correcao" className="space-y-4">
-                {selectedDinamica?.correcao && selectedDinamica.correcao.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Imagens de Correção ({selectedDinamica.correcao.length})</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Carousel className="w-full max-w-4xl mx-auto">
-                        <CarouselContent>
-                          {selectedDinamica.correcao.map((url, index) => (
-                            <CarouselItem key={index}>
-                              <div className="flex justify-center p-4">
-                                <img 
-                                  src={url} 
-                                  alt={`Correção ${index + 1}`} 
-                                  className="max-w-full h-auto rounded-lg border"
-                                />
-                              </div>
-                              <p className="text-center text-sm text-muted-foreground mt-2">
-                                Imagem {index + 1} de {selectedDinamica.correcao.length}
-                              </p>
-                            </CarouselItem>
-                          ))}
-                        </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
-                      </Carousel>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-            </Tabs>
+                <TabsContent value="correcao" className="space-y-4">
+                  {selectedSubmissao.correcao && selectedSubmissao.correcao.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Imagens de Correção ({selectedSubmissao.correcao.length})</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Carousel className="w-full max-w-4xl mx-auto">
+                          <CarouselContent>
+                            {selectedSubmissao.correcao.map((url, index) => (
+                              <CarouselItem key={index}>
+                                <div className="flex justify-center p-4">
+                                  <img 
+                                    src={url} 
+                                    alt={`Correção ${index + 1}`} 
+                                    className="max-w-full h-auto rounded-lg border"
+                                  />
+                                </div>
+                                <p className="text-center text-sm text-muted-foreground mt-2">
+                                  Imagem {index + 1} de {selectedSubmissao.correcao.length}
+                                </p>
+                              </CarouselItem>
+                            ))}
+                          </CarouselContent>
+                          <CarouselPrevious />
+                          <CarouselNext />
+                        </Carousel>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
+              </Tabs>
+            )}
           </DialogContent>
         </Dialog>
       </div>
