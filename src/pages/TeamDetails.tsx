@@ -804,14 +804,30 @@ export default function TeamDetails() {
                     <CardHeader>
                       <CardTitle>Resultado Final</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="flex justify-center">
-                        <img 
-                          src={selectedSubmissao.imagem_pronta} 
-                          alt="Resultado Final" 
-                          className="max-w-full h-auto rounded-lg border"
-                        />
+                    <CardContent className="space-y-6">
+                      <div>
+                        <h4 className="text-sm font-semibold mb-2 text-muted-foreground">Imagem Pronta</h4>
+                        <div className="flex justify-center">
+                          <img 
+                            src={selectedSubmissao.imagem_pronta} 
+                            alt="Resultado Final" 
+                            className="max-w-full h-auto rounded-lg border"
+                          />
+                        </div>
                       </div>
+                      
+                      {selectedSubmissao.correcao_completa && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-2 text-muted-foreground">Correção Completa</h4>
+                          <div className="flex justify-center">
+                            <img 
+                              src={selectedSubmissao.correcao_completa} 
+                              alt="Correção Completa" 
+                              className="max-w-full h-auto rounded-lg border"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>
