@@ -690,21 +690,17 @@ export const buscarSubmissaoPorCodePasta = async (
     const pontuacaoUrl = `${baseUrl}pontuacao.txt`;
     const cssUrl = `${baseUrl}styles.css`;
 
-    // Buscar apenas arquivos textuais (se existirem)
-    const [pontRes, cssRes] = await Promise.all([
-      fetch(pontuacaoUrl),
-      fetch(cssUrl),
-    ]);
+    // Buscar apenas arquivos textuais necessários
+    const pontRes = await fetch(pontuacaoUrl);
 
     const pontuacao = pontRes.ok ? await pontRes.text() : '';
-    const css = cssRes.ok ? await cssRes.text() : '';
 
     return {
       codePasta,
       base: baseUrl,
       gif: null,
-      html: '',
-      css,
+      html: devUrl,
+      css: `${cssUrl}?t=${Date.now()}`,
       pontuacao,
       imagem_pronta: finalImgUrl,
       imagem_desenvolvimento: devUrl,
