@@ -660,8 +660,9 @@ export const buscarGifDinamica = async (codePasta: string): Promise<{ gif: strin
 
 // Interface para os dados completos de uma submissão
 export interface SubmissaoDinamica {
-  integranteId: number;
-  integranteNome: string;
+  integranteId?: number;
+  integranteNome?: string;
+  codePasta: string;
   base: string;
   gif: string | null;
   html: string;
@@ -673,28 +674,20 @@ export interface SubmissaoDinamica {
   imagens_evolucao: string[];
 }
 
-// Buscar dados completos de submissão de um integrante
-export const buscarSubmissaoDinamica = async (
-  codePasta: string,
-  timeId: number,
-  integranteId: number
+// Buscar dados completos de uma submissão usando o code_pasta completo
+export const buscarSubmissaoPorCodePasta = async (
+  codePasta: string
 ): Promise<SubmissaoDinamica | null> => {
   try {
-    const url = `${API_BASE_URL}/uploads/${codePasta}/${timeId}_${integranteId}/`;
+    const url = `${API_BASE_URL}/uploads/${codePasta}/`;
     console.log("Buscando submissão em:", url);
     
     const response = await fetch(url);
-    
-    if (!response.ok) {
-      console.error(`Erro ao buscar submissão: ${response.status}`);
-      return null;
-    }
+    if (!response.ok) return null;
     
     const data = await response.json();
-    
     return {
-      integranteId,
-      integranteNome: "",
+      codePasta,
       ...data
     };
   } catch (error) {
@@ -703,18 +696,30 @@ export const buscarSubmissaoDinamica = async (
   }
 };
 
-// Buscar todas as submissões de uma dinâmica para um time
+// Buscar todas as submissões de uma dinâmica agrupando por evento/tipo
 export const buscarTodasSubmissoesDinamica = async (
-  codePasta: string,
-  timeId: number,
-  integrantes: Usuario[]
+  dinamicaSelecionada: Dinamica,
+  todasDinamicas: Dinamica[],
+  integrantes: Array<{ id: number; nome: string }>
 ): Promise<SubmissaoDinamica[]> => {
   try {
+    // Filtrar dinâmicas do mesmo evento e tipo
+    const dinamicasGrupo = todasDinamicas.filter(
+      d => d.evento === dinamicaSelecionada.evento && d.tipo === dinamicaSelecionada.tipo
+    );
+    
+    // Para cada dinâmica do grupo, buscar a submissão
     const submissoes = await Promise.all(
-      integrantes.map(async (integrante) => {
-        const submissao = await buscarSubmissaoDinamica(codePasta, timeId, integrante.id!);
+      dinamicasGrupo.map(async (dinamica) => {
+        const submissao = await buscarSubmissaoPorCodePasta(dinamica.code_pasta);
         if (submissao) {
-          submissao.integranteNome = integrante.nome;
+          // Extrair o ID do integrante do code_pasta (formato: evento_tipo/teamId_integranteId)
+          const match = dinamica.code_pasta.match(/_(\d+)$/);
+          const integranteId = match ? parseInt(match[1]) : undefined;
+          const integrante = integrantes.find(i => i.id === integranteId);
+          
+          submissao.integranteId = integranteId;
+          submissao.integranteNome = integrante?.nome || `Integrante ${integranteId}`;
         }
         return submissao;
       })

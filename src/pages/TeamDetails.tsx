@@ -375,12 +375,16 @@ export default function TeamDetails() {
     setLoadingSubmissoes(true);
     
     // Buscar todas as submissões dos integrantes para esta dinâmica
-    if (dinamica.code_pasta && time?.id) {
+    if (dinamica.code_pasta && time) {
       try {
+        const integrantesComId = integrantesComFuncao
+          .map(i => ({ id: i.id, nome: i.nome }))
+          .filter((i): i is { id: number; nome: string } => i.id != null);
+        
         const submissoesData = await buscarTodasSubmissoesDinamica(
-          dinamica.code_pasta,
-          time.id,
-          integrantes
+          dinamica,
+          dinamicas,
+          integrantesComId
         );
         setSubmissoes(submissoesData);
         
