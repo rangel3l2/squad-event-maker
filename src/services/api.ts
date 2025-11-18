@@ -680,23 +680,40 @@ export const buscarSubmissaoPorCodePasta = async (
   codePasta: string
 ): Promise<SubmissaoDinamica | null> => {
   try {
-    const url = `${API_BASE_URL}/uploads/${codePasta}/`;
-    console.log("Buscando submissão em:", url);
-    
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    // Adiciona URL da imagem de desenvolvimento com timestamp para evitar cache
-    const imagemDesenvolvimento = `${API_BASE_URL}/uploads/${codePasta}/index.html?t=${Date.now()}`;
-    
+    const baseUrl = `${API_BASE_URL}/uploads/${codePasta}/`;
+    const idSuffix = codePasta.split('/')[1] || '';
+
+    // URLs importantes baseadas no code_pasta
+    const devUrl = `${baseUrl}index.html?t=${Date.now()}`; // força atualizar evitando cache
+    const finalImgUrl = `${baseUrl}${idSuffix}_266x414.png`;
+    const corrCompletaUrl = `${baseUrl}${idSuffix}_266x414/${idSuffix}_266x414_resultado_final.png`;
+    const pontuacaoUrl = `${baseUrl}pontuacao.txt`;
+    const cssUrl = `${baseUrl}styles.css`;
+
+    // Buscar apenas arquivos textuais (se existirem)
+    const [pontRes, cssRes] = await Promise.all([
+      fetch(pontuacaoUrl),
+      fetch(cssUrl),
+    ]);
+
+    const pontuacao = pontRes.ok ? await pontRes.text() : '';
+    const css = cssRes.ok ? await cssRes.text() : '';
+
     return {
       codePasta,
-      ...data,
-      imagem_desenvolvimento: imagemDesenvolvimento
+      base: baseUrl,
+      gif: null,
+      html: '',
+      css,
+      pontuacao,
+      imagem_pronta: finalImgUrl,
+      imagem_desenvolvimento: devUrl,
+      correcao_completa: corrCompletaUrl,
+      correcao: [],
+      imagens_evolucao: [],
     };
   } catch (error) {
-    console.error("Erro ao buscar submissão:", error);
+    console.error("Erro ao buscar submissão (code_pasta):", codePasta, error);
     return null;
   }
 };
