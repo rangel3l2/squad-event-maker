@@ -669,6 +669,7 @@ export interface SubmissaoDinamica {
   css: string;
   pontuacao: string;
   imagem_pronta: string;
+  imagem_desenvolvimento?: string;
   correcao_completa: string;
   correcao: string[];
   imagens_evolucao: string[];
@@ -686,9 +687,13 @@ export const buscarSubmissaoPorCodePasta = async (
     if (!response.ok) return null;
     
     const data = await response.json();
+    // Adiciona URL da imagem de desenvolvimento com timestamp para evitar cache
+    const imagemDesenvolvimento = `${API_BASE_URL}/uploads/${codePasta}/index.html?t=${Date.now()}`;
+    
     return {
       codePasta,
-      ...data
+      ...data,
+      imagem_desenvolvimento: imagemDesenvolvimento
     };
   } catch (error) {
     console.error("Erro ao buscar submissão:", error);

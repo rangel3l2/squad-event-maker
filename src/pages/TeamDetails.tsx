@@ -39,6 +39,7 @@ export default function TeamDetails() {
   const [submissoes, setSubmissoes] = useState<SubmissaoDinamica[]>([]);
   const [selectedSubmissao, setSelectedSubmissao] = useState<SubmissaoDinamica | null>(null);
   const [loadingSubmissoes, setLoadingSubmissoes] = useState(false);
+  const [dinamicaAtual, setDinamicaAtual] = useState<any>(null);
 
   useEffect(() => {
     const loadTeamData = async () => {
@@ -805,6 +806,22 @@ export default function TeamDetails() {
                       <CardTitle>Resultado Final</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
+                      {selectedSubmissao.imagem_desenvolvimento && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-2 text-muted-foreground">
+                            Desenvolvimento (atualiza a cada minuto)
+                          </h4>
+                          <div className="flex justify-center">
+                            <img 
+                              key={selectedSubmissao.imagem_desenvolvimento}
+                              src={selectedSubmissao.imagem_desenvolvimento} 
+                              alt="Em Desenvolvimento" 
+                              className="max-w-full h-auto rounded-lg border"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
                       <div>
                         <h4 className="text-sm font-semibold mb-2 text-muted-foreground">Imagem Pronta</h4>
                         <div className="flex justify-center">
