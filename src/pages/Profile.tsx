@@ -305,12 +305,13 @@ export default function Profile() {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="flex justify-center">
+                  {/* DESATIVADO TEMPORARIAMENTE - Para reativar, descomente o bloco abaixo */}
+                  {/* <div className="flex justify-center">
                     <AvatarSelector
                       currentAvatar={avatarUrl}
                       onAvatarChange={setAvatarUrl}
                     />
-                  </div>
+                  </div> */}
 
                   <FormField
                     control={form.control}
