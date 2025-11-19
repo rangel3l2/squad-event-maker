@@ -99,7 +99,12 @@ export default function Profile() {
     loadProfile();
   }, [user, navigate, form]);
 
+  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
   const onSubmit = async (data: ProfileFormData) => {
+    toast.info("Funcionalidade de salvar perfil temporariamente desativada");
+    return;
+    
+    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
     if (!user || !userId) return;
 
     setIsSubmitting(true);
@@ -120,9 +125,15 @@ export default function Profile() {
     } finally {
       setIsSubmitting(false);
     }
+    */
   };
 
+  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
   const handleLeaveTeam = async () => {
+    toast.info("Funcionalidade de sair do time temporariamente desativada");
+    return;
+    
+    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
     if (!userId || !teamId) return;
 
     setIsLeavingTeam(true);
@@ -140,6 +151,7 @@ export default function Profile() {
     } finally {
       setIsLeavingTeam(false);
     }
+    */
   };
 
   const handleEditTeam = () => {
@@ -148,7 +160,12 @@ export default function Profile() {
     }
   };
 
+  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
   const handleDeleteAccount = async () => {
+    toast.info("Funcionalidade de deletar conta temporariamente desativada");
+    return;
+    
+    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
     if (!userId || deleteConfirmation !== "apagar_usuario") {
       toast.error("Digite 'apagar_usuario' para confirmar");
       return;
@@ -175,9 +192,15 @@ export default function Profile() {
       setIsDeletingAccount(false);
       setDeleteConfirmation("");
     }
+    */
   };
 
+  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
   const handleDeleteTeam = async () => {
+    toast.info("Funcionalidade de deletar time temporariamente desativada");
+    return;
+    
+    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
     if (!teamId) return;
 
     setIsDeletingTeam(true);
@@ -196,6 +219,7 @@ export default function Profile() {
     } finally {
       setIsDeletingTeam(false);
     }
+    */
   };
 
   const isCaptain = currentTeam && user && currentTeam.captain_id === user.id;
@@ -231,30 +255,24 @@ export default function Profile() {
                   </div>
                   
                   <div className="flex gap-2">
+                    {/* DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada */}
                     {isCaptain && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive">
+                          <Button variant="destructive" disabled={true}>
                             <Trash2 className="w-4 h-4 mr-2" />
-                            Deletar Time
+                            Deletar Time (Desativado)
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Deletar Time</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Tem certeza que deseja deletar o time "{currentTeam.name}"? Esta ação não pode ser desfeita e todos os membros serão removidos.
+                              Funcionalidade temporariamente desativada.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={handleDeleteTeam}
-                              disabled={isDeletingTeam}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              {isDeletingTeam ? "Deletando..." : "Deletar Time"}
-                            </AlertDialogAction>
+                            <AlertDialogCancel>Fechar</AlertDialogCancel>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -262,29 +280,20 @@ export default function Profile() {
                     
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive">
+                        <Button variant="destructive" disabled={true}>
                           <LogOut className="w-4 h-4 mr-2" />
-                          Sair do Time
+                          Sair do Time (Desativado)
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                          <AlertDialogTitle>Sair do Time</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Você será removido do time "{currentTeam.name}". 
-                            {isCaptain && " Como você é o capitão, a liderança será transferida para outro membro ou o time será deletado se não houver outros membros."}
-                            {" "}Você poderá entrar em outro time ou criar um novo depois.
+                            Funcionalidade temporariamente desativada.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={handleLeaveTeam}
-                            disabled={isLeavingTeam}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            {isLeavingTeam ? "Saindo..." : "Sair do Time"}
-                          </AlertDialogAction>
+                          <AlertDialogCancel>Fechar</AlertDialogCancel>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
@@ -298,9 +307,9 @@ export default function Profile() {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-3xl font-bold">Dados Pessoais</CardTitle>
-            <CardDescription className="text-lg">
-              Edite suas informações de cadastro
-            </CardDescription>
+             <CardDescription className="text-lg">
+               Visualize suas informações (edição temporariamente desativada)
+             </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -320,7 +329,7 @@ export default function Profile() {
                       <FormItem>
                         <FormLabel>Nome Completo *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Seu nome completo" {...field} />
+                          <Input placeholder="Seu nome completo" {...field} disabled={true} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -333,7 +342,7 @@ export default function Profile() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Turma *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={true}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione a turma" />
@@ -355,7 +364,7 @@ export default function Profile() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Período *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={true}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione o período" />
@@ -375,8 +384,8 @@ export default function Profile() {
                     )}
                   />
 
-                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-                    {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+                  <Button type="submit" className="w-full" size="lg" disabled={true}>
+                    Edição Temporariamente Desativada
                   </Button>
 
                   <Button 
@@ -404,43 +413,23 @@ export default function Profile() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-full">
+                  <Button variant="destructive" className="w-full" disabled={true}>
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Excluir Conta
+                    Excluir Conta (Desativado)
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                    <AlertDialogTitle>Exclusão de Conta</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Esta ação não pode ser desfeita. Isso excluirá permanentemente sua conta
-                      e removerá seus dados dos nossos servidores.
+                      Funcionalidade temporariamente desativada.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <div className="py-4">
-                    <label className="text-sm font-medium mb-2 block">
-                      Digite <code className="bg-muted px-2 py-1 rounded">apagar_usuario</code> para confirmar:
-                    </label>
-                    <Input
-                      value={deleteConfirmation}
-                      onChange={(e) => setDeleteConfirmation(e.target.value)}
-                      placeholder="apagar_usuario"
-                      className="font-mono"
-                    />
-                  </div>
                   <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>
-                      Cancelar
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDeleteAccount}
-                      disabled={isDeletingAccount || deleteConfirmation !== "apagar_usuario"}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {isDeletingAccount ? "Excluindo..." : "Excluir Minha Conta"}
-                    </AlertDialogAction>
+                    <AlertDialogCancel>Fechar</AlertDialogCancel>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
