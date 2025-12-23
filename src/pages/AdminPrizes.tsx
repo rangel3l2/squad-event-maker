@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Trash2, ArrowUp, ArrowDown, Plus, Trophy } from "lucide-react";
+import { Trash2, ArrowUp, ArrowDown, Plus, Trophy, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ interface Prize {
 const AdminPrizes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin, loading: roleLoading } = useRole();
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [prizes, setPrizes] = useState<Prize[]>([]);
@@ -46,8 +48,17 @@ const AdminPrizes = () => {
       navigate("/auth");
       return;
     }
-    fetchEvents();
-  }, [user, navigate]);
+
+    if (!roleLoading && !isAdmin) {
+      toast.error("Acesso negado - privilégios de administrador necessários");
+      navigate("/");
+      return;
+    }
+
+    if (!roleLoading && isAdmin) {
+      fetchEvents();
+    }
+  }, [user, isAdmin, roleLoading, navigate]);
 
   useEffect(() => {
     if (selectedEventId) {
@@ -155,6 +166,18 @@ const AdminPrizes = () => {
       default: return "text-muted-foreground";
     }
   };
+
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Calendar, Trash2 } from "lucide-react";
+import { Plus, Calendar, Trash2, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 interface Event {
@@ -22,6 +23,7 @@ interface Event {
 
 const Admin = () => {
   const { user } = useAuth();
+  const { isAdmin, loading: roleLoading } = useRole();
   const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -33,8 +35,16 @@ const Admin = () => {
       return;
     }
 
-    fetchEvents();
-  }, [user, navigate]);
+    if (!roleLoading && !isAdmin) {
+      toast.error("Acesso negado - privilégios de administrador necessários");
+      navigate("/");
+      return;
+    }
+
+    if (!roleLoading && isAdmin) {
+      fetchEvents();
+    }
+  }, [user, isAdmin, roleLoading, navigate]);
 
   const fetchEvents = async () => {
     try {
@@ -128,6 +138,18 @@ const Admin = () => {
       minute: '2-digit',
     });
   };
+
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <>
