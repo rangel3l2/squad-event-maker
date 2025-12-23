@@ -1,15 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.0";
 
-const API_BASE_URL = "http://ifms.pro.br:6003";
+const API_BASE_URL = "https://ifms.pro.br:6005";
 
 // Allowed path prefixes for SSRF protection
 const ALLOWED_PATH_PREFIXES = [
-  '/api/',
+  '/usuarios',
+  '/times',
   '/time/',
-  '/times/',
-  '/events/',
-  '/dinamicas/',
+  '/baixar-pastas-pares',
+  '/uploads/',
+  '/obter-gif',
 ];
 
 function getCorsHeaders(req: Request) {
@@ -98,11 +99,13 @@ serve(async (req) => {
 
     // Construct the target URL
     const targetUrl = `${API_BASE_URL}${path}`;
-    console.log('Proxying request to:', targetUrl);
+    console.log('Proxying request to:', targetUrl, 'Method:', method);
 
-    // Forward the request to the external API
+    // Determine content type from request
+    const requestContentType = req.headers.get('content-type') || 'application/json';
+    
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      'Content-Type': requestContentType,
     };
 
     const options: RequestInit = {
@@ -110,22 +113,40 @@ serve(async (req) => {
       headers,
     };
 
-    // Forward body for POST, PUT, PATCH requests
-    if (['POST', 'PUT', 'PATCH'].includes(method)) {
+    // Forward body for POST, PUT, PATCH, DELETE requests
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
       const body = await req.text();
-      options.body = body;
+      if (body) {
+        options.body = body;
+      }
     }
 
     const response = await fetch(targetUrl, options);
-    const data = await response.text();
-
-    return new Response(data, {
-      status: response.status,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json',
-      },
-    });
+    
+    // Get response content type
+    const responseContentType = response.headers.get('content-type') || 'application/json';
+    
+    // Handle different response types
+    if (responseContentType.includes('application/json')) {
+      const data = await response.text();
+      return new Response(data, {
+        status: response.status,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+      });
+    } else {
+      // For binary data or other content types, pass through as-is
+      const data = await response.arrayBuffer();
+      return new Response(data, {
+        status: response.status,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': responseContentType,
+        },
+      });
+    }
   } catch (error) {
     console.error('Proxy error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

@@ -1,19 +1,49 @@
-// Direct HTTPS connection to external API
+// API service that proxies all requests through authenticated edge functions
 import { supabase } from '@/integrations/supabase/client';
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const API_BASE_URL = "https://ifms.pro.br:6005";
 
-const makeRequest = async (path: string, options?: RequestInit) => {
-  const url = `${API_BASE_URL}${path}`;
-  const finalHeaders = {
-    'Content-Type': 'application/json',
-    ...(options?.headers || {}),
-  } as Record<string, string>;
+// Helper to get auth token
+const getAuthToken = async (): Promise<string | null> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || null;
+};
+
+// Make authenticated request through edge function proxy
+const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Promise<Response> => {
+  const token = await getAuthToken();
   
-  return fetch(url, {
+  if (!token) {
+    throw new Error("Authentication required. Please log in.");
+  }
+  
+  const url = `${SUPABASE_URL}/functions/v1/api-proxy?path=${encodeURIComponent(path)}`;
+  
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': options?.headers?.['Content-Type' as keyof HeadersInit] as string || 'application/json',
+  };
+
+  const finalOptions: RequestInit = {
     ...options,
-    headers: finalHeaders,
-  });
+    headers,
+  };
+
+  console.log('Making authenticated request:', path, 'Method:', options?.method || 'GET');
+  
+  const response = await fetch(url, finalOptions);
+  
+  if (response.status === 401) {
+    throw new Error("Session expired. Please log in again.");
+  }
+  
+  return response;
+};
+
+// Legacy makeRequest for backwards compatibility - now routes through proxy
+const makeRequest = async (path: string, options?: RequestInit): Promise<Response> => {
+  return makeAuthenticatedRequest(path, options);
 };
 
 export interface Usuario {
@@ -531,14 +561,11 @@ export const transferirDono = async (timeId: number, novoDonoId: number): Promis
 };
 
 export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas> => {
-  console.log("=== API buscarDinamicasTime (direct) ===");
+  console.log("=== API buscarDinamicasTime (authenticated) ===");
   console.log("Time ID:", timeId);
 
-  const url = `${API_BASE_URL}/time/dinamicas?time_id=${timeId}`;
-  console.log("URL completa:", url);
-
   try {
-    const response = await fetch(url);
+    const response = await makeRequest(`/time/dinamicas?time_id=${timeId}`);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -575,14 +602,11 @@ export const buscarDinamicasTime = async (timeId: number): Promise<TimeDinamicas
 
 // Buscar arquivos de uma dinâmica específica
 export const buscarImagensDinamica = async (codePasta: string): Promise<ArquivoDinamica[]> => {
-  console.log("=== API buscarImagensDinamica (direct) ===");
+  console.log("=== API buscarImagensDinamica (authenticated) ===");
   console.log("Code Pasta:", codePasta);
 
-  const url = `${API_BASE_URL}/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`;
-  console.log("URL completa:", url);
-
   try {
-    const response = await fetch(url);
+    const response = await makeRequest(`/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -690,10 +714,16 @@ export const buscarSubmissaoPorCodePasta = async (
     const pontuacaoUrl = `${baseUrl}pontuacao.txt`;
     const cssUrl = `${baseUrl}styles.css`;
 
-    // Buscar apenas arquivos textuais necessários
-    const pontRes = await fetch(pontuacaoUrl);
-
-    const pontuacao = pontRes.ok ? await pontRes.text() : '';
+    // Buscar pontuação through authenticated proxy
+    let pontuacao = '';
+    try {
+      const pontRes = await makeRequest(`/uploads/${codePasta}/pontuacao.txt`);
+      if (pontRes.ok) {
+        pontuacao = await pontRes.text();
+      }
+    } catch {
+      // Pontuação não disponível
+    }
 
     return {
       codePasta,
