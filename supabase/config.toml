@@ -2,3 +2,6 @@ project_id = "twfbsgbydjuhqjjkhodv"
 
 [functions.generate-logo]
 verify_jwt = true
+
+[functions.upload-image]
+verify_jwt = true
