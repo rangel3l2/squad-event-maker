@@ -1,26 +1,70 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.0";
 import JSZip from "https://esm.sh/jszip@3.10.1";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://twfbsgbydjuhqjjkhodv.lovableproject.com',
+    'http://localhost:5173',
+    'http://localhost:8080',
+  ];
+  
+  return {
+    'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Credentials': 'true',
+  };
+}
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!
+    );
+
+    const { error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     let codePasta: string | null = null;
     
-    // Tentar pegar do body (POST) primeiro
+    // Try to get from body (POST) first
     if (req.method === 'POST') {
       const body = await req.json();
       codePasta = body.code_pasta;
     }
     
-    // Se não tiver no body, tentar query parameter (GET)
+    // If not in body, try query parameter (GET)
     if (!codePasta) {
       const url = new URL(req.url);
       codePasta = url.searchParams.get('code_pasta');
@@ -55,15 +99,15 @@ serve(async (req) => {
     
     console.log('Resposta recebida, processando ZIP...');
     
-    // Baixar o ZIP como ArrayBuffer
+    // Download ZIP as ArrayBuffer
     const zipBuffer = await response.arrayBuffer();
     console.log('ZIP baixado, tamanho:', zipBuffer.byteLength);
     
-    // Extrair o GIF do ZIP
+    // Extract GIF from ZIP
     const zip = await JSZip.loadAsync(zipBuffer);
     console.log('ZIP carregado, arquivos:', Object.keys(zip.files));
     
-    // Procurar arquivo GIF no ZIP
+    // Find GIF file in ZIP
     let gifFile = null;
     for (const fileName in zip.files) {
       if (fileName.toLowerCase().endsWith('.gif')) {
@@ -83,7 +127,7 @@ serve(async (req) => {
       );
     }
     
-    // Extrair o GIF como base64
+    // Extract GIF as base64
     const gifBlob = await gifFile.async('base64');
     const gifDataUrl = `data:image/gif;base64,${gifBlob}`;
     console.log('GIF extraído e convertido para base64');
