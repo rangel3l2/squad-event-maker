@@ -1,47 +1,29 @@
-const IMGBB_API_KEY = "5e705342ac5da081236065212f37307c";
-const IMGBB_API_URL = "https://api.imgbb.com/1/upload";
+import { supabase } from "@/integrations/supabase/client";
 
-interface ImgBBResponse {
-  data: {
-    image: {
-      url: string;
-    };
-    url: string;
-    display_url: string;
-  };
-  success: boolean;
-  status: number;
+interface UploadResponse {
+  url: string;
+  display_url: string;
 }
 
 export const uploadImageToImgBB = async (base64Image: string): Promise<string> => {
   try {
-    // Remove o prefixo data:image/...;base64, se existir
-    const base64Data = base64Image.includes(',') 
-      ? base64Image.split(',')[1] 
-      : base64Image;
+    console.log('Uploading image via edge function...');
 
-    const formData = new FormData();
-    formData.append('image', base64Data);
-
-    const response = await fetch(`${IMGBB_API_URL}?key=${IMGBB_API_KEY}`, {
-      method: 'POST',
-      body: formData,
+    const { data, error } = await supabase.functions.invoke<UploadResponse>('upload-image', {
+      body: { base64Image }
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Erro ao fazer upload no ImgBB:', errorText);
-      throw new Error(`Erro no upload: ${response.status}`);
+    if (error) {
+      console.error('Upload error:', error);
+      throw new Error(error.message || 'Failed to upload image');
     }
 
-    const result: ImgBBResponse = await response.json();
-
-    if (!result.success) {
-      throw new Error('Upload falhou no ImgBB');
+    if (!data?.url) {
+      throw new Error('No URL returned from upload');
     }
 
-    console.log('Upload ImgBB bem-sucedido:', result.data.image.url);
-    return result.data.image.url;
+    console.log('Upload successful:', data.url);
+    return data.url;
   } catch (error) {
     console.error('Erro ao fazer upload da imagem:', error);
     throw error;
