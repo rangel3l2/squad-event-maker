@@ -22,6 +22,7 @@ import TeamDetails from "./pages/TeamDetails";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import EventTeams from "./pages/EventTeams";
+import OAuthConsent from "./pages/OAuthConsent";
 
 const queryClient = new QueryClient();
 
