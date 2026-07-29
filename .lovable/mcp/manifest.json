@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "sdk_version": "0.25.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://twfbsgbydjuhqjjkhodv.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "squad-event-maker",
+      "version": "0.1.0",
+      "title": "squad-event-maker"
+    },
+    "tools": [
+      {
+        "name": "list_events",
+        "title": "List events",
+        "description": "List events (championships) visible to the signed-in user.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "only_active": {
+              "type": "boolean",
+              "description": "Return only active events."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_event_details",
+        "title": "Get event details",
+        "description": "Get an event with its rules and prizes.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "event_id": {
+              "type": "string",
+              "description": "Id of the event to fetch."
+            }
+          },
+          "required": [
+            "event_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_teams",
+        "title": "List teams",
+        "description": "List teams, optionally filtered by event id.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "event_id": {
+              "type": "string",
+              "description": "Event id to filter teams by."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_team",
+        "title": "Get team details",
+        "description": "Get a single team with its members.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "team_id": {
+              "type": "string",
+              "description": "Id of the team to fetch."
+            }
+          },
+          "required": [
+            "team_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_teams",
+        "title": "List my teams",
+        "description": "List the teams the signed-in user belongs to.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_my_team",
+        "title": "Update my team",
+        "description": "Update the name, description or colors of a team. Only allowed for teams the signed-in user is permitted to edit.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "team_id": {
+              "type": "string",
+              "description": "Id of the team to update."
+            },
+            "name": {
+              "type": "string",
+              "description": "New team name."
+            },
+            "description": {
+              "type": "string",
+              "description": "New team description."
+            },
+            "primary_color": {
+              "type": "string",
+              "description": "New primary color, e.g. #ff0000."
+            },
+            "secondary_color": {
+              "type": "string",
+              "description": "New secondary color, e.g. #0000ff."
+            }
+          },
+          "required": [
+            "team_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

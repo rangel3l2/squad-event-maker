@@ -22,6 +22,7 @@ import TeamDetails from "./pages/TeamDetails";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import EventTeams from "./pages/EventTeams";
+import OAuthConsent from "./pages/OAuthConsent";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <ServerAuthGuard>
             <Routes>
               <Route path="/server-auth" element={<ServerAuthorization />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />

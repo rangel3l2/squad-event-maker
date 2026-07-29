@@ -14,8 +14,8 @@ export default function ServerAuthGuard({ children }: ServerAuthGuardProps) {
 
   useEffect(() => {
     const checkAuthorization = async () => {
-      // Não verificar se já estiver na página de autorização
-      if (location.pathname === "/server-auth") {
+      // Não verificar em páginas que não dependem do servidor externo
+      if (location.pathname === "/server-auth" || location.pathname.startsWith("/.lovable/")) {
         setIsChecking(false);
         return;
       }
@@ -41,7 +41,7 @@ export default function ServerAuthGuard({ children }: ServerAuthGuardProps) {
     checkAuthorization();
   }, [navigate, location.pathname]);
 
-  if (isChecking && location.pathname !== "/server-auth") {
+  if (isChecking && location.pathname !== "/server-auth" && !location.pathname.startsWith("/.lovable/")) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
