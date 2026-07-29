@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import type { ToolContext } from "@lovable.dev/mcp-js";
 
+declare const process: { env: Record<string, string | undefined> };
+
 /**
  * Supabase client scoped to the MCP caller's verified access token,
  * so all queries run under that user's RLS policies.
