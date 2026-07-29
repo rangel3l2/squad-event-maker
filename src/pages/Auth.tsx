@@ -1,18 +1,28 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarUsuarios } from "@/services/api";
 import { toast } from "sonner";
 
+const safeNext = (value: string | null) =>
+  value && value.startsWith("/") && !value.startsWith("//") ? value : null;
+
 const Auth = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next"));
   const { user, signInWithGoogle } = useAuth();
 
   useEffect(() => {
     const checkUserProfile = async () => {
       if (!user) return;
+
+      if (next) {
+        window.location.href = next;
+        return;
+      }
 
       try {
         // Verificar se o usuário está cadastrado na API externa
@@ -35,14 +45,15 @@ const Auth = () => {
     if (user) {
       checkUserProfile();
     }
-  }, [user, navigate]);
+  }, [user, navigate, next]);
 
   const handleGoogleSignIn = async () => {
-    const { error } = await signInWithGoogle();
+    const { error } = await signInWithGoogle(next ?? undefined);
     if (error) {
       toast.error("Erro ao fazer login com Google: " + error.message);
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
