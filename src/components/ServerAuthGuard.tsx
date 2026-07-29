@@ -41,7 +41,7 @@ export default function ServerAuthGuard({ children }: ServerAuthGuardProps) {
     checkAuthorization();
   }, [navigate, location.pathname]);
 
-  if (isChecking && location.pathname !== "/server-auth") {
+  if (isChecking && location.pathname !== "/server-auth" && !location.pathname.startsWith("/.lovable/")) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
