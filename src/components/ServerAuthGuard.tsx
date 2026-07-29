@@ -14,8 +14,8 @@ export default function ServerAuthGuard({ children }: ServerAuthGuardProps) {
 
   useEffect(() => {
     const checkAuthorization = async () => {
-      // Não verificar se já estiver na página de autorização
-      if (location.pathname === "/server-auth") {
+      // Não verificar em páginas que não dependem do servidor externo
+      if (location.pathname === "/server-auth" || location.pathname.startsWith("/.lovable/")) {
         setIsChecking(false);
         return;
       }
