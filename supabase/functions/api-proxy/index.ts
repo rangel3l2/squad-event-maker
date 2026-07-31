@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.76.0";
 
-const API_BASE_URL = "https://ifms.pro.br:6005";
+const API_BASE_URL = "https://frontendteamscup.com.br/api";
 
 // Allowed path prefixes for SSRF protection
 const ALLOWED_PATH_PREFIXES = [

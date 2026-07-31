@@ -82,7 +82,7 @@ serve(async (req) => {
 
     console.log('Buscando GIF para pasta:', codePasta);
     
-    const apiUrl = `https://ifms.pro.br:6005/obter-gif?code_pasta=${encodeURIComponent(codePasta)}`;
+    const apiUrl = `https://frontendteamscup.com.br/api/obter-gif?code_pasta=${encodeURIComponent(codePasta)}`;
     console.log('Fazendo requisição para:', apiUrl);
     
     const response = await fetch(apiUrl);

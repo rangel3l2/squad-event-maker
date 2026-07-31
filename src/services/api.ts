@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const API_BASE_URL = "https://ifms.pro.br:6005";
+const API_BASE_URL = "https://frontendteamscup.com.br/api";
 
 // Helper to get auth token
 const getAuthToken = async (): Promise<string | null> => {

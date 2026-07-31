@@ -70,7 +70,7 @@ serve(async (req) => {
 
     console.log('Buscando dinâmicas para time:', timeId);
     
-    const apiUrl = `https://ifms.pro.br:6005/time/dinamicas?time_id=${encodeURIComponent(timeId)}`;
+    const apiUrl = `https://frontendteamscup.com.br/api/time/dinamicas?time_id=${encodeURIComponent(timeId)}`;
     console.log('Fazendo requisição para:', apiUrl);
     
     const response = await fetch(apiUrl);
