@@ -3,10 +3,10 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@0.25.1";
 
 // src/lib/mcp/tools/list-events.ts
-import { defineTool } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineTool } from "npm:@lovable.dev/mcp-js@0.25.1";
 import { z } from "npm:zod@^3.25.76";
 
 // src/lib/mcp/supabase.ts
@@ -47,7 +47,7 @@ var list_events_default = defineTool({
 });
 
 // src/lib/mcp/tools/get-event-details.ts
-import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.25.1";
 import { z as z2 } from "npm:zod@^3.25.76";
 var get_event_details_default = defineTool2({
   name: "get_event_details",
@@ -78,7 +78,7 @@ var get_event_details_default = defineTool2({
 });
 
 // src/lib/mcp/tools/list-teams.ts
-import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.25.1";
 import { z as z3 } from "npm:zod@^3.25.76";
 var list_teams_default = defineTool3({
   name: "list_teams",
@@ -104,7 +104,7 @@ var list_teams_default = defineTool3({
 });
 
 // src/lib/mcp/tools/get-team.ts
-import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineTool as defineTool4 } from "npm:@lovable.dev/mcp-js@0.25.1";
 import { z as z4 } from "npm:zod@^3.25.76";
 var get_team_default = defineTool4({
   name: "get_team",
@@ -135,7 +135,7 @@ var get_team_default = defineTool4({
 });
 
 // src/lib/mcp/tools/list-my-teams.ts
-import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineTool as defineTool5 } from "npm:@lovable.dev/mcp-js@0.25.1";
 var list_my_teams_default = defineTool5({
   name: "list_my_teams",
   title: "List my teams",
@@ -156,7 +156,7 @@ var list_my_teams_default = defineTool5({
 });
 
 // src/lib/mcp/tools/update-my-team.ts
-import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.25.0";
+import { defineTool as defineTool6 } from "npm:@lovable.dev/mcp-js@0.25.1";
 import { z as z5 } from "npm:zod@^3.25.76";
 var update_my_team_default = defineTool6({
   name: "update_my_team",
@@ -219,5 +219,5 @@ var mcp_default = defineMcp({
 });
 
 // lovable-mcp-supabase-entry.ts
-import { createSupabaseHandler } from "npm:@lovable.dev/mcp-js@0.25.0/stacks/supabase";
+import { createSupabaseHandler } from "npm:@lovable.dev/mcp-js@0.25.1/stacks/supabase";
 Deno.serve(createSupabaseHandler(mcp_default, { functionName: "mcp" }));
