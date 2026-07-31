@@ -32,31 +32,28 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <ServerAuthGuard>
-            <Routes>
-              <Route path="/server-auth" element={<ServerAuthorization />} />
-              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/complete-profile" element={<CompleteProfile />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/teams" element={<Teams />} />
-              <Route path="/team-details" element={<TeamDetails />} />
-              <Route path="/team-details/:teamId" element={<TeamDetails />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/carousel" element={<AdminCarousel />} />
-              <Route path="/admin/invites" element={<AdminInvites />} />
-              <Route path="/admin/config" element={<AdminEventConfig />} />
-              <Route path="/admin/rules" element={<AdminRules />} />
-              <Route path="/admin/prizes" element={<AdminPrizes />} />
-              <Route path="/event/:eventId" element={<EventTeams />} />
-              <Route path="/logo-editor" element={<LogoEditor />} />
-              <Route path="/logo-editor/:teamId" element={<LogoEditor />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </ServerAuthGuard>
+          <Routes>
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/complete-profile" element={<CompleteProfile />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/teams" element={<Teams />} />
+            <Route path="/team-details" element={<TeamDetails />} />
+            <Route path="/team-details/:teamId" element={<TeamDetails />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/carousel" element={<AdminCarousel />} />
+            <Route path="/admin/invites" element={<AdminInvites />} />
+            <Route path="/admin/config" element={<AdminEventConfig />} />
+            <Route path="/admin/rules" element={<AdminRules />} />
+            <Route path="/admin/prizes" element={<AdminPrizes />} />
+            <Route path="/event/:eventId" element={<EventTeams />} />
+            <Route path="/logo-editor" element={<LogoEditor />} />
+            <Route path="/logo-editor/:teamId" element={<LogoEditor />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
