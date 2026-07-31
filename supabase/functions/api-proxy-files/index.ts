@@ -70,7 +70,7 @@ serve(async (req) => {
 
     console.log('Buscando arquivos para pasta:', codePasta);
     
-    const apiUrl = `https://ifms.pro.br:6005/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`;
+    const apiUrl = `https://frontendteamscup.com.br/api/baixar-pastas-pares?code_pasta=${encodeURIComponent(codePasta)}`;
     console.log('Fazendo requisição para:', apiUrl);
     
     const response = await fetch(apiUrl);
