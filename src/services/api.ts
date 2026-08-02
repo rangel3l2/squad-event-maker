@@ -779,3 +779,102 @@ export const buscarTodasSubmissoesDinamica = async (
     return [];
   }
 };
+
+// ==========================
+// Sedes, Eventos e Cores dos Times
+// ==========================
+
+export const EVENTO_ATUAL = 2;
+
+export interface Sede {
+  id: number;
+  nome_campus: string;
+  instituicao: string;
+  campus: string;
+  local?: string;
+  cidade: string;
+  uf: string;
+  regiao?: number;
+  ano?: number;
+  evento?: number;
+  imagem_sede?: string;
+}
+
+export interface CorTime {
+  id: number;
+  cor: string;
+}
+
+export interface DisponibilidadeCor {
+  cor_id: number;
+  cor_base: string;
+  usos: number;
+  disponivel: boolean;
+  vagas: number;
+  times: Array<{ id: number; nome_time: string; cor_time?: string; sede?: number; evento?: number }>;
+}
+
+export interface DisponibilidadeCores {
+  sede_id: number;
+  evento: number;
+  limite_por_cor: number;
+  cores: DisponibilidadeCor[];
+}
+
+const parseApiError = async (response: Response, fallback: string): Promise<never> => {
+  let detail: any = "";
+  try {
+    const ct = response.headers.get("content-type") || "";
+    detail = ct.includes("application/json") ? await response.json() : await response.text();
+  } catch {
+    /* ignore */
+  }
+  const message =
+    typeof detail === "string" ? detail : detail?.detail || detail?.message || JSON.stringify(detail);
+  throw new Error(message || `${fallback} (${response.status})`);
+};
+
+export const listarSedesPorEvento = async (eventoCod: number = EVENTO_ATUAL): Promise<Sede[]> => {
+  const response = await makeRequest(`/eventos/${eventoCod}/sedes`);
+  if (!response.ok) await parseApiError(response, "Erro ao listar sedes");
+  const data = await response.json();
+  return Array.isArray(data) ? data : (data?.sedes ?? []);
+};
+
+export const listarCoresTimes = async (): Promise<CorTime[]> => {
+  const response = await makeRequest("/times/cores");
+  if (!response.ok) await parseApiError(response, "Erro ao listar cores");
+  return response.json();
+};
+
+export const disponibilidadeCores = async (
+  sedeId: number,
+  evento: number = EVENTO_ATUAL
+): Promise<DisponibilidadeCores> => {
+  const response = await makeRequest(
+    `/times/cores/disponibilidade?sede_id=${sedeId}&evento=${evento}`
+  );
+  if (!response.ok) await parseApiError(response, "Erro ao consultar disponibilidade de cores");
+  return response.json();
+};
+
+export const definirCorTime = async (
+  timeId: number,
+  payload: { dono_id: number; cor_id: number; cor_time?: string }
+) => {
+  const response = await makeRequest(`/times/${timeId}/cor`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) await parseApiError(response, "Erro ao definir cor do time");
+  return response.json();
+};
+
+export const removerCorTime = async (timeId: number, donoId: number) => {
+  const response = await makeRequest(`/times/${timeId}/cor?dono_id=${donoId}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) await parseApiError(response, "Erro ao remover cor do time");
+  return response.json();
+};
