@@ -65,6 +65,11 @@ export interface Time {
   integrantes?: Integrante[];
   quantidade?: number;
   qtd_integrantes?: number;
+  sede?: number;
+  evento?: number;
+  cor_id?: number | null;
+  cor_base?: string | null;
+  cor_time?: string | null;
 }
 
 export interface Integrante {
