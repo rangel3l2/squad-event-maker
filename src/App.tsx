@@ -22,6 +22,8 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import EventTeams from "./pages/EventTeams";
 import OAuthConsent from "./pages/OAuthConsent";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+
 
 const queryClient = new QueryClient();
 
@@ -41,13 +43,14 @@ const App = () => (
             <Route path="/teams" element={<Teams />} />
             <Route path="/team-details" element={<TeamDetails />} />
             <Route path="/team-details/:teamId" element={<TeamDetails />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/carousel" element={<AdminCarousel />} />
-            <Route path="/admin/invites" element={<AdminInvites />} />
-            <Route path="/admin/config" element={<AdminEventConfig />} />
-            <Route path="/admin/rules" element={<AdminRules />} />
-            <Route path="/admin/prizes" element={<AdminPrizes />} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
+            <Route path="/admin/carousel" element={<ProtectedRoute requireAdmin><AdminCarousel /></ProtectedRoute>} />
+            <Route path="/admin/invites" element={<ProtectedRoute requireAdmin><AdminInvites /></ProtectedRoute>} />
+            <Route path="/admin/config" element={<ProtectedRoute requireAdmin><AdminEventConfig /></ProtectedRoute>} />
+            <Route path="/admin/rules" element={<ProtectedRoute requireAdmin><AdminRules /></ProtectedRoute>} />
+            <Route path="/admin/prizes" element={<ProtectedRoute requireAdmin><AdminPrizes /></ProtectedRoute>} />
+
             <Route path="/event/:eventId" element={<EventTeams />} />
             <Route path="/logo-editor" element={<LogoEditor />} />
             <Route path="/logo-editor/:teamId" element={<LogoEditor />} />
