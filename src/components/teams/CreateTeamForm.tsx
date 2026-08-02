@@ -288,7 +288,22 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                     Esta senha será usada para convidar membros para o time
                   </p>
                 </div>
+
+                <div className="pt-2 border-t space-y-4">
+                  <SedeSelector
+                    value={sedeId}
+                    onChange={(id) => {
+                      setSedeId(id);
+                      setCor(null);
+                    }}
+                  />
+                </div>
+
+                <div className="pt-2 border-t">
+                  <TeamColorPicker sedeId={sedeId} value={cor} onChange={setCor} />
+                </div>
               </div>
+
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? "Criando..." : "Criar Time"}
