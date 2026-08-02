@@ -98,16 +98,34 @@ const AdminPrizes = () => {
 
     const maxOrder = prizes.length > 0 ? Math.max(...prizes.map(p => p.display_order)) : -1;
 
+    const position = parseInt(formData.get("position") as string, 10);
+    if (!Number.isInteger(position) || position < 1 || position > 100) {
+      toast.error("Posição deve ser um número entre 1 e 100");
+      return;
+    }
+
+    const title = ((formData.get("title") as string) ?? "").trim();
+    const prizeDetails = ((formData.get("prize_details") as string) ?? "").trim();
+    if (title.length < 1 || title.length > 120) {
+      toast.error("Título deve ter entre 1 e 120 caracteres");
+      return;
+    }
+    if (prizeDetails.length < 1 || prizeDetails.length > 1000) {
+      toast.error("Detalhes da premiação devem ter entre 1 e 1000 caracteres");
+      return;
+    }
+
     const { error } = await supabase
       .from("event_prizes")
       .insert({
         event_id: selectedEventId,
-        position: parseInt(formData.get("position") as string),
-        title: formData.get("title") as string,
-        description: formData.get("description") as string,
-        prize_details: formData.get("prize_details") as string,
+        position,
+        title,
+        description: ((formData.get("description") as string) ?? "").trim().slice(0, 1000),
+        prize_details: prizeDetails,
         display_order: maxOrder + 1,
       });
+
 
     if (error) {
       toast.error("Erro ao criar premiação");
