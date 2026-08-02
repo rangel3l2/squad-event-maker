@@ -255,6 +255,8 @@ export const criarTime = async (time: Time): Promise<Time> => {
   params.set('dono_id', String(time.dono_id));
   if (time.senha_convite) params.set('senha_convite', time.senha_convite);
   if (time.imagem_time) params.set('imagem_time', time.imagem_time);
+  if (time.sede !== undefined && time.sede !== null) params.set('sede', String(time.sede));
+  if (time.evento !== undefined && time.evento !== null) params.set('evento', String(time.evento));
 
   console.log("=== API criarTime ===");
   console.log("Objeto Time recebido:", time);
