@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { criarTime, listarUsuarios, listarTimes, adicionarIntegrante, deletarTime, buscarTimesPorDono } from "@/services/api";
+import { criarTime, listarUsuarios, listarTimes, adicionarIntegrante, deletarTime, buscarTimesPorDono, definirCorTime, EVENTO_ATUAL } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Copy, Check, Mail, MessageCircle, Sparkles } from "lucide-react";
 import { TeamLogoUploader } from "./TeamLogoUploader";
+import { SedeSelector } from "./SedeSelector";
+import { TeamColorPicker, type CorSelecionada } from "./TeamColorPicker";
 import { useNavigate } from "react-router-dom";
 
 const createTeamSchema = z.object({
@@ -34,6 +36,9 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [senhaConvite, setSenhaConvite] = useState("");
+  const [sedeId, setSedeId] = useState<number | null>(null);
+  const [cor, setCor] = useState<CorSelecionada | null>(null);
+
 
   // Gerar senha de 5 caracteres automaticamente
   useEffect(() => {
