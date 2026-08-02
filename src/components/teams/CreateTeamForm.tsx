@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { criarTime, listarUsuarios, listarTimes, adicionarIntegrante, deletarTime, buscarTimesPorDono } from "@/services/api";
+import { criarTime, listarUsuarios, listarTimes, adicionarIntegrante, deletarTime, buscarTimesPorDono, definirCorTime, EVENTO_ATUAL } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Copy, Check, Mail, MessageCircle, Sparkles } from "lucide-react";
 import { TeamLogoUploader } from "./TeamLogoUploader";
+import { SedeSelector } from "./SedeSelector";
+import { TeamColorPicker, type CorSelecionada } from "./TeamColorPicker";
 import { useNavigate } from "react-router-dom";
 
 const createTeamSchema = z.object({
@@ -34,6 +36,9 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [senhaConvite, setSenhaConvite] = useState("");
+  const [sedeId, setSedeId] = useState<number | null>(null);
+  const [cor, setCor] = useState<CorSelecionada | null>(null);
+
 
   // Gerar senha de 5 caracteres automaticamente
   useEffect(() => {
@@ -97,6 +102,12 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       return;
     }
 
+    if (!sedeId) {
+      toast.error("Selecione a sede do time");
+      return;
+    }
+
+
     setIsSubmitting(true);
 
     try {
@@ -146,12 +157,14 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         }
       }
 
-      // Criar time usando a API
+      // Criar time usando a API (a cor é definida em rota dedicada)
       const novoTime = await criarTime({
         nome_time: data.name,
         dono_id: usuario.id,
         senha_convite: senhaConvite,
         imagem_time: logoUrl,
+        sede: sedeId,
+        evento: EVENTO_ATUAL,
       });
 
       // Buscar o time recém-criado pelo código de convite
@@ -164,7 +177,24 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
           usuario_id: usuario.id,
           funcao: "Líder"
         });
+
+        // Definir a cor do time pela rota dedicada (respeita limite por sede)
+        if (cor) {
+          try {
+            await definirCorTime(timeCriado.id, {
+              dono_id: usuario.id,
+              cor_id: cor.cor_id,
+              cor_time: cor.cor_time,
+            });
+          } catch (corError: any) {
+            console.error("Erro ao definir cor do time:", corError);
+            toast.warning("Time criado, mas a cor não pôde ser aplicada", {
+              description: corError.message,
+            });
+          }
+        }
       }
+
 
       // Mostrar o código de convite
       setInviteCode(senhaConvite);
@@ -258,7 +288,22 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                     Esta senha será usada para convidar membros para o time
                   </p>
                 </div>
+
+                <div className="pt-2 border-t space-y-4">
+                  <SedeSelector
+                    value={sedeId}
+                    onChange={(id) => {
+                      setSedeId(id);
+                      setCor(null);
+                    }}
+                  />
+                </div>
+
+                <div className="pt-2 border-t">
+                  <TeamColorPicker sedeId={sedeId} value={cor} onChange={setCor} />
+                </div>
               </div>
+
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? "Criando..." : "Criar Time"}

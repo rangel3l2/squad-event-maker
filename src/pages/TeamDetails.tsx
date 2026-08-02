@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, buscarTodasSubmissoesDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica, type SubmissaoDinamica } from "@/services/api";
 import CodeViewer from "@/components/CodeViewer";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { TeamColorManager } from "@/components/teams/TeamColorManager";
+import { EVENTO_ATUAL } from "@/services/api";
 
 export default function TeamDetails() {
   const { user } = useAuth();
@@ -591,6 +593,21 @@ export default function TeamDetails() {
             </div>
           </CardHeader>
         </Card>
+
+        {/* Cor do Time (apenas líder) */}
+        {isUserInTeam && isLeader && time.id && time.dono_id && (
+          <TeamColorManager
+            timeId={time.id}
+            donoId={time.dono_id}
+            sedeId={time.sede ?? null}
+            evento={time.evento ?? EVENTO_ATUAL}
+            corAtualId={time.cor_id ?? null}
+            corAtual={time.cor_time ?? time.cor_base ?? null}
+            onUpdated={() => window.location.reload()}
+          />
+        )}
+
+
 
         {/* Lista de Integrantes */}
         <Card>

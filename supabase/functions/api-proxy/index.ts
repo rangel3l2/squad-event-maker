@@ -8,6 +8,7 @@ const ALLOWED_PATH_PREFIXES = [
   '/usuarios',
   '/times',
   '/time/',
+  '/eventos/',
   '/baixar-pastas-pares',
   '/uploads/',
   '/obter-gif',
