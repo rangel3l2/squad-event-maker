@@ -157,12 +157,14 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         }
       }
 
-      // Criar time usando a API
+      // Criar time usando a API (a cor é definida em rota dedicada)
       const novoTime = await criarTime({
         nome_time: data.name,
         dono_id: usuario.id,
         senha_convite: senhaConvite,
         imagem_time: logoUrl,
+        sede: sedeId,
+        evento: EVENTO_ATUAL,
       });
 
       // Buscar o time recém-criado pelo código de convite
@@ -175,7 +177,24 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
           usuario_id: usuario.id,
           funcao: "Líder"
         });
+
+        // Definir a cor do time pela rota dedicada (respeita limite por sede)
+        if (cor) {
+          try {
+            await definirCorTime(timeCriado.id, {
+              dono_id: usuario.id,
+              cor_id: cor.cor_id,
+              cor_time: cor.cor_time,
+            });
+          } catch (corError: any) {
+            console.error("Erro ao definir cor do time:", corError);
+            toast.warning("Time criado, mas a cor não pôde ser aplicada", {
+              description: corError.message,
+            });
+          }
+        }
       }
+
 
       // Mostrar o código de convite
       setInviteCode(senhaConvite);
