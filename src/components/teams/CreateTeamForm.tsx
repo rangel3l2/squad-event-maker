@@ -102,6 +102,12 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       return;
     }
 
+    if (!sedeId) {
+      toast.error("Selecione a sede do time");
+      return;
+    }
+
+
     setIsSubmitting(true);
 
     try {
