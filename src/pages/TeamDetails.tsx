@@ -592,6 +592,21 @@ export default function TeamDetails() {
           </CardHeader>
         </Card>
 
+        {/* Cor do Time (apenas líder) */}
+        {isUserInTeam && isLeader && time.id && time.dono_id && (
+          <TeamColorManager
+            timeId={time.id}
+            donoId={time.dono_id}
+            sedeId={time.sede ?? null}
+            evento={time.evento ?? EVENTO_ATUAL}
+            corAtualId={time.cor_id ?? null}
+            corAtual={time.cor_time ?? time.cor_base ?? null}
+            onUpdated={() => window.location.reload()}
+          />
+        )}
+
+
+
         {/* Lista de Integrantes */}
         <Card>
           <CardHeader>
