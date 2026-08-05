@@ -110,6 +110,18 @@ serve(async (req) => {
       'Content-Type': requestContentType,
     };
 
+    // Auth against the external API:
+    // - /login: forward the provider (Google) token + provider name
+    // - other routes: forward the API token issued by /login
+    const providerToken = req.headers.get('x-provider-token');
+    const apiToken = req.headers.get('x-api-token');
+    if (providerToken) {
+      headers['Authorization'] = `Bearer ${providerToken}`;
+      headers['X-Auth-Provider'] = req.headers.get('x-auth-provider') || 'google';
+    } else if (apiToken) {
+      headers['Authorization'] = `Bearer ${apiToken}`;
+    }
+
     const options: RequestInit = {
       method,
       headers,
