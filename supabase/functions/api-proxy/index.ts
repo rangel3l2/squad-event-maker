@@ -5,6 +5,7 @@ const API_BASE_URL = "https://frontendteamscup.com.br/api";
 
 // Allowed path prefixes for SSRF protection
 const ALLOWED_PATH_PREFIXES = [
+  '/login',
   '/usuarios',
   '/times',
   '/time/',
