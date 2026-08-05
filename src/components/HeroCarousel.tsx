@@ -67,6 +67,8 @@ export const HeroCarousel = () => {
                     controls
                     onEnded={handleEnded}
                   />
+                ) : slide.type === "sedes" ? (
+                  <SedesShowcase />
                 ) : (
                   <img
                     src={slide.src}
