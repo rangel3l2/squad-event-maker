@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listarSedesPorEvento, EVENTO_ATUAL, type Sede } from "@/services/api";
+import { getSavedLocation, requestUserLocation } from "@/hooks/useUserLocation";
 
 interface SedeSelectorProps {
   value: number | null;
