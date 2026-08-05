@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { setProviderToken, ensureApiToken, clearApiAuth } from "@/services/apiAuth";
 
 interface AuthContextType {
   user: User | null;
