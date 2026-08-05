@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listarSedesPorEvento, EVENTO_ATUAL, type Sede } from "@/services/api";
+import { getSavedLocation, requestUserLocation } from "@/hooks/useUserLocation";
 
 interface SedeSelectorProps {
   value: number | null;
@@ -41,54 +42,40 @@ export function SedeSelector({ value, onChange, evento = EVENTO_ATUAL }: SedeSel
     load();
   }, [evento]);
 
-  const detectarLocalizacao = () => {
-    if (!("geolocation" in navigator)) {
-      toast.error("Seu navegador não suporta geolocalização. Selecione a sede manualmente.");
+  const aplicarLocalizacao = (cidade: string, uf: string, listaSedes: Sede[], silent = false) => {
+    setLocalizacao([cidade, uf].filter(Boolean).join(" - "));
+    const match =
+      listaSedes.find(
+        (s) => normalize(s.cidade) === normalize(cidade) && normalize(s.uf) === normalize(uf)
+      ) ||
+      listaSedes.find((s) => normalize(s.cidade) === normalize(cidade)) ||
+      listaSedes.find((s) => normalize(s.uf) === normalize(uf));
+
+    if (match) {
+      onChange(match.id);
+      if (!silent) toast.success(`Sede sugerida: ${match.nome_campus}`);
+    } else if (!silent) {
+      toast.info("Nenhuma sede encontrada perto de você. Escolha manualmente.");
+    }
+  };
+
+  // Reaproveita a localização já autorizada no login
+  useEffect(() => {
+    if (loading || value) return;
+    const saved = getSavedLocation();
+    if (saved) aplicarLocalizacao(saved.cidade, saved.uf, sedes, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, sedes]);
+
+  const detectarLocalizacao = async () => {
+    setLocating(true);
+    const loc = await requestUserLocation();
+    setLocating(false);
+    if (!loc) {
+      toast.info("Sem acesso à localização. Selecione a sede manualmente.");
       return;
     }
-
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const resp = await fetch(
-            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=pt`
-          );
-          if (!resp.ok) throw new Error("Falha ao identificar a cidade");
-          const data = await resp.json();
-
-          const cidade: string = data.city || data.locality || data.principalSubdivision || "";
-          const uf: string = data.principalSubdivisionCode?.split("-")?.[1] || "";
-          setLocalizacao([cidade, uf].filter(Boolean).join(" - "));
-
-          const match =
-            sedes.find(
-              (s) => normalize(s.cidade) === normalize(cidade) && normalize(s.uf) === normalize(uf)
-            ) ||
-            sedes.find((s) => normalize(s.cidade) === normalize(cidade)) ||
-            sedes.find((s) => normalize(s.uf) === normalize(uf));
-
-          if (match) {
-            onChange(match.id);
-            toast.success(`Sede sugerida: ${match.nome_campus}`);
-          } else {
-            toast.info("Nenhuma sede encontrada perto de você. Escolha manualmente.");
-          }
-        } catch (error) {
-          console.error("Erro na geolocalização:", error);
-          toast.error("Não conseguimos identificar sua cidade. Escolha a sede manualmente.");
-        } finally {
-          setLocating(false);
-        }
-      },
-      (error) => {
-        console.warn("Permissão de localização negada:", error);
-        setLocating(false);
-        toast.info("Sem acesso à localização. Selecione a sede manualmente.");
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+    aplicarLocalizacao(loc.cidade, loc.uf, sedes);
   };
 
   const sedeSelecionada = sedes.find((s) => s.id === value);

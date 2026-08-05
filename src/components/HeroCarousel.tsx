@@ -7,11 +7,12 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import videoCopa from "@/assets/videoCopa.mp4.asset.json";
+import videoCopa from "@/assets/videoCopa2026.webm.asset.json";
+import { SedesShowcase } from "@/components/SedesShowcase";
 
-type Slide = { type: "video"; src: string } | { type: "image"; src: string };
+type Slide = { type: "video"; src: string } | { type: "image"; src: string } | { type: "sedes" };
 
-const slides: Slide[] = [{ type: "video", src: videoCopa.url }];
+const slides: Slide[] = [{ type: "video", src: videoCopa.url }, { type: "sedes" }];
 
 export const HeroCarousel = () => {
   const [api, setApi] = useState<CarouselApi>();
@@ -66,6 +67,8 @@ export const HeroCarousel = () => {
                     controls
                     onEnded={handleEnded}
                   />
+                ) : slide.type === "sedes" ? (
+                  <SedesShowcase />
                 ) : (
                   <img
                     src={slide.src}
