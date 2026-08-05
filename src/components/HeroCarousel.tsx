@@ -1,67 +1,89 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Carousel,
+  CarouselApi,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
+import videoCopa from "@/assets/videoCopa.mp4.asset.json";
+
+type Slide = { type: "video"; src: string } | { type: "image"; src: string };
+
+const slides: Slide[] = [{ type: "video", src: videoCopa.url }];
 
 export const HeroCarousel = () => {
-  const [images, setImages] = useState<string[]>([]);
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    // Importar todas as imagens da pasta assets
-    const loadImages = async () => {
-      const imageModules = import.meta.glob<{ default: string }>(
-        "/public/assets/*.{jpeg,jpg,png,gif}",
-        { eager: true }
-      );
-      
-      const imageArray = Object.values(imageModules).map((module) => module.default);
-      setImages(imageArray);
+    if (!api) return;
+    setCurrent(api.selectedScrollSnap());
+    const onSelect = () => setCurrent(api.selectedScrollSnap());
+    api.on("select", onSelect);
+    return () => {
+      api.off("select", onSelect);
     };
+  }, [api]);
 
-    loadImages();
-  }, []);
+  // Play/pause the video depending on whether its slide is visible
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const videoIndex = slides.findIndex((s) => s.type === "video");
+    if (current === videoIndex) {
+      video.currentTime = 0;
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }, [current]);
 
-  if (images.length === 0) {
-    return (
-      <div className="w-full max-w-5xl mx-auto">
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border shadow-card bg-muted flex items-center justify-center">
-          <p className="text-muted-foreground">Carregando imagens...</p>
-        </div>
-      </div>
-    );
-  }
+  // When the video finishes, advance to the next slide
+  const handleEnded = useCallback(() => {
+    if (!api) return;
+    if (slides.length > 1) api.scrollNext();
+    else videoRef.current?.play().catch(() => {});
+  }, [api]);
 
   return (
     <div className="w-full max-w-5xl mx-auto">
-      <Carousel
-        plugins={[
-          Autoplay({
-            delay: 4000,
-          }),
-        ]}
-        className="w-full"
-      >
+      <Carousel setApi={setApi} className="w-full" opts={{ loop: slides.length > 1 }}>
         <CarouselContent>
-          {images.map((image, index) => (
+          {slides.map((slide, index) => (
             <CarouselItem key={index}>
               <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border shadow-card bg-muted">
-                <img
-                  src={image}
-                  alt={`Carousel Image ${index + 1}`}
-                  className="w-full h-full object-contain"
-                  loading="lazy"
-                />
+                {slide.type === "video" ? (
+                  <video
+                    ref={videoRef}
+                    src={slide.src}
+                    className="w-full h-full object-contain"
+                    autoPlay
+                    muted
+                    playsInline
+                    controls
+                    onEnded={handleEnded}
+                  />
+                ) : (
+                  <img
+                    src={slide.src}
+                    alt={`Copa 2026 - imagem ${index + 1}`}
+                    className="w-full h-full object-contain"
+                    loading="lazy"
+                  />
+                )}
               </div>
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-4" />
-        <CarouselNext className="right-4" />
+        {slides.length > 1 && (
+          <>
+            <CarouselPrevious className="left-4" />
+            <CarouselNext className="right-4" />
+          </>
+        )}
       </Carousel>
     </div>
   );
