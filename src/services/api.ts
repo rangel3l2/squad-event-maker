@@ -1,5 +1,6 @@
 // API service that proxies all requests through authenticated edge functions
 import { supabase } from '@/integrations/supabase/client';
+import { ensureApiToken } from '@/services/apiAuth';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const API_BASE_URL = "https://frontendteamscup.com.br/api";
@@ -19,27 +20,36 @@ const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Pr
   }
   
   const url = `${SUPABASE_URL}/functions/v1/api-proxy?path=${encodeURIComponent(path)}`;
-  
-  const headers: Record<string, string> = {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': options?.headers?.['Content-Type' as keyof HeadersInit] as string || 'application/json',
-  };
 
-  const finalOptions: RequestInit = {
-    ...options,
-    headers,
+  const buildOptions = async (forceRefresh: boolean): Promise<RequestInit> => {
+    const apiToken = await ensureApiToken(forceRefresh);
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': options?.headers?.['Content-Type' as keyof HeadersInit] as string || 'application/json',
+    };
+    if (apiToken) headers['X-Api-Token'] = apiToken;
+    return { ...options, headers };
   };
 
   console.log('Making authenticated request:', path, 'Method:', options?.method || 'GET');
-  
-  const response = await fetch(url, finalOptions);
-  
+
+  let response = await fetch(url, await buildOptions(false));
+
+  // External API token expired/invalid: re-login once and retry
+  if (response.status === 401 || response.status === 403) {
+    const retryOptions = await buildOptions(true);
+    if ((retryOptions.headers as Record<string, string>)['X-Api-Token']) {
+      response = await fetch(url, retryOptions);
+    }
+  }
+
   if (response.status === 401) {
     throw new Error("Session expired. Please log in again.");
   }
   
   return response;
 };
+
 
 // Legacy makeRequest for backwards compatibility - now routes through proxy
 const makeRequest = async (path: string, options?: RequestInit): Promise<Response> => {

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { setProviderToken, ensureApiToken, clearApiAuth } from "@/services/apiAuth";
 
 interface AuthContextType {
   user: User | null;
@@ -25,6 +26,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+
+        if (session?.provider_token) {
+          setProviderToken(session.provider_token);
+          // Exchange the Google token for the external API token
+          setTimeout(() => { void ensureApiToken(true); }, 0);
+        } else if (event === "SIGNED_OUT") {
+          clearApiAuth();
+        }
       }
     );
 
@@ -32,6 +41,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.provider_token) setProviderToken(session.provider_token);
+      if (session) void ensureApiToken();
       setLoading(false);
     });
 
@@ -61,6 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    clearApiAuth();
     await supabase.auth.signOut();
   };
 

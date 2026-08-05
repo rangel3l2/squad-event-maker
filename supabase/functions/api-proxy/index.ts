@@ -5,6 +5,7 @@ const API_BASE_URL = "https://frontendteamscup.com.br/api";
 
 // Allowed path prefixes for SSRF protection
 const ALLOWED_PATH_PREFIXES = [
+  '/login',
   '/usuarios',
   '/times',
   '/time/',
@@ -24,7 +25,7 @@ function getCorsHeaders(req: Request) {
   
   return {
     'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-api-token, x-provider-token, x-auth-provider',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Credentials': 'true',
   };
@@ -108,6 +109,18 @@ serve(async (req) => {
     const headers: Record<string, string> = {
       'Content-Type': requestContentType,
     };
+
+    // Auth against the external API:
+    // - /login: forward the provider (Google) token + provider name
+    // - other routes: forward the API token issued by /login
+    const providerToken = req.headers.get('x-provider-token');
+    const apiToken = req.headers.get('x-api-token');
+    if (providerToken) {
+      headers['Authorization'] = `Bearer ${providerToken}`;
+      headers['X-Auth-Provider'] = req.headers.get('x-auth-provider') || 'google';
+    } else if (apiToken) {
+      headers['Authorization'] = `Bearer ${apiToken}`;
+    }
 
     const options: RequestInit = {
       method,
