@@ -196,12 +196,14 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       }
 
       // Criar time usando a API (a cor é definida em rota dedicada)
+      // Campus e nível de ensino são copiados do dono no momento da criação
       const novoTime = await criarTime({
         nome_time: data.name,
         dono_id: usuario.id,
         senha_convite: senhaConvite,
         imagem_time: logoUrl,
-        sede: sedeId,
+        sede: usuario.sede ?? sedeId,
+        categoria: usuario.nivel ?? usuario.categoria ?? nivelUsuario,
         evento: EVENTO_ATUAL,
       });
 
