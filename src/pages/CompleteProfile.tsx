@@ -153,21 +153,48 @@ export default function CompleteProfile() {
 
               <FormField
                 control={form.control}
-                name="classroom"
+                name="nivel"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Turma *</FormLabel>
+                    <FormLabel>Nível de Ensino *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione a turma" />
+                          <SelectValue placeholder="Selecione o nível de ensino" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="1">Turma 1 (Manhã)</SelectItem>
-                        <SelectItem value="2">Turma 2 (Tarde)</SelectItem>
+                        {NIVEIS_ENSINO.map((n) => (
+                          <SelectItem key={n.value} value={String(n.value)}>{n.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="semestre"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Semestre atual *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o semestre" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {SEMESTRES.map((s) => (
+                          <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      Curso anual? Use 1º ano = 1º/2º semestre, 2º ano = 3º/4º semestre, e assim por diante.
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -186,18 +213,19 @@ export default function CompleteProfile() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="1">1º Período</SelectItem>
-                        <SelectItem value="2">2º Período</SelectItem>
-                        <SelectItem value="3">3º Período</SelectItem>
-                        <SelectItem value="4">4º Período</SelectItem>
-                        <SelectItem value="5">5º Período</SelectItem>
-                        <SelectItem value="6">6º Período</SelectItem>
+                        {PERIODOS.map((p) => (
+                          <SelectItem key={p.value} value={String(p.value)}>{p.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <div className="pt-2 border-t">
+                <SedeSelector value={sedeId} onChange={setSedeId} />
+              </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? "Salvando..." : "Continuar"}
