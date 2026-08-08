@@ -28,14 +28,16 @@ export default function CompleteProfile() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [sedeId, setSedeId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: "",
-      classroom: "",
+      semestre: "",
       period: "",
+      nivel: "",
     },
   });
 
