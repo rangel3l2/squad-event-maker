@@ -36,9 +36,14 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [senhaConvite, setSenhaConvite] = useState("");
-  const [sedeId, setSedeId] = useState<number | null>(null);
+  const [perfil, setPerfil] = useState<Usuario | null>(null);
+  const [sede, setSede] = useState<Sede | null>(null);
+  const [loadingPerfil, setLoadingPerfil] = useState(true);
   const [cor, setCor] = useState<CorSelecionada | null>(null);
 
+  // Campus e nível do time vêm do usuário dono (não são escolhidos manualmente)
+  const sedeId = perfil?.sede ?? null;
+  const nivelUsuario = perfil?.nivel ?? perfil?.categoria ?? null;
 
   // Gerar senha de 5 caracteres automaticamente
   useEffect(() => {
@@ -58,6 +63,31 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       setLogoUrl(savedLogo);
     }
   }, []);
+
+  // Carrega o perfil do usuário para herdar campus e nível de ensino
+  useEffect(() => {
+    if (!user?.email) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const usuarios = await listarUsuarios();
+        const encontrado = usuarios.find((u) => u.email === user.email) ?? null;
+        if (cancelled) return;
+        setPerfil(encontrado);
+        if (encontrado?.sede) {
+          const sedes = await listarSedesPorEvento();
+          if (!cancelled) setSede(sedes.find((s) => s.id === encontrado.sede) ?? null);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar perfil do usuário:", error);
+      } finally {
+        if (!cancelled) setLoadingPerfil(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email]);
 
   const form = useForm<CreateTeamFormData>({
     resolver: zodResolver(createTeamSchema),
