@@ -9,14 +9,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AvatarSelector } from "@/components/teams/AvatarSelector";
+import { SedeSelector } from "@/components/teams/SedeSelector";
+import { PERIODOS, NIVEIS_ENSINO, SEMESTRES } from "@/services/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
   fullName: z.string().trim().min(3, "Nome completo deve ter pelo menos 3 caracteres").max(100, "Nome deve ter no máximo 100 caracteres"),
-  classroom: z.string().trim().min(1, "Turma é obrigatória").max(50, "Turma deve ter no máximo 50 caracteres"),
+  semestre: z.string().min(1, "Selecione o semestre"),
   period: z.string().min(1, "Selecione um período"),
+  nivel: z.string().min(1, "Selecione o nível de ensino"),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
