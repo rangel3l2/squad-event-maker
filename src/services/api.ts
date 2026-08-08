@@ -186,6 +186,9 @@ export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
   // Sempre enviar o campo, mesmo vazio
   params.set('url_image_perfil', (usuario.url_image_perfil ?? '').toString());
   params.set('email', usuario.email);
+  if (usuario.sede !== undefined && usuario.sede !== null) params.set('sede', String(usuario.sede));
+  if (usuario.nivel !== undefined && usuario.nivel !== null) params.set('nivel', String(usuario.nivel));
+  if (usuario.categoria !== undefined && usuario.categoria !== null) params.set('categoria', String(usuario.categoria));
 
   console.log('=== API criarUsuario (form) ===');
   console.log('Body (form):', params.toString());
