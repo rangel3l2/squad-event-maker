@@ -56,14 +56,42 @@ const makeRequest = async (path: string, options?: RequestInit): Promise<Respons
   return makeAuthenticatedRequest(path, options);
 };
 
+// Períodos de estudo (valores inteiros aceitos pela API)
+export const PERIODOS = [
+  { value: 1, label: "Matutino" },
+  { value: 2, label: "Vespertino" },
+  { value: 3, label: "Integral" },
+  { value: 4, label: "Noturno" },
+] as const;
+
+// Nível de ensino (campo `nivel` do usuário / `categoria` do time)
+export const NIVEIS_ENSINO = [
+  { value: 1, label: "Ensino Médio" },
+  { value: 2, label: "Graduação / Ensino Superior" },
+] as const;
+
+// Semestre atual do aluno (armazenado no campo `turma`).
+// Cursos anuais: 1º ano = 1º/2º semestre, 2º ano = 3º/4º, e assim por diante.
+export const SEMESTRES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+
+export const labelPeriodo = (v?: number) => PERIODOS.find((p) => p.value === v)?.label ?? "-";
+export const labelNivel = (v?: number) => NIVEIS_ENSINO.find((n) => n.value === v)?.label ?? "-";
+
 export interface Usuario {
   id?: number;
   nome: string;
   token_gmail: string;
+  /** Semestre atual do aluno */
   turma: number;
+  /** 1 Matutino | 2 Vespertino | 3 Integral | 4 Noturno */
   periodo: number;
   url_image_perfil?: string;
   email: string;
+  /** Sede/campus do usuário */
+  sede?: number;
+  /** Nível de ensino: 1 Médio | 2 Graduação */
+  nivel?: number;
+  categoria?: number | null;
 }
 
 export interface Time {
@@ -75,8 +103,11 @@ export interface Time {
   integrantes?: Integrante[];
   quantidade?: number;
   qtd_integrantes?: number;
+  /** Campus/sede do time (herdado do dono na criação) */
   sede?: number;
   evento?: number;
+  /** Nível de ensino do time (copiado do dono na criação) */
+  categoria?: number;
   cor_id?: number | null;
   cor_base?: string | null;
   cor_time?: string | null;
@@ -155,6 +186,9 @@ export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
   // Sempre enviar o campo, mesmo vazio
   params.set('url_image_perfil', (usuario.url_image_perfil ?? '').toString());
   params.set('email', usuario.email);
+  if (usuario.sede !== undefined && usuario.sede !== null) params.set('sede', String(usuario.sede));
+  if (usuario.nivel !== undefined && usuario.nivel !== null) params.set('nivel', String(usuario.nivel));
+  if (usuario.categoria !== undefined && usuario.categoria !== null) params.set('categoria', String(usuario.categoria));
 
   console.log('=== API criarUsuario (form) ===');
   console.log('Body (form):', params.toString());
@@ -185,6 +219,9 @@ export const alterarUsuario = async (id: number, usuario: Partial<Usuario>): Pro
   if (usuario.periodo !== undefined) params.set('periodo', String(usuario.periodo));
   if (usuario.url_image_perfil !== undefined) params.set('url_image_perfil', usuario.url_image_perfil ?? '');
   if (usuario.email !== undefined) params.set('email', usuario.email);
+  if (usuario.sede !== undefined && usuario.sede !== null) params.set('sede', String(usuario.sede));
+  if (usuario.nivel !== undefined && usuario.nivel !== null) params.set('nivel', String(usuario.nivel));
+  if (usuario.categoria !== undefined && usuario.categoria !== null) params.set('categoria', String(usuario.categoria));
 
   console.log('=== API alterarUsuario (form) ===');
   console.log('Body (form):', params.toString());
@@ -267,6 +304,8 @@ export const criarTime = async (time: Time): Promise<Time> => {
   if (time.imagem_time) params.set('imagem_time', time.imagem_time);
   if (time.sede !== undefined && time.sede !== null) params.set('sede', String(time.sede));
   if (time.evento !== undefined && time.evento !== null) params.set('evento', String(time.evento));
+  // Nível de ensino gravado no time no momento da criação (histórico, não depende do usuário)
+  if (time.categoria !== undefined && time.categoria !== null) params.set('categoria', String(time.categoria));
 
   console.log("=== API criarTime ===");
   console.log("Objeto Time recebido:", time);

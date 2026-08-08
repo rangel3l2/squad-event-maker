@@ -9,14 +9,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AvatarSelector } from "@/components/teams/AvatarSelector";
+import { SedeSelector } from "@/components/teams/SedeSelector";
+import { PERIODOS, NIVEIS_ENSINO, SEMESTRES } from "@/services/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
   fullName: z.string().trim().min(3, "Nome completo deve ter pelo menos 3 caracteres").max(100, "Nome deve ter no máximo 100 caracteres"),
-  classroom: z.string().trim().min(1, "Turma é obrigatória").max(50, "Turma deve ter no máximo 50 caracteres"),
+  semestre: z.string().min(1, "Selecione o semestre"),
   period: z.string().min(1, "Selecione um período"),
+  nivel: z.string().min(1, "Selecione o nível de ensino"),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -25,14 +28,16 @@ export default function CompleteProfile() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [sedeId, setSedeId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: "",
-      classroom: "",
+      semestre: "",
       period: "",
+      nivel: "",
     },
   });
 
@@ -67,17 +72,26 @@ export default function CompleteProfile() {
       return;
     }
 
+    if (!sedeId) {
+      toast.error("Selecione a sua sede/campus");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { criarUsuario } = await import("@/services/api");
-      
+
+      const nivel = parseInt(data.nivel);
       const userData: any = {
         nome: data.fullName.trim(),
         token_gmail: user.email,
-        turma: parseInt(data.classroom),
+        turma: parseInt(data.semestre),
         periodo: parseInt(data.period),
         email: user.email,
         url_image_perfil: avatarUrl || "", // String vazia se não tiver
+        sede: sedeId,
+        nivel,
+        categoria: nivel,
       };
 
       await criarUsuario(userData);
@@ -139,21 +153,48 @@ export default function CompleteProfile() {
 
               <FormField
                 control={form.control}
-                name="classroom"
+                name="nivel"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Turma *</FormLabel>
+                    <FormLabel>Nível de Ensino *</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione a turma" />
+                          <SelectValue placeholder="Selecione o nível de ensino" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="1">Turma 1 (Manhã)</SelectItem>
-                        <SelectItem value="2">Turma 2 (Tarde)</SelectItem>
+                        {NIVEIS_ENSINO.map((n) => (
+                          <SelectItem key={n.value} value={String(n.value)}>{n.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="semestre"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Semestre atual *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o semestre" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {SEMESTRES.map((s) => (
+                          <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      Curso anual? Use 1º ano = 1º/2º semestre, 2º ano = 3º/4º semestre, e assim por diante.
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -172,18 +213,19 @@ export default function CompleteProfile() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="1">1º Período</SelectItem>
-                        <SelectItem value="2">2º Período</SelectItem>
-                        <SelectItem value="3">3º Período</SelectItem>
-                        <SelectItem value="4">4º Período</SelectItem>
-                        <SelectItem value="5">5º Período</SelectItem>
-                        <SelectItem value="6">6º Período</SelectItem>
+                        {PERIODOS.map((p) => (
+                          <SelectItem key={p.value} value={String(p.value)}>{p.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <div className="pt-2 border-t">
+                <SedeSelector value={sedeId} onChange={setSedeId} />
+              </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? "Salvando..." : "Continuar"}

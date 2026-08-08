@@ -11,9 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Copy, Check, Mail, MessageCircle, Sparkles } from "lucide-react";
+import { Copy, Check, Mail, MessageCircle, Sparkles, MapPin, GraduationCap } from "lucide-react";
 import { TeamLogoUploader } from "./TeamLogoUploader";
-import { SedeSelector } from "./SedeSelector";
+import { listarSedesPorEvento, labelNivel, type Sede, type Usuario } from "@/services/api";
 import { TeamColorPicker, type CorSelecionada } from "./TeamColorPicker";
 import { useNavigate } from "react-router-dom";
 
@@ -36,9 +36,14 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [senhaConvite, setSenhaConvite] = useState("");
-  const [sedeId, setSedeId] = useState<number | null>(null);
+  const [perfil, setPerfil] = useState<Usuario | null>(null);
+  const [sede, setSede] = useState<Sede | null>(null);
+  const [loadingPerfil, setLoadingPerfil] = useState(true);
   const [cor, setCor] = useState<CorSelecionada | null>(null);
 
+  // Campus e nível do time vêm do usuário dono (não são escolhidos manualmente)
+  const sedeId = perfil?.sede ?? null;
+  const nivelUsuario = perfil?.nivel ?? perfil?.categoria ?? null;
 
   // Gerar senha de 5 caracteres automaticamente
   useEffect(() => {
@@ -58,6 +63,31 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       setLogoUrl(savedLogo);
     }
   }, []);
+
+  // Carrega o perfil do usuário para herdar campus e nível de ensino
+  useEffect(() => {
+    if (!user?.email) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const usuarios = await listarUsuarios();
+        const encontrado = usuarios.find((u) => u.email === user.email) ?? null;
+        if (cancelled) return;
+        setPerfil(encontrado);
+        if (encontrado?.sede) {
+          const sedes = await listarSedesPorEvento();
+          if (!cancelled) setSede(sedes.find((s) => s.id === encontrado.sede) ?? null);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar perfil do usuário:", error);
+      } finally {
+        if (!cancelled) setLoadingPerfil(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email]);
 
   const form = useForm<CreateTeamFormData>({
     resolver: zodResolver(createTeamSchema),
@@ -103,10 +133,18 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     }
 
     if (!sedeId) {
-      toast.error("Selecione a sede do time");
+      toast.error("Seu cadastro não tem um campus definido", {
+        description: "Atualize seu cadastro com a sede/campus antes de criar um time.",
+      });
       return;
     }
 
+    if (!nivelUsuario) {
+      toast.error("Seu cadastro não tem nível de ensino definido", {
+        description: "Informe se você é do Ensino Médio ou da Graduação antes de criar um time.",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -158,12 +196,14 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       }
 
       // Criar time usando a API (a cor é definida em rota dedicada)
+      // Campus e nível de ensino são copiados do dono no momento da criação
       const novoTime = await criarTime({
         nome_time: data.name,
         dono_id: usuario.id,
         senha_convite: senhaConvite,
         imagem_time: logoUrl,
-        sede: sedeId,
+        sede: usuario.sede ?? sedeId,
+        categoria: usuario.nivel ?? usuario.categoria ?? nivelUsuario,
         evento: EVENTO_ATUAL,
       });
 
@@ -289,15 +329,27 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                   </p>
                 </div>
 
-                <div className="pt-2 border-t space-y-4">
-                  <SedeSelector
-                    value={sedeId}
-                    onChange={(id) => {
-                      setSedeId(id);
-                      setCor(null);
-                    }}
-                  />
+                <div className="pt-2 border-t space-y-2">
+                  <Label>Campus e nível de ensino</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Definidos automaticamente a partir do seu cadastro e gravados no time.
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <span className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      {loadingPerfil
+                        ? "Carregando..."
+                        : sede
+                          ? `${sede.nome_campus} — ${sede.cidade}/${sede.uf}`
+                          : "Campus não definido no seu cadastro"}
+                    </span>
+                    <span className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
+                      <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                      {loadingPerfil ? "Carregando..." : labelNivel(nivelUsuario ?? undefined)}
+                    </span>
+                  </div>
                 </div>
+
 
                 <div className="pt-2 border-t">
                   <TeamColorPicker sedeId={sedeId} value={cor} onChange={setCor} />
