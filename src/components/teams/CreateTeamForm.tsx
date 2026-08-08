@@ -319,15 +319,27 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                   </p>
                 </div>
 
-                <div className="pt-2 border-t space-y-4">
-                  <SedeSelector
-                    value={sedeId}
-                    onChange={(id) => {
-                      setSedeId(id);
-                      setCor(null);
-                    }}
-                  />
+                <div className="pt-2 border-t space-y-2">
+                  <Label>Campus e nível de ensino</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Definidos automaticamente a partir do seu cadastro e gravados no time.
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <span className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      {loadingPerfil
+                        ? "Carregando..."
+                        : sede
+                          ? `${sede.nome_campus} — ${sede.cidade}/${sede.uf}`
+                          : "Campus não definido no seu cadastro"}
+                    </span>
+                    <span className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
+                      <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                      {loadingPerfil ? "Carregando..." : labelNivel(nivelUsuario ?? undefined)}
+                    </span>
+                  </div>
                 </div>
+
 
                 <div className="pt-2 border-t">
                   <TeamColorPicker sedeId={sedeId} value={cor} onChange={setCor} />
