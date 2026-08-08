@@ -133,10 +133,18 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     }
 
     if (!sedeId) {
-      toast.error("Selecione a sede do time");
+      toast.error("Seu cadastro não tem um campus definido", {
+        description: "Atualize seu cadastro com a sede/campus antes de criar um time.",
+      });
       return;
     }
 
+    if (!nivelUsuario) {
+      toast.error("Seu cadastro não tem nível de ensino definido", {
+        description: "Informe se você é do Ensino Médio ou da Graduação antes de criar um time.",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
