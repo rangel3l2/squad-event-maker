@@ -56,14 +56,42 @@ const makeRequest = async (path: string, options?: RequestInit): Promise<Respons
   return makeAuthenticatedRequest(path, options);
 };
 
+// Períodos de estudo (valores inteiros aceitos pela API)
+export const PERIODOS = [
+  { value: 1, label: "Matutino" },
+  { value: 2, label: "Vespertino" },
+  { value: 3, label: "Integral" },
+  { value: 4, label: "Noturno" },
+] as const;
+
+// Nível de ensino (campo `nivel` do usuário / `categoria` do time)
+export const NIVEIS_ENSINO = [
+  { value: 1, label: "Ensino Médio" },
+  { value: 2, label: "Graduação / Ensino Superior" },
+] as const;
+
+// Semestre atual do aluno (armazenado no campo `turma`).
+// Cursos anuais: 1º ano = 1º/2º semestre, 2º ano = 3º/4º, e assim por diante.
+export const SEMESTRES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+
+export const labelPeriodo = (v?: number) => PERIODOS.find((p) => p.value === v)?.label ?? "-";
+export const labelNivel = (v?: number) => NIVEIS_ENSINO.find((n) => n.value === v)?.label ?? "-";
+
 export interface Usuario {
   id?: number;
   nome: string;
   token_gmail: string;
+  /** Semestre atual do aluno */
   turma: number;
+  /** 1 Matutino | 2 Vespertino | 3 Integral | 4 Noturno */
   periodo: number;
   url_image_perfil?: string;
   email: string;
+  /** Sede/campus do usuário */
+  sede?: number;
+  /** Nível de ensino: 1 Médio | 2 Graduação */
+  nivel?: number;
+  categoria?: number | null;
 }
 
 export interface Time {
@@ -75,8 +103,11 @@ export interface Time {
   integrantes?: Integrante[];
   quantidade?: number;
   qtd_integrantes?: number;
+  /** Campus/sede do time (herdado do dono na criação) */
   sede?: number;
   evento?: number;
+  /** Nível de ensino do time (copiado do dono na criação) */
+  categoria?: number;
   cor_id?: number | null;
   cor_base?: string | null;
   cor_time?: string | null;
