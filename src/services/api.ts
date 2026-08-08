@@ -219,6 +219,9 @@ export const alterarUsuario = async (id: number, usuario: Partial<Usuario>): Pro
   if (usuario.periodo !== undefined) params.set('periodo', String(usuario.periodo));
   if (usuario.url_image_perfil !== undefined) params.set('url_image_perfil', usuario.url_image_perfil ?? '');
   if (usuario.email !== undefined) params.set('email', usuario.email);
+  if (usuario.sede !== undefined && usuario.sede !== null) params.set('sede', String(usuario.sede));
+  if (usuario.nivel !== undefined && usuario.nivel !== null) params.set('nivel', String(usuario.nivel));
+  if (usuario.categoria !== undefined && usuario.categoria !== null) params.set('categoria', String(usuario.categoria));
 
   console.log('=== API alterarUsuario (form) ===');
   console.log('Body (form):', params.toString());
