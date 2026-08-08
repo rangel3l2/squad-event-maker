@@ -72,17 +72,26 @@ export default function CompleteProfile() {
       return;
     }
 
+    if (!sedeId) {
+      toast.error("Selecione a sua sede/campus");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { criarUsuario } = await import("@/services/api");
-      
+
+      const nivel = parseInt(data.nivel);
       const userData: any = {
         nome: data.fullName.trim(),
         token_gmail: user.email,
-        turma: parseInt(data.classroom),
+        turma: parseInt(data.semestre),
         periodo: parseInt(data.period),
         email: user.email,
         url_image_perfil: avatarUrl || "", // String vazia se não tiver
+        sede: sedeId,
+        nivel,
+        categoria: nivel,
       };
 
       await criarUsuario(userData);
