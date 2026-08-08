@@ -11,9 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Copy, Check, Mail, MessageCircle, Sparkles } from "lucide-react";
+import { Copy, Check, Mail, MessageCircle, Sparkles, MapPin, GraduationCap } from "lucide-react";
 import { TeamLogoUploader } from "./TeamLogoUploader";
-import { SedeSelector } from "./SedeSelector";
+import { listarSedesPorEvento, labelNivel, type Sede, type Usuario } from "@/services/api";
 import { TeamColorPicker, type CorSelecionada } from "./TeamColorPicker";
 import { useNavigate } from "react-router-dom";
 
