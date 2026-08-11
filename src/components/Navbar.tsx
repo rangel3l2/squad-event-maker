@@ -2,7 +2,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Users, Trophy, LogOut, Settings, Palette, UserCircle } from "lucide-react";
-import logoCopa from "@/assets/logo-copa.png";
+import logoCopaAsset from "@/assets/logo-copa-2026.png.asset.json";
+
+const logoCopa = logoCopaAsset.url;
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
