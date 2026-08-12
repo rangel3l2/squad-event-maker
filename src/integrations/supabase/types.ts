@@ -486,26 +486,6 @@ export type Database = {
     }
     Functions: {
       add_admin_by_email: { Args: { _email: string }; Returns: undefined }
-      get_teammate_public_profile: {
-        Args: { _profile_id: string }
-        Returns: {
-          avatar_url: string
-          classroom: string
-          full_name: string
-          id: string
-        }[]
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      validate_event_email_domain: {
-        Args: { _event_id: string; _user_email: string }
-        Returns: boolean
-      }
     }
     Enums: {
       app_role: "admin" | "student"
