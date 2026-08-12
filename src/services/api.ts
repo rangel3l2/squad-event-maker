@@ -1,6 +1,6 @@
 // API service that proxies all requests through authenticated edge functions
 import { supabase } from '@/integrations/supabase/client';
-import { ApiReauthenticationRequiredError, clearApiAuth, ensureApiToken } from '@/services/apiAuth';
+import { ApiReauthenticationRequiredError, clearApiAuth, ensureApiToken, setApiToken } from '@/services/apiAuth';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const API_BASE_URL = "https://frontendteamscup.com.br/api";
@@ -51,7 +51,7 @@ const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Pr
 
   // External API token expired/invalid: re-login once and retry
   if (response.status === 401 || response.status === 403) {
-    clearApiAuth();
+    setApiToken(null);
     const retryOptions = await buildOptions(true);
     response = await fetch(url, retryOptions);
   }
