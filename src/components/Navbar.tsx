@@ -17,8 +17,8 @@ const Navbar = () => {
             alt="Frontend Teams Cup - Três Lagoas Logo" 
             className="h-28 w-auto object-contain animate-fade-in"
           />
-          <span className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent leading-tight">
-            Frontend<br className="hidden sm:block" /> Teams Cup
+          <span className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent leading-tight">
+            Frontend<br className="md:hidden" /> Teams Cup
           </span>
         </Link>
 
