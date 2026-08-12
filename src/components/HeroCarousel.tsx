@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import {
   Carousel,
   CarouselApi,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import videoCopa from "@/assets/videoCopa2026.webm.asset.json";
 import { SedesShowcase } from "@/components/SedesShowcase";
-import { MapPin, Trophy, Users, ArrowRight } from "lucide-react";
+import { MapPin, Trophy, Users, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 type Slide =
   | { type: "video"; src: string }
@@ -122,7 +121,7 @@ export const HeroCarousel = () => {
 
   return (
     <div className="w-full max-w-5xl mx-auto">
-      <Carousel setApi={setApi} className="w-full" opts={{ loop: slides.length > 1 }}>
+      <Carousel setApi={setApi} className="w-full group" opts={{ loop: slides.length > 1 }}>
         <CarouselContent>
           {slides.map((slide, index) => (
             <CarouselItem key={index}>
@@ -154,10 +153,43 @@ export const HeroCarousel = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
+
         {slides.length > 1 && (
           <>
-            <CarouselPrevious className="left-4" />
-            <CarouselNext className="right-4" />
+            <button
+              type="button"
+              onClick={() => api?.scrollPrev()}
+              aria-label="Slide anterior"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-background/80 text-primary border border-border/60 shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-110 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => api?.scrollNext()}
+              aria-label="Próximo slide"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-background/80 text-primary border border-border/60 shadow-lg backdrop-blur-md transition-all duration-200 hover:scale-110 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => api?.scrollTo(index)}
+                  aria-label={`Ir para slide ${index + 1}`}
+                  className={cn(
+                    "h-2 rounded-full transition-all duration-200",
+                    current === index
+                      ? "w-6 bg-primary shadow-md"
+                      : "w-2 bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                  )}
+                />
+              ))}
+            </div>
           </>
         )}
       </Carousel>
