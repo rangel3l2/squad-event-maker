@@ -11,12 +11,15 @@ const Navbar = () => {
   return (
     <nav className="border-b border-border/50 backdrop-blur-lg bg-background/80 sticky top-0 z-50">
       <div className="container mx-auto px-4 h-32 flex items-center justify-between">
-        <Link to="/" className="flex items-center justify-center py-3">
+        <Link to="/" className="flex items-center gap-3 py-3">
           <img 
             src={logoCopa} 
             alt="Frontend Teams Cup - Três Lagoas Logo" 
             className="h-28 w-auto object-contain animate-fade-in"
           />
+          <span className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent leading-tight">
+            Frontend<br className="hidden sm:block" /> Teams Cup
+          </span>
         </Link>
 
         <div className="flex items-center gap-4">
