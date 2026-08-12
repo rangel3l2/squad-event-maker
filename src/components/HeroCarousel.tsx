@@ -6,8 +6,6 @@ import {
   CarouselApi,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
