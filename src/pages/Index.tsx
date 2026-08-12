@@ -152,9 +152,6 @@ const Index = () => {
               />
             </div>
           )}
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-            Frontend Teams Cup
-          </h1>
           {events.length > 0 && events[0].edition && (
             <p className="text-2xl md:text-3xl font-semibold text-primary mb-4">
               {events[0].edition}
