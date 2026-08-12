@@ -10,12 +10,12 @@ const Navbar = () => {
 
   return (
     <nav className="border-b border-border/50 backdrop-blur-lg bg-background/80 sticky top-0 z-50">
-      <div className="container mx-auto px-4 h-24 flex items-center justify-between">
+      <div className="container mx-auto px-4 h-32 flex items-center justify-between">
         <Link to="/" className="flex items-center justify-center py-3">
           <img 
             src={logoCopa} 
             alt="Frontend Teams Cup - Três Lagoas Logo" 
-            className="h-20 w-auto object-contain animate-fade-in"
+            className="h-28 w-auto object-contain animate-fade-in"
           />
         </Link>
 
