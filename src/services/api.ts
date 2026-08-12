@@ -1,6 +1,6 @@
 // API service that proxies all requests through authenticated edge functions
 import { supabase } from '@/integrations/supabase/client';
-import { ensureApiToken } from '@/services/apiAuth';
+import { ApiReauthenticationRequiredError, clearApiAuth, ensureApiToken, setApiToken } from '@/services/apiAuth';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const API_BASE_URL = "https://frontendteamscup.com.br/api";
@@ -21,13 +21,27 @@ const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Pr
   
   const url = `${SUPABASE_URL}/functions/v1/api-proxy?path=${encodeURIComponent(path)}`;
 
+  const requireApiToken = async (forceRefresh: boolean): Promise<string> => {
+    try {
+      const apiToken = await ensureApiToken(forceRefresh);
+      if (apiToken) return apiToken;
+    } catch (error) {
+      if (!(error instanceof ApiReauthenticationRequiredError)) throw error;
+    }
+
+    if (window.location.pathname !== '/auth' || !window.location.search.includes('reauth=1')) {
+      window.location.assign('/auth?reauth=1');
+    }
+    throw new ApiReauthenticationRequiredError();
+  };
+
   const buildOptions = async (forceRefresh: boolean): Promise<RequestInit> => {
-    const apiToken = await ensureApiToken(forceRefresh);
+    const apiToken = await requireApiToken(forceRefresh);
     const headers: Record<string, string> = {
       'Authorization': `Bearer ${token}`,
       'Content-Type': options?.headers?.['Content-Type' as keyof HeadersInit] as string || 'application/json',
+      'X-Api-Token': apiToken,
     };
-    if (apiToken) headers['X-Api-Token'] = apiToken;
     return { ...options, headers };
   };
 
@@ -37,14 +51,15 @@ const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Pr
 
   // External API token expired/invalid: re-login once and retry
   if (response.status === 401 || response.status === 403) {
+    setApiToken(null);
     const retryOptions = await buildOptions(true);
-    if ((retryOptions.headers as Record<string, string>)['X-Api-Token']) {
-      response = await fetch(url, retryOptions);
-    }
+    response = await fetch(url, retryOptions);
   }
 
   if (response.status === 401) {
-    throw new Error("Session expired. Please log in again.");
+    clearApiAuth();
+    window.location.assign('/auth?reauth=1');
+    throw new ApiReauthenticationRequiredError();
   }
   
   return response;

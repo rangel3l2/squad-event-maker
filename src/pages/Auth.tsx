@@ -13,11 +13,14 @@ const Auth = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = safeNext(params.get("next"));
+  const requiresReauthentication = params.get("reauth") === "1";
   const { user, signInWithGoogle } = useAuth();
 
   useEffect(() => {
     const checkUserProfile = async () => {
       if (!user) return;
+
+      if (requiresReauthentication) return;
 
       if (next) {
         window.location.href = next;
@@ -45,7 +48,7 @@ const Auth = () => {
     if (user) {
       checkUserProfile();
     }
-  }, [user, navigate, next]);
+  }, [user, navigate, next, requiresReauthentication]);
 
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle(next ?? undefined);
@@ -62,7 +65,9 @@ const Auth = () => {
           <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-lg mx-auto mb-4" />
           <CardTitle className="text-3xl font-bold">Frontend Teams Cup</CardTitle>
           <CardDescription>
-            Entre com sua conta do Google para continuar
+            {requiresReauthentication
+              ? "Sua autorização expirou. Entre novamente para continuar"
+              : "Entre com sua conta do Google para continuar"}
           </CardDescription>
         </CardHeader>
         <CardContent>
