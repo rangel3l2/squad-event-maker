@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { setProviderToken, getProviderToken, ensureApiToken, clearApiAuth } from "@/services/apiAuth";
+import { setProviderToken, ensureApiToken, clearApiAuth } from "@/services/apiAuth";
 import { toast } from "sonner";
 
 interface AuthContextType {
@@ -44,11 +44,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.provider_token) setProviderToken(session.provider_token);
       if (session) {
-        void ensureApiToken().then((apiToken) => {
-          // Google token expires after ~1h; without it the external API rejects everything.
-          if (!apiToken && !getProviderToken()) {
-            toast.error("Sua sessão com o Google expirou. Entre novamente para continuar.");
-          }
+        void ensureApiToken().catch(() => {
+          // Protected API calls will send the user through Google again when required.
         });
       }
       setLoading(false);

@@ -31,6 +31,13 @@ export const getProviderToken = (): string | null => {
 
 export const getApiToken = (): string | null => localStorage.getItem(API_TOKEN_KEY);
 
+export class ApiReauthenticationRequiredError extends Error {
+  constructor() {
+    super('Sua autorização com o Google expirou. Entre novamente para continuar.');
+    this.name = 'ApiReauthenticationRequiredError';
+  }
+}
+
 export const setApiToken = (token: string | null) => {
   if (token) localStorage.setItem(API_TOKEN_KEY, token);
   else localStorage.removeItem(API_TOKEN_KEY);
@@ -105,7 +112,7 @@ export const ensureApiToken = async (forceRefresh = false): Promise<string | nul
     const existing = getApiToken();
     if (existing) return existing;
   }
-  if (!getProviderToken()) return null;
+  if (!getProviderToken()) throw new ApiReauthenticationRequiredError();
   if (inFlightLogin) return inFlightLogin;
 
   inFlightLogin = (async () => {
@@ -113,7 +120,7 @@ export const ensureApiToken = async (forceRefresh = false): Promise<string | nul
       return await loginExternalApi();
     } catch (error) {
       console.error('Erro no login da API externa:', error);
-      return null;
+      throw error;
     } finally {
       inFlightLogin = null;
     }
