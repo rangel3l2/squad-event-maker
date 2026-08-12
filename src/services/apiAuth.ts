@@ -7,13 +7,27 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 const API_TOKEN_KEY = 'ftc_api_token';
 const PROVIDER_TOKEN_KEY = 'ftc_provider_token';
+const PROVIDER_TOKEN_AT_KEY = 'ftc_provider_token_at';
+// Google access tokens live ~1h; treat them as dead a bit earlier.
+const PROVIDER_TOKEN_TTL_MS = 50 * 60 * 1000;
 
 export const setProviderToken = (token: string | null) => {
-  if (token) localStorage.setItem(PROVIDER_TOKEN_KEY, token);
+  if (token) {
+    localStorage.setItem(PROVIDER_TOKEN_KEY, token);
+    localStorage.setItem(PROVIDER_TOKEN_AT_KEY, String(Date.now()));
+  }
 };
 
-export const getProviderToken = (): string | null =>
-  localStorage.getItem(PROVIDER_TOKEN_KEY);
+export const getProviderToken = (): string | null => {
+  const token = localStorage.getItem(PROVIDER_TOKEN_KEY);
+  if (!token) return null;
+  const issuedAt = Number(localStorage.getItem(PROVIDER_TOKEN_AT_KEY) || 0);
+  if (!issuedAt || Date.now() - issuedAt > PROVIDER_TOKEN_TTL_MS) {
+    clearApiAuth();
+    return null;
+  }
+  return token;
+};
 
 export const getApiToken = (): string | null => localStorage.getItem(API_TOKEN_KEY);
 
@@ -25,6 +39,7 @@ export const setApiToken = (token: string | null) => {
 export const clearApiAuth = () => {
   localStorage.removeItem(API_TOKEN_KEY);
   localStorage.removeItem(PROVIDER_TOKEN_KEY);
+  localStorage.removeItem(PROVIDER_TOKEN_AT_KEY);
 };
 
 const extractToken = (data: unknown): string | null => {
@@ -69,6 +84,8 @@ export const loginExternalApi = async (providerTokenArg?: string | null): Promis
 
   if (!response.ok) {
     const text = await response.text();
+    // Provider token rejected/expired: drop it so we stop retrying with a dead token.
+    if (response.status === 401) clearApiAuth();
     throw new Error(`Falha no login da API (${response.status}): ${text}`);
   }
 
@@ -80,6 +97,8 @@ export const loginExternalApi = async (providerTokenArg?: string | null): Promis
   return token;
 };
 
+let inFlightLogin: Promise<string | null> | null = null;
+
 /** Returns a valid API token, logging in when needed. */
 export const ensureApiToken = async (forceRefresh = false): Promise<string | null> => {
   if (!forceRefresh) {
@@ -87,10 +106,18 @@ export const ensureApiToken = async (forceRefresh = false): Promise<string | nul
     if (existing) return existing;
   }
   if (!getProviderToken()) return null;
-  try {
-    return await loginExternalApi();
-  } catch (error) {
-    console.error('Erro no login da API externa:', error);
-    return null;
-  }
+  if (inFlightLogin) return inFlightLogin;
+
+  inFlightLogin = (async () => {
+    try {
+      return await loginExternalApi();
+    } catch (error) {
+      console.error('Erro no login da API externa:', error);
+      return null;
+    } finally {
+      inFlightLogin = null;
+    }
+  })();
+
+  return inFlightLogin;
 };
