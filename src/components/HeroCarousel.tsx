@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import videoCopa from "@/assets/videoCopa2026.webm.asset.json";
 import { SedesShowcase } from "@/components/SedesShowcase";
-import { MapPin, Trophy, Users, ArrowRight } from "lucide-react";
+import { MapPin, Trophy, Users, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 type Slide =
   | { type: "video"; src: string }
