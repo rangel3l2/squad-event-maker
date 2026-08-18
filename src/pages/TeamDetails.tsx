@@ -113,12 +113,31 @@ export default function TeamDetails() {
             return;
           }
         } else if (usuario) {
-          // Senão, busca o time do usuário logado
+          // Senão, busca o time do usuário logado NO EVENTO ATUAL
           try {
-            timeData = await mostrarTimeUsuario(usuario.id!);
+            // Prioriza times onde o usuário é dono no evento atual
+            const timesDoDono = await buscarTimesPorDono(usuario.id!, EVENTO_ATUAL);
+            const timeDoDono = timesDoDono.find(t => Number(t.evento) === Number(EVENTO_ATUAL));
+            
+            if (timeDoDono && timeDoDono.id != null) {
+              timeData = await mostrarTime(timeDoDono.id);
+            } else {
+              // Se não for dono, procura como integrante no evento atual
+              const timesEvento = await listarTimes({ evento: EVENTO_ATUAL });
+              const timeComoIntegrante = timesEvento.find((t) => {
+                const integrantes = t.integrantes || [];
+                return integrantes.some((i: any) => i.usuario_id === usuario.id);
+              });
+              
+              if (timeComoIntegrante && timeComoIntegrante.id != null) {
+                timeData = await mostrarTime(timeComoIntegrante.id);
+              } else {
+                throw new Error("Nenhum time neste evento");
+              }
+            }
           } catch (error) {
             console.error("Erro ao buscar time do usuário:", error);
-            toast.error("Você não está em nenhum time");
+            toast.error("Você não está em nenhum time nesta edição");
             setLoading(false);
             return;
           }
