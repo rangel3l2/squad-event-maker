@@ -67,9 +67,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         ? `${window.location.origin}/auth?next=${encodeURIComponent(next)}`
         : `${window.location.origin}/`;
 
+    // Drop any stale API/provider token so the callback always exchanges a fresh one.
+    clearApiAuth();
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo },
+      options: {
+        redirectTo,
+        // Force Google to hand back a new provider_token (needed by the external API /login).
+        queryParams: { prompt: 'consent', access_type: 'offline' },
+      },
     });
 
     return { error };
