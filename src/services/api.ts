@@ -633,9 +633,12 @@ export const deletarUsuario = async (usuarioId: number, confirmacao: string) => 
   return response.json();
 };
 
-// Buscar times por dono
-export const buscarTimesPorDono = async (donoId: number): Promise<Time[]> => {
-  const times = await listarTimes();
+// Buscar times por dono (por padrão apenas no evento atual)
+export const buscarTimesPorDono = async (
+  donoId: number,
+  evento: number | null = EVENTO_ATUAL
+): Promise<Time[]> => {
+  const times = await listarTimes({ evento });
   return times.filter(t => t.dono_id === donoId);
 };
 
