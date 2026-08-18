@@ -66,23 +66,23 @@ export default function TeamDetails() {
             return;
           }
 
-          // Verificar se o usuário já tem um time (apenas se logado)
+          // Verificar se o usuário já tem um time NO EVENTO ATUAL (apenas se logado)
           if (usuario) {
-            let usuarioTemTime = false;
+            let usuarioTemTimeNesteEvento = false;
             
-            // Verificar se é dono de algum time
+            // Verificar se é dono de algum time neste evento
             try {
-              const userTeam = await mostrarTimeUsuario(usuario.id!);
-              if (userTeam && userTeam.id != null) {
-                usuarioTemTime = true;
+              const timesDoDono = await buscarTimesPorDono(usuario.id!, EVENTO_ATUAL);
+              if (timesDoDono.some(t => Number(t.evento) === Number(EVENTO_ATUAL))) {
+                usuarioTemTimeNesteEvento = true;
               }
             } catch {
-              // Não é dono de nenhum time
+              // Não é dono de nenhum time neste evento
             }
 
-            // Verificar se é integrante de algum time
-            if (!usuarioTemTime) {
-              const times = await listarTimes();
+            // Verificar se é integrante de algum time neste evento
+            if (!usuarioTemTimeNesteEvento) {
+              const times = await listarTimes({ evento: EVENTO_ATUAL });
               for (const time of times) {
                 const integrantes = time.integrantes || [];
                 const ehIntegrante = integrantes.some(
@@ -90,13 +90,13 @@ export default function TeamDetails() {
                 );
                 
                 if (ehIntegrante) {
-                  usuarioTemTime = true;
+                  usuarioTemTimeNesteEvento = true;
                   break;
                 }
               }
             }
             
-            setUserHasTeam(usuarioTemTime);
+            setUserHasTeam(usuarioTemTimeNesteEvento);
           }
         }
 
