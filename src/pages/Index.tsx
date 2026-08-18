@@ -143,15 +143,6 @@ const Index = () => {
       {/* Hero Section */}
       <section className="py-20 px-4 text-center bg-gradient-to-b from-background to-card">
         <div className="max-w-5xl mx-auto space-y-8">
-          {events.length > 0 && events[0].logo_url && (
-            <div className="flex justify-center mb-6">
-              <img 
-                src={events[0].logo_url} 
-                alt="Frontend Teams Cup Logo" 
-                className="h-32 object-contain"
-              />
-            </div>
-          )}
           {events.length > 0 && events[0].edition && (
             <p className="text-2xl md:text-3xl font-semibold text-primary mb-4">
               {events[0].edition}

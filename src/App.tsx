@@ -10,7 +10,6 @@ import Auth from "./pages/Auth";
 import CompleteProfile from "./pages/CompleteProfile";
 import Events from "./pages/Events";
 import Admin from "./pages/Admin";
-import LogoEditor from "./pages/LogoEditor";
 import AdminCarousel from "./pages/AdminCarousel";
 import AdminInvites from "./pages/AdminInvites";
 import AdminEventConfig from "./pages/AdminEventConfig";
@@ -52,8 +51,6 @@ const App = () => (
             <Route path="/admin/prizes" element={<ProtectedRoute requireAdmin><AdminPrizes /></ProtectedRoute>} />
 
             <Route path="/event/:eventId" element={<EventTeams />} />
-            <Route path="/logo-editor" element={<LogoEditor />} />
-            <Route path="/logo-editor/:teamId" element={<LogoEditor />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

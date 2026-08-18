@@ -126,6 +126,8 @@ export interface Time {
   cor_id?: number | null;
   cor_base?: string | null;
   cor_time?: string | null;
+  /** Miniatura/mini logo do time (importado externamente) */
+  img_logo_pequeno?: string;
 }
 
 export interface Integrante {
@@ -305,11 +307,33 @@ export const mostrarTimeUsuario = async (usuarioId: number) => {
 };
 
 // Times
-export const listarTimes = async (): Promise<Time[]> => {
-  const response = await makeRequest('/times');
+/**
+ * Lista os times. Por padrão só traz os times do evento atual.
+ * Passe `evento: null` para trazer os times de todos os eventos (edições anteriores).
+ */
+export const listarTimes = async (
+  filtros?: { evento?: number | null; sede_id?: number | null }
+): Promise<Time[]> => {
+  const evento = filtros && 'evento' in filtros ? filtros.evento : EVENTO_ATUAL;
+  const params = new URLSearchParams();
+  if (evento !== null && evento !== undefined) params.set('evento', String(evento));
+  if (filtros?.sede_id !== null && filtros?.sede_id !== undefined) {
+    params.set('sede_id', String(filtros.sede_id));
+  }
+  const query = params.toString();
+  const response = await makeRequest(`/times${query ? `?${query}` : ''}`);
   if (!response.ok) throw new Error("Erro ao listar times");
-  return response.json();
+  const data = await response.json();
+  const lista: Time[] = Array.isArray(data) ? data : (data?.times ?? []);
+  // Defesa extra caso a API ignore o filtro
+  return evento === null || evento === undefined
+    ? lista
+    : lista.filter((t) => t.evento === undefined || t.evento === null || Number(t.evento) === Number(evento));
 };
+
+/** Times de todas as edições (usado para duplicar times de eventos anteriores) */
+export const listarTimesTodosEventos = async (): Promise<Time[]> =>
+  listarTimes({ evento: null });
 
 export const criarTime = async (time: Time): Promise<Time> => {
   const params = new URLSearchParams();
@@ -319,6 +343,8 @@ export const criarTime = async (time: Time): Promise<Time> => {
   if (time.imagem_time) params.set('imagem_time', time.imagem_time);
   if (time.sede !== undefined && time.sede !== null) params.set('sede', String(time.sede));
   if (time.evento !== undefined && time.evento !== null) params.set('evento', String(time.evento));
+  if (time.img_logo_pequeno) params.set('img_logo_pequeno', time.img_logo_pequeno);
+  if (time.cor_time) params.set('cor_time', time.cor_time);
   // Nível de ensino gravado no time no momento da criação (histórico, não depende do usuário)
   if (time.categoria !== undefined && time.categoria !== null) params.set('categoria', String(time.categoria));
 
@@ -607,9 +633,12 @@ export const deletarUsuario = async (usuarioId: number, confirmacao: string) => 
   return response.json();
 };
 
-// Buscar times por dono
-export const buscarTimesPorDono = async (donoId: number): Promise<Time[]> => {
-  const times = await listarTimes();
+// Buscar times por dono (por padrão apenas no evento atual)
+export const buscarTimesPorDono = async (
+  donoId: number,
+  evento: number | null = EVENTO_ATUAL
+): Promise<Time[]> => {
+  const times = await listarTimes({ evento });
   return times.filter(t => t.dono_id === donoId);
 };
 
@@ -855,7 +884,26 @@ export const buscarTodasSubmissoesDinamica = async (
 // Sedes, Eventos e Cores dos Times
 // ==========================
 
-export const EVENTO_ATUAL = 2;
+/**
+ * Código do evento atual.
+ * O valor é lido do arquivo editável `public/evento.txt` no carregamento do app.
+ */
+export let EVENTO_ATUAL = 2;
+
+/** Lê o código do evento do arquivo `evento.txt` (editável sem alterar o código). */
+export const carregarEventoAtual = async (): Promise<number> => {
+  try {
+    const resp = await fetch(`/evento.txt?t=${Date.now()}`, { cache: "no-store" });
+    if (resp.ok) {
+      const texto = (await resp.text()).trim();
+      const numero = parseInt(texto, 10);
+      if (!Number.isNaN(numero) && numero > 0) EVENTO_ATUAL = numero;
+    }
+  } catch {
+    // mantém o valor padrão
+  }
+  return EVENTO_ATUAL;
+};
 
 export interface Sede {
   id: number;

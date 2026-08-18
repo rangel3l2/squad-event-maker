@@ -24,7 +24,7 @@ interface TeamColorPickerProps {
 
 const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
 
-/** Aplica variação de tom (-50 a +50) sobre a cor base */
+/** Aplica variação de tom (-25 a +25) sobre a cor base */
 export const aplicarTom = (hex: string, tom: number): string => {
   const clean = hex.replace("#", "");
   const r = parseInt(clean.slice(0, 2), 16);
@@ -161,8 +161,8 @@ export function TeamColorPicker({
             <Label className="text-sm">Variação de tom</Label>
             <Slider
               value={[tom]}
-              min={-50}
-              max={50}
+              min={-25}
+              max={25}
               step={5}
               onValueChange={(v) => alterarTom(v[0])}
             />

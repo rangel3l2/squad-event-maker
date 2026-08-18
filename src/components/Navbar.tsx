@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Users, Trophy, LogOut, Settings, Palette, UserCircle } from "lucide-react";
+import { Users, LogOut, UserCircle } from "lucide-react";
 
 const logoCopa = "/logo-copa-2026-transp.png";
 
@@ -29,12 +29,6 @@ const Navbar = () => {
                 <Button variant="ghost" size="sm">
                   <Users className="w-4 h-4 mr-2" />
                   Times
-                </Button>
-              </Link>
-              <Link to="/logo-editor">
-                <Button variant="ghost" size="sm">
-                  <Palette className="w-4 h-4 mr-2" />
-                  Editor de Logos
                 </Button>
               </Link>
               <Link to="/profile">

@@ -9,7 +9,8 @@ import { Users, PlusCircle, AlertCircle, Search } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, mostrarTimeUsuario, listarTimes, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, listarTimes, listarSedesPorEvento, EVENTO_ATUAL, type Sede, type Time } from "@/services/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Teams() {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ export default function Teams() {
   const [filteredTeams, setFilteredTeams] = useState<Time[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [sedes, setSedes] = useState<Sede[]>([]);
+  const [sedeFiltro, setSedeFiltro] = useState<string>("todas");
 
   useEffect(() => {
     if (!user) {
@@ -87,22 +90,44 @@ export default function Teams() {
     checkProfile();
   }, [user, navigate]);
 
-  // Carregar todos os times
+  // Carregar sedes do evento e sugerir a sede do usuário
+  useEffect(() => {
+    if (!user?.email) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const listaSedes = await listarSedesPorEvento(EVENTO_ATUAL);
+        if (cancelled) return;
+        setSedes(listaSedes);
+        const usuarios = await listarUsuarios();
+        const minhaSede = usuarios.find((u) => u.email === user.email)?.sede;
+        if (!cancelled && minhaSede) setSedeFiltro(String(minhaSede));
+      } catch (error) {
+        console.error("Erro ao carregar sedes:", error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email]);
+
+  // Carregar times do evento atual (filtrando pela sede escolhida)
   useEffect(() => {
     const loadTeams = async () => {
       try {
-        console.log("Carregando times...");
-        const times = await listarTimes();
-        console.log("Times carregados:", times.length);
+        const times = await listarTimes({
+          evento: EVENTO_ATUAL,
+          sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
+        });
         setAllTeams(times);
         setFilteredTeams(times);
       } catch (error) {
         console.error("Erro ao carregar times:", error);
       }
     };
-    
+
     loadTeams();
-  }, [refreshKey]); // Recarrega quando refreshKey mudar
+  }, [refreshKey, sedeFiltro]); // Recarrega quando refreshKey ou sede mudar
 
   // Filtrar times conforme busca
   useEffect(() => {
@@ -120,8 +145,6 @@ export default function Teams() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-center mb-8">Frontend Teams Cup</h1>
-        
         {mode === "select" && (
           <>
             {hasTeam ? (
@@ -198,8 +221,23 @@ export default function Teams() {
                 Times Cadastrados
               </CardTitle>
               <CardDescription>
-                Explore todos os times participantes da competição
+                Times do evento atual. O filtro começa na sua sede, mas você pode ver as outras.
               </CardDescription>
+              <div className="pt-3">
+                <Select value={sedeFiltro} onValueChange={setSedeFiltro}>
+                  <SelectTrigger className="w-full sm:w-[320px]">
+                    <SelectValue placeholder="Filtrar por sede" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas as sedes</SelectItem>
+                    {sedes.map((sede) => (
+                      <SelectItem key={sede.id} value={String(sede.id)}>
+                        {sede.nome_campus} — {sede.cidade}/{sede.uf}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
               {/* Campo de busca */}

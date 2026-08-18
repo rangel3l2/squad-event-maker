@@ -4,18 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { criarTime, listarUsuarios, listarTimes, adicionarIntegrante, deletarTime, buscarTimesPorDono, definirCorTime, EVENTO_ATUAL } from "@/services/api";
+import { criarTime, listarUsuarios, listarTimes, listarTimesTodosEventos, adicionarIntegrante, deletarTime, buscarTimesPorDono, definirCorTime, EVENTO_ATUAL, type Time } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Copy, Check, Mail, MessageCircle, Sparkles, MapPin, GraduationCap } from "lucide-react";
+import { Copy, Check, Mail, MessageCircle, MapPin, GraduationCap, History } from "lucide-react";
 import { TeamLogoUploader } from "./TeamLogoUploader";
 import { listarSedesPorEvento, labelNivel, type Sede, type Usuario } from "@/services/api";
 import { TeamColorPicker, type CorSelecionada } from "./TeamColorPicker";
-import { useNavigate } from "react-router-dom";
+import { SedeSelector } from "./SedeSelector";
 
 const createTeamSchema = z.object({
   name: z.string().trim().min(3, "Nome deve ter pelo menos 3 caracteres").max(50, "Nome deve ter no máximo 50 caracteres"),
@@ -29,9 +29,11 @@ interface CreateTeamFormProps {
 
 export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string>("");
+  const [miniLogoUrl, setMiniLogoUrl] = useState<string>("");
+  const [sedeId, setSedeId] = useState<number | null>(null);
+  const [timesAnteriores, setTimesAnteriores] = useState<Time[]>([]);
   const [inviteCode, setInviteCode] = useState<string>("");
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -41,8 +43,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const [loadingPerfil, setLoadingPerfil] = useState(true);
   const [cor, setCor] = useState<CorSelecionada | null>(null);
 
-  // Campus e nível do time vêm do usuário dono (não são escolhidos manualmente)
-  const sedeId = perfil?.sede ?? null;
+  // A sede é sugerida (cadastro/localização) mas pode ser alterada pelo usuário
   const nivelUsuario = perfil?.nivel ?? perfil?.categoria ?? null;
 
   // Gerar senha de 5 caracteres automaticamente
@@ -75,8 +76,24 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         if (cancelled) return;
         setPerfil(encontrado);
         if (encontrado?.sede) {
+          setSedeId((atual) => atual ?? encontrado.sede ?? null);
           const sedes = await listarSedesPorEvento();
           if (!cancelled) setSede(sedes.find((s) => s.id === encontrado.sede) ?? null);
+        }
+        // Times de edições anteriores do próprio usuário (para duplicar)
+        if (encontrado?.id) {
+          try {
+            const todos = await listarTimesTodosEventos();
+            if (!cancelled) {
+              setTimesAnteriores(
+                todos.filter(
+                  (t) => t.dono_id === encontrado.id && Number(t.evento) !== Number(EVENTO_ATUAL)
+                )
+              );
+            }
+          } catch (err) {
+            console.error("Erro ao carregar times de edições anteriores:", err);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar perfil do usuário:", error);
@@ -202,7 +219,8 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         dono_id: usuario.id,
         senha_convite: senhaConvite,
         imagem_time: logoUrl,
-        sede: usuario.sede ?? sedeId,
+        img_logo_pequeno: miniLogoUrl || undefined,
+        sede: sedeId,
         categoria: usuario.nivel ?? usuario.categoria ?? nivelUsuario,
         evento: EVENTO_ATUAL,
       });
@@ -267,6 +285,15 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     }
   };
 
+  const duplicarTime = (time: Time) => {
+    form.setValue("name", time.nome_time ?? "");
+    if (time.imagem_time) setLogoUrl(time.imagem_time);
+    if (time.img_logo_pequeno) setMiniLogoUrl(time.img_logo_pequeno);
+    toast.success("Dados do time anterior copiados", {
+      description: "Escolha a cor do time nesta edição. Os membros não foram duplicados.",
+    });
+  };
+
   const handleDialogClose = () => {
     setShowInviteDialog(false);
     onSuccess();
@@ -283,21 +310,57 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Logo do Time *</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate('/logo-editor')}
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Criar com Editor IA
-                  </Button>
-                </div>
+                {timesAnteriores.length > 0 && (
+                  <div className="rounded-lg border bg-muted/40 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <History className="w-4 h-4 text-primary" />
+                      <Label>Duplicar time de edições anteriores</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Reaproveite nome, logo, miniatura e cor do seu time anterior. Os membros não são
+                      copiados — você adiciona os novos integrantes depois.
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {timesAnteriores.map((t) => (
+                        <div
+                          key={t.id}
+                          className="flex items-center gap-3 rounded-md border bg-background p-2"
+                        >
+                          {t.imagem_time && (
+                            <img
+                              src={t.imagem_time}
+                              alt={`Logo ${t.nome_time}`}
+                              className="w-10 h-10 object-contain rounded"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{t.nome_time}</p>
+                            <p className="text-xs text-muted-foreground">Evento {t.evento ?? "-"}</p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => duplicarTime(t)}
+                          >
+                            Duplicar
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <TeamLogoUploader
                   currentLogo={logoUrl}
                   onLogoChange={setLogoUrl}
+                />
+
+                <TeamLogoUploader
+                  currentLogo={miniLogoUrl}
+                  onLogoChange={setMiniLogoUrl}
+                  label="Miniatura do Logo (mini logo)"
+                  description="Versão reduzida do logo, usada em listagens. Envie um arquivo ou cole o link de uma imagem externa."
                 />
 
                 <FormField
@@ -329,18 +392,15 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                   </p>
                 </div>
 
-                <div className="pt-2 border-t space-y-2">
-                  <Label>Campus e nível de ensino</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Definidos automaticamente a partir do seu cadastro e gravados no time.
-                  </p>
+                <div className="pt-2 border-t space-y-3">
+                  <SedeSelector value={sedeId} onChange={setSedeId} />
                   <div className="flex flex-wrap gap-2 pt-1">
                     <span className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
                       <MapPin className="w-4 h-4 text-muted-foreground" />
                       {loadingPerfil
                         ? "Carregando..."
                         : sede
-                          ? `${sede.nome_campus} — ${sede.cidade}/${sede.uf}`
+                          ? `Sede do cadastro: ${sede.nome_campus} — ${sede.cidade}/${sede.uf}`
                           : "Campus não definido no seu cadastro"}
                     </span>
                     <span className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">

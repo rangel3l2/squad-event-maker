@@ -53,7 +53,7 @@ const BrasilPromoSlide = () => {
         </h3>
 
         <p className="text-base md:text-lg text-muted-foreground">
-          A Frontend Teams Cup chega a múltiplas sedes em 2026. Faça parte do maior evento de futebol entre turmas de desenvolvimento web do país.
+          A competição chega a múltiplas sedes em 2026. Faça parte do maior evento de futebol entre turmas de desenvolvimento web do país.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-4 py-2">

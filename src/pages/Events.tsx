@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, Trophy, Palette } from "lucide-react";
+import { Calendar, Users, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 
@@ -85,13 +85,6 @@ const Events = () => {
                 Escolha um evento e crie seu time!
               </p>
             </div>
-            <Button 
-              onClick={() => navigate('/logo-editor')}
-              className="bg-gradient-accent hover:opacity-90"
-            >
-              <Palette className="w-4 h-4 mr-2" />
-              Criar Logo para Time
-            </Button>
           </div>
 
           {events.length === 0 ? (
