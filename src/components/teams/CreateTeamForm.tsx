@@ -289,9 +289,8 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     form.setValue("name", time.nome_time ?? "");
     if (time.imagem_time) setLogoUrl(time.imagem_time);
     if (time.img_logo_pequeno) setMiniLogoUrl(time.img_logo_pequeno);
-    if (time.cor_time) setCor({ cor: time.cor_time, nome: time.cor_time } as CorSelecionada);
     toast.success("Dados do time anterior copiados", {
-      description: "Os membros não foram duplicados — convide os integrantes desta edição.",
+      description: "Escolha a cor do time nesta edição. Os membros não foram duplicados.",
     });
   };
 
