@@ -153,7 +153,7 @@ export default function Teams() {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="text-lg">
-                    Você já está no time "{currentTeamName}". Para entrar em outro time ou criar um novo, primeiro saia do seu time atual.
+                    Você já está no time "{currentTeamName}" nesta edição da Copa. Para entrar em outro time ou criar um novo nesta edição, primeiro saia do seu time atual.
                   </AlertDescription>
                 </Alert>
               </div>
