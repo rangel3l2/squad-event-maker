@@ -4,18 +4,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { criarTime, listarUsuarios, listarTimes, adicionarIntegrante, deletarTime, buscarTimesPorDono, definirCorTime, EVENTO_ATUAL } from "@/services/api";
+import { criarTime, listarUsuarios, listarTimes, listarTimesTodosEventos, adicionarIntegrante, deletarTime, buscarTimesPorDono, definirCorTime, EVENTO_ATUAL, type Time } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Copy, Check, Mail, MessageCircle, Sparkles, MapPin, GraduationCap } from "lucide-react";
+import { Copy, Check, Mail, MessageCircle, MapPin, GraduationCap, History } from "lucide-react";
 import { TeamLogoUploader } from "./TeamLogoUploader";
 import { listarSedesPorEvento, labelNivel, type Sede, type Usuario } from "@/services/api";
 import { TeamColorPicker, type CorSelecionada } from "./TeamColorPicker";
-import { useNavigate } from "react-router-dom";
+import { SedeSelector } from "./SedeSelector";
 
 const createTeamSchema = z.object({
   name: z.string().trim().min(3, "Nome deve ter pelo menos 3 caracteres").max(50, "Nome deve ter no máximo 50 caracteres"),
@@ -29,9 +29,11 @@ interface CreateTeamFormProps {
 
 export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string>("");
+  const [miniLogoUrl, setMiniLogoUrl] = useState<string>("");
+  const [sedeId, setSedeId] = useState<number | null>(null);
+  const [timesAnteriores, setTimesAnteriores] = useState<Time[]>([]);
   const [inviteCode, setInviteCode] = useState<string>("");
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -41,8 +43,7 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
   const [loadingPerfil, setLoadingPerfil] = useState(true);
   const [cor, setCor] = useState<CorSelecionada | null>(null);
 
-  // Campus e nível do time vêm do usuário dono (não são escolhidos manualmente)
-  const sedeId = perfil?.sede ?? null;
+  // A sede é sugerida (cadastro/localização) mas pode ser alterada pelo usuário
   const nivelUsuario = perfil?.nivel ?? perfil?.categoria ?? null;
 
   // Gerar senha de 5 caracteres automaticamente
@@ -75,8 +76,24 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         if (cancelled) return;
         setPerfil(encontrado);
         if (encontrado?.sede) {
+          setSedeId((atual) => atual ?? encontrado.sede ?? null);
           const sedes = await listarSedesPorEvento();
           if (!cancelled) setSede(sedes.find((s) => s.id === encontrado.sede) ?? null);
+        }
+        // Times de edições anteriores do próprio usuário (para duplicar)
+        if (encontrado?.id) {
+          try {
+            const todos = await listarTimesTodosEventos();
+            if (!cancelled) {
+              setTimesAnteriores(
+                todos.filter(
+                  (t) => t.dono_id === encontrado.id && Number(t.evento) !== Number(EVENTO_ATUAL)
+                )
+              );
+            }
+          } catch (err) {
+            console.error("Erro ao carregar times de edições anteriores:", err);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar perfil do usuário:", error);
