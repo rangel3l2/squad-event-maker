@@ -11,6 +11,13 @@ const getAuthToken = async (): Promise<string | null> => {
   return session?.access_token || null;
 };
 
+// Sends the user back to Google sign-in, remembering where they were.
+const redirectToReauth = () => {
+  if (window.location.pathname === '/auth') return;
+  const next = encodeURIComponent(window.location.pathname + window.location.search);
+  window.location.assign(`/auth?reauth=1&next=${next}`);
+};
+
 // Make authenticated request through edge function proxy
 const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Promise<Response> => {
   const token = await getAuthToken();
@@ -29,9 +36,7 @@ const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Pr
       if (!(error instanceof ApiReauthenticationRequiredError)) throw error;
     }
 
-    if (window.location.pathname !== '/auth' || !window.location.search.includes('reauth=1')) {
-      window.location.assign('/auth?reauth=1');
-    }
+    redirectToReauth();
     throw new ApiReauthenticationRequiredError();
   };
 
@@ -58,7 +63,7 @@ const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Pr
 
   if (response.status === 401) {
     clearApiAuth();
-    window.location.assign('/auth?reauth=1');
+    redirectToReauth();
     throw new ApiReauthenticationRequiredError();
   }
   

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarUsuarios } from "@/services/api";
+import { getApiToken } from "@/services/apiAuth";
 import { toast } from "sonner";
 
 const safeNext = (value: string | null) =>
@@ -20,7 +21,12 @@ const Auth = () => {
     const checkUserProfile = async () => {
       if (!user) return;
 
-      if (requiresReauthentication) return;
+      if (requiresReauthentication) {
+        // Reauth finished only when the external API token was re-issued.
+        if (!getApiToken()) return;
+        window.location.href = next ?? "/";
+        return;
+      }
 
       if (next) {
         window.location.href = next;
