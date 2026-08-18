@@ -104,18 +104,20 @@ serve(async (req) => {
       );
     }
 
-    // Upload to ImgBB
-    const formData = new FormData();
-    formData.append('image', base64Data);
+    // Upload to ImgBB (form-urlencoded is more reliable for base64 payloads)
+    const body = new URLSearchParams();
+    body.append('key', IMGBB_API_KEY);
+    body.append('image', base64Data);
 
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+    const response = await fetch('https://api.imgbb.com/1/upload', {
       method: 'POST',
-      body: formData,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('ImgBB upload error:', errorText);
+      console.error('ImgBB upload error:', response.status, errorText);
       return new Response(
         JSON.stringify({ error: "Failed to upload image" }), 
         {
