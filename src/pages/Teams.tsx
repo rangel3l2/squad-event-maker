@@ -9,7 +9,7 @@ import { Users, PlusCircle, AlertCircle, Search } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, mostrarTimeUsuario, listarTimes, listarSedesPorEvento, EVENTO_ATUAL, type Sede, type Time } from "@/services/api";
+import { listarUsuarios, listarTimes, listarSedesPorEvento, EVENTO_ATUAL, buscarTimesPorDono, type Sede, type Time } from "@/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Teams() {
@@ -31,7 +31,7 @@ export default function Teams() {
       return;
     }
 
-    // Verificar se completou o cadastro e se já está em um time
+    // Verificar se completou o cadastro e se já está em um time DO EVENTO ATUAL
     const checkProfile = async () => {
       try {
         // Verificar perfil completo via API
@@ -43,26 +43,27 @@ export default function Teams() {
           return;
         }
 
-        console.log("=== VERIFICANDO SE USUÁRIO JÁ ESTÁ EM UM TIME ===");
-        console.log("ID do usuário:", usuario.id);
+        console.log("=== VERIFICANDO SE USUÁRIO JÁ ESTÁ EM UM TIME DESTE EVENTO ===");
+        console.log("ID do usuário:", usuario.id, "Evento atual:", EVENTO_ATUAL);
 
-        // Verificar se é dono de algum time
+        // Verificar se é dono de algum time no evento atual
         try {
-          const timeUsuario = await mostrarTimeUsuario(usuario.id!);
+          const timesDoDono = await buscarTimesPorDono(usuario.id!, EVENTO_ATUAL);
+          const timeAtual = timesDoDono.find(t => Number(t.evento) === Number(EVENTO_ATUAL));
           
-          if (timeUsuario && timeUsuario.id != null) {
-            console.log("Usuário é DONO do time:", timeUsuario.nome_time);
+          if (timeAtual && timeAtual.id != null) {
+            console.log("Usuário é DONO do time neste evento:", timeAtual.nome_time);
             setHasTeam(true);
-            setCurrentTeamName(timeUsuario.nome_time || "");
+            setCurrentTeamName(timeAtual.nome_time || "");
             return;
           }
         } catch (error) {
-          console.log("Usuário não é dono de nenhum time");
+          console.log("Usuário não é dono de nenhum time neste evento");
         }
 
-        // Verificar se é integrante de algum time
-        const times = await listarTimes();
-        console.log("Total de times listados:", times.length);
+        // Verificar se é integrante de algum time no evento atual
+        const times = await listarTimes({ evento: EVENTO_ATUAL });
+        console.log("Total de times do evento atual:", times.length);
         
         for (const time of times) {
           const integrantes = time.integrantes || [];
@@ -73,14 +74,14 @@ export default function Teams() {
           );
           
           if (ehIntegrante) {
-            console.log("Usuário é INTEGRANTE do time:", time.nome_time);
+            console.log("Usuário é INTEGRANTE do time neste evento:", time.nome_time);
             setHasTeam(true);
             setCurrentTeamName(time.nome_time);
             return;
           }
         }
 
-        console.log("Usuário NÃO está em nenhum time");
+        console.log("Usuário NÃO está em nenhum time neste evento");
         setHasTeam(false);
       } catch (error) {
         console.error("Error checking profile:", error);
@@ -152,7 +153,7 @@ export default function Teams() {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription className="text-lg">
-                    Você já está no time "{currentTeamName}". Para entrar em outro time ou criar um novo, primeiro saia do seu time atual.
+                    Você já está no time "{currentTeamName}" nesta edição da Copa. Para entrar em outro time ou criar um novo nesta edição, primeiro saia do seu time atual.
                   </AlertDescription>
                 </Alert>
               </div>

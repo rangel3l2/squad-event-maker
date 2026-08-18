@@ -14,8 +14,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
-import { AlertCircle, Users, LogOut, Edit, Trash2 } from "lucide-react";
-import { listarUsuarios, mostrarTimeUsuario, alterarUsuario, sairDoTime, deletarTime, deletarUsuario } from "@/services/api";
+import { AlertCircle, Users, LogOut, Edit, Trash2, Trophy } from "lucide-react";
+import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, type Time } from "@/services/api";
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
@@ -38,10 +38,9 @@ export default function Profile() {
   const { user, signOut } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentTeam, setCurrentTeam] = useState<TeamInfo | null>(null);
+  const [userTeams, setUserTeams] = useState<TeamInfo[]>([]);
   const [isLeavingTeam, setIsLeavingTeam] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
-  const [teamId, setTeamId] = useState<number | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
@@ -73,22 +72,28 @@ export default function Profile() {
           form.setValue('period', usuario.periodo ? usuario.periodo.toString() : '');
           setAvatarUrl(usuario.url_image_perfil || '');
 
-          // Buscar time do usuário
-           const timeUsuario = await mostrarTimeUsuario(usuario.id!);
-           if (timeUsuario && timeUsuario.id != null) {
-             setTeamId(timeUsuario.id);
-             setCurrentTeam({
-               id: String(timeUsuario.id),
-               name: timeUsuario.nome_time || 'Meu Time',
-               logo_url: timeUsuario.imagem_time || '',
-               captain_id: timeUsuario.dono_id != null ? String(timeUsuario.dono_id) : '',
-               event_id: ''
-             });
-           } else {
-             setTeamId(null);
-             setCurrentTeam(null);
-             console.warn("Time do usuário ausente ou inválido:", timeUsuario);
-           }
+          // Buscar todos os times do usuário (em todos os eventos)
+          try {
+            const todosOsTimes = await listarTimes({ evento: null });
+            const timesDoUsuario = todosOsTimes.filter((t: Time) => {
+              if (t.dono_id === usuario.id) return true;
+              const integrantes = t.integrantes || [];
+              return integrantes.some((i: any) => i.usuario_id === usuario.id);
+            });
+
+            const teamsInfo: TeamInfo[] = timesDoUsuario.map((t: Time) => ({
+              id: String(t.id),
+              name: t.nome_time || 'Meu Time',
+              logo_url: t.imagem_time || '',
+              captain_id: t.dono_id != null ? String(t.dono_id) : '',
+              event_id: t.evento != null ? String(t.evento) : ''
+            }));
+
+            setUserTeams(teamsInfo);
+          } catch (error) {
+            console.error("Erro ao carregar times do usuário:", error);
+            setUserTeams([]);
+          }
         }
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -148,12 +153,6 @@ export default function Profile() {
     */
   };
 
-  const handleEditTeam = () => {
-    if (currentTeam) {
-      navigate(`/team-edit/${currentTeam.id}`);
-    }
-  };
-
   const handleDeleteAccount = async () => {
     const fullName = (form.getValues("fullName") || "").trim();
 
@@ -209,82 +208,105 @@ export default function Profile() {
     */
   };
 
-  const isCaptain = currentTeam && user && currentTeam.captain_id === user.id;
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Seção do Time */}
-          {currentTeam && (
+          {/* Seção dos Times */}
+          {userTeams.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Meu Time
+                  Meus Times
                 </CardTitle>
+                <CardDescription>
+                  Times em que você participa, organizados por edição do evento.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <img 
-                      src={currentTeam.logo_url} 
-                      alt={currentTeam.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                    <div>
-                      <h3 className="text-xl font-bold">{currentTeam.name}</h3>
-                      {isCaptain && (
-                        <span className="text-sm text-muted-foreground">Você é o capitão</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    {/* DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada */}
-                    {isCaptain && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" disabled={true}>
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Deletar Time (Desativado)
+                <div className="space-y-4">
+                  {userTeams.map((team) => {
+                    const isCaptain = user && team.captain_id === user.id;
+                    return (
+                      <div
+                        key={team.id}
+                        className="flex items-center justify-between rounded-lg border p-4"
+                      >
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={team.logo_url || '/placeholder.svg'}
+                            alt={team.name}
+                            className="w-16 h-16 rounded-lg object-cover"
+                          />
+                          <div>
+                            <h3 className="text-xl font-bold">{team.name}</h3>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Trophy className="w-4 h-4" />
+                              <span>Edição {team.event_id || '-'}</span>
+                              {isCaptain && (
+                                <span className="text-primary">• Você é o capitão</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/team-details/${team.id}`)}
+                          >
+                            Ver time
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Deletar Time</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Funcionalidade temporariamente desativada.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Fechar</AlertDialogCancel>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                    
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={true}>
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Sair do Time (Desativado)
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Sair do Time</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Funcionalidade temporariamente desativada.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Fechar</AlertDialogCancel>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+
+                          {/* DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada */}
+                          {isCaptain && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" disabled={true}>
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Deletar (Desativado)
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Deletar Time</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Funcionalidade temporariamente desativada.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Fechar</AlertDialogCancel>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm" disabled={true}>
+                                <LogOut className="w-4 h-4 mr-2" />
+                                Sair (Desativado)
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Sair do Time</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Funcionalidade temporariamente desativada.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Fechar</AlertDialogCancel>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

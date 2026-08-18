@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Users, KeyRound, UserCog, Trash2, Trophy, FileCode, FileText, Award, Image, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, buscarTodasSubmissoesDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica, type SubmissaoDinamica } from "@/services/api";
+import { listarUsuarios, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, buscarTodasSubmissoesDinamica, buscarTimesPorDono, type Usuario, type Time, type Dinamica, type ArquivoDinamica, type SubmissaoDinamica } from "@/services/api";
 import CodeViewer from "@/components/CodeViewer";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { TeamColorManager } from "@/components/teams/TeamColorManager";
@@ -66,23 +66,23 @@ export default function TeamDetails() {
             return;
           }
 
-          // Verificar se o usuário já tem um time (apenas se logado)
+          // Verificar se o usuário já tem um time NO EVENTO ATUAL (apenas se logado)
           if (usuario) {
-            let usuarioTemTime = false;
+            let usuarioTemTimeNesteEvento = false;
             
-            // Verificar se é dono de algum time
+            // Verificar se é dono de algum time neste evento
             try {
-              const userTeam = await mostrarTimeUsuario(usuario.id!);
-              if (userTeam && userTeam.id != null) {
-                usuarioTemTime = true;
+              const timesDoDono = await buscarTimesPorDono(usuario.id!, EVENTO_ATUAL);
+              if (timesDoDono.some(t => Number(t.evento) === Number(EVENTO_ATUAL))) {
+                usuarioTemTimeNesteEvento = true;
               }
             } catch {
-              // Não é dono de nenhum time
+              // Não é dono de nenhum time neste evento
             }
 
-            // Verificar se é integrante de algum time
-            if (!usuarioTemTime) {
-              const times = await listarTimes();
+            // Verificar se é integrante de algum time neste evento
+            if (!usuarioTemTimeNesteEvento) {
+              const times = await listarTimes({ evento: EVENTO_ATUAL });
               for (const time of times) {
                 const integrantes = time.integrantes || [];
                 const ehIntegrante = integrantes.some(
@@ -90,13 +90,13 @@ export default function TeamDetails() {
                 );
                 
                 if (ehIntegrante) {
-                  usuarioTemTime = true;
+                  usuarioTemTimeNesteEvento = true;
                   break;
                 }
               }
             }
             
-            setUserHasTeam(usuarioTemTime);
+            setUserHasTeam(usuarioTemTimeNesteEvento);
           }
         }
 
@@ -113,12 +113,31 @@ export default function TeamDetails() {
             return;
           }
         } else if (usuario) {
-          // Senão, busca o time do usuário logado
+          // Senão, busca o time do usuário logado NO EVENTO ATUAL
           try {
-            timeData = await mostrarTimeUsuario(usuario.id!);
+            // Prioriza times onde o usuário é dono no evento atual
+            const timesDoDono = await buscarTimesPorDono(usuario.id!, EVENTO_ATUAL);
+            const timeDoDono = timesDoDono.find(t => Number(t.evento) === Number(EVENTO_ATUAL));
+            
+            if (timeDoDono && timeDoDono.id != null) {
+              timeData = await mostrarTime(timeDoDono.id);
+            } else {
+              // Se não for dono, procura como integrante no evento atual
+              const timesEvento = await listarTimes({ evento: EVENTO_ATUAL });
+              const timeComoIntegrante = timesEvento.find((t) => {
+                const integrantes = t.integrantes || [];
+                return integrantes.some((i: any) => i.usuario_id === usuario.id);
+              });
+              
+              if (timeComoIntegrante && timeComoIntegrante.id != null) {
+                timeData = await mostrarTime(timeComoIntegrante.id);
+              } else {
+                throw new Error("Nenhum time neste evento");
+              }
+            }
           } catch (error) {
             console.error("Erro ao buscar time do usuário:", error);
-            toast.error("Você não está em nenhum time");
+            toast.error("Você não está em nenhum time nesta edição");
             setLoading(false);
             return;
           }
@@ -298,44 +317,42 @@ export default function TeamDetails() {
         return;
       }
 
-      // Verificar se já tem time
-      console.log("=== VERIFICANDO SE USUÁRIO JÁ TEM TIME ===");
-      console.log("Usuario ID:", usuario.id);
+      // Verificar se já tem time NESTE EVENTO
+      console.log("=== VERIFICANDO SE USUÁRIO JÁ TEM TIME NESTE EVENTO ===");
+      console.log("Usuario ID:", usuario.id, "Evento atual:", EVENTO_ATUAL);
       
       try {
-        const userTeam = await mostrarTimeUsuario(usuario.id!);
-        console.log("Resultado mostrarTimeUsuario:", userTeam);
-        console.log("userTeam.id:", userTeam?.id);
-        console.log("userTeam.nome_time:", userTeam?.nome_time);
+        const timesDoDono = await buscarTimesPorDono(usuario.id!, EVENTO_ATUAL);
+        const timeNesteEvento = timesDoDono.find(t => Number(t.evento) === Number(EVENTO_ATUAL));
         
-        if (userTeam && userTeam.id != null) {
-          console.log("Usuário JÁ TEM TIME:", userTeam.nome_time);
-          toast.error(`Você já está no time "${userTeam.nome_time}". Saia desse time primeiro para entrar em outro.`);
+        if (timeNesteEvento && timeNesteEvento.id != null) {
+          console.log("Usuário JÁ TEM TIME neste evento:", timeNesteEvento.nome_time);
+          toast.error(`Você já está no time "${timeNesteEvento.nome_time}" nesta edição. Saia desse time primeiro para entrar em outro.`);
           return;
         }
       } catch (error) {
-        console.log("Erro ao buscar time do usuário (pode ser normal se não tiver time):", error);
+        console.log("Erro ao buscar times do usuário (pode ser normal se não tiver time neste evento):", error);
       }
 
-      // Verificar também se é integrante de algum time
-      console.log("=== VERIFICANDO SE É INTEGRANTE DE ALGUM TIME ===");
-      const todosOsTimes = await listarTimes();
-      console.log("Total de times para verificar:", todosOsTimes.length);
+      // Verificar também se é integrante de algum time neste evento
+      console.log("=== VERIFICANDO SE É INTEGRANTE DE ALGUM TIME NESTE EVENTO ===");
+      const timesNesteEvento = await listarTimes({ evento: EVENTO_ATUAL });
+      console.log("Total de times do evento atual para verificar:", timesNesteEvento.length);
       
-      for (const timeVerificar of todosOsTimes) {
+      for (const timeVerificar of timesNesteEvento) {
         const integrantes = timeVerificar.integrantes || [];
         const ehIntegrante = integrantes.some(
           (integrante: any) => integrante.usuario_id === usuario.id
         );
         
         if (ehIntegrante) {
-          console.log("Usuário É INTEGRANTE do time:", timeVerificar.nome_time);
-          toast.error(`Você já está no time "${timeVerificar.nome_time}". Saia desse time primeiro para entrar em outro.`);
+          console.log("Usuário É INTEGRANTE do time neste evento:", timeVerificar.nome_time);
+          toast.error(`Você já está no time "${timeVerificar.nome_time}" nesta edição. Saia desse time primeiro para entrar em outro.`);
           return;
         }
       }
       
-      console.log("Usuário NÃO está em nenhum time. Pode continuar.");
+      console.log("Usuário NÃO está em nenhum time neste evento. Pode continuar.");
 
       // Verificar código de convite
       if (!time.senha_convite) {
