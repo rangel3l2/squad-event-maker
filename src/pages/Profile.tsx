@@ -154,28 +154,21 @@ export default function Profile() {
     }
   };
 
-  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
   const handleDeleteAccount = async () => {
-    toast.info("Funcionalidade de deletar conta temporariamente desativada");
-    return;
-    
-    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
-    if (!userId || deleteConfirmation !== "apagar_usuario") {
-      toast.error("Digite 'apagar_usuario' para confirmar");
+    const fullName = (form.getValues("fullName") || "").trim();
+
+    if (!userId) return;
+
+    if (!fullName || deleteConfirmation.trim().toLowerCase() !== fullName.toLowerCase()) {
+      toast.error("Digite seu nome completo exatamente como está no perfil para confirmar");
       return;
     }
 
     setIsDeletingAccount(true);
     try {
-      // Deletar usuário e remover de todos os times
-      await deletarUsuario(userId, deleteConfirmation);
-      
-      // Fazer logout do Google/Supabase
+      await deletarUsuario(userId, "apagar_usuario");
       await signOut();
-      
       toast.success("Conta excluída com sucesso! Você será desconectado.");
-      
-      // Aguardar um pouco para o logout processar
       setTimeout(() => {
         navigate("/auth");
       }, 1500);
@@ -186,8 +179,8 @@ export default function Profile() {
       setIsDeletingAccount(false);
       setDeleteConfirmation("");
     }
-    */
   };
+
 
   // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
   const handleDeleteTeam = async () => {
