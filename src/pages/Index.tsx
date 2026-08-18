@@ -148,10 +148,10 @@ const Index = () => {
               {events[0].edition}
             </p>
           )}
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8">
+          <HeroCarousel />
+          <p className="text-xl md:text-2xl text-muted-foreground">
             A maior competição de futebol entre turmas de desenvolvimento web
           </p>
-          <HeroCarousel />
         </div>
       </section>
 
