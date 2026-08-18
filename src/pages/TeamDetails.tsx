@@ -298,44 +298,42 @@ export default function TeamDetails() {
         return;
       }
 
-      // Verificar se já tem time
-      console.log("=== VERIFICANDO SE USUÁRIO JÁ TEM TIME ===");
-      console.log("Usuario ID:", usuario.id);
+      // Verificar se já tem time NESTE EVENTO
+      console.log("=== VERIFICANDO SE USUÁRIO JÁ TEM TIME NESTE EVENTO ===");
+      console.log("Usuario ID:", usuario.id, "Evento atual:", EVENTO_ATUAL);
       
       try {
-        const userTeam = await mostrarTimeUsuario(usuario.id!);
-        console.log("Resultado mostrarTimeUsuario:", userTeam);
-        console.log("userTeam.id:", userTeam?.id);
-        console.log("userTeam.nome_time:", userTeam?.nome_time);
+        const timesDoDono = await buscarTimesPorDono(usuario.id!, EVENTO_ATUAL);
+        const timeNesteEvento = timesDoDono.find(t => Number(t.evento) === Number(EVENTO_ATUAL));
         
-        if (userTeam && userTeam.id != null) {
-          console.log("Usuário JÁ TEM TIME:", userTeam.nome_time);
-          toast.error(`Você já está no time "${userTeam.nome_time}". Saia desse time primeiro para entrar em outro.`);
+        if (timeNesteEvento && timeNesteEvento.id != null) {
+          console.log("Usuário JÁ TEM TIME neste evento:", timeNesteEvento.nome_time);
+          toast.error(`Você já está no time "${timeNesteEvento.nome_time}" nesta edição. Saia desse time primeiro para entrar em outro.`);
           return;
         }
       } catch (error) {
-        console.log("Erro ao buscar time do usuário (pode ser normal se não tiver time):", error);
+        console.log("Erro ao buscar times do usuário (pode ser normal se não tiver time neste evento):", error);
       }
 
-      // Verificar também se é integrante de algum time
-      console.log("=== VERIFICANDO SE É INTEGRANTE DE ALGUM TIME ===");
-      const todosOsTimes = await listarTimes();
-      console.log("Total de times para verificar:", todosOsTimes.length);
+      // Verificar também se é integrante de algum time neste evento
+      console.log("=== VERIFICANDO SE É INTEGRANTE DE ALGUM TIME NESTE EVENTO ===");
+      const timesNesteEvento = await listarTimes({ evento: EVENTO_ATUAL });
+      console.log("Total de times do evento atual para verificar:", timesNesteEvento.length);
       
-      for (const timeVerificar of todosOsTimes) {
+      for (const timeVerificar of timesNesteEvento) {
         const integrantes = timeVerificar.integrantes || [];
         const ehIntegrante = integrantes.some(
           (integrante: any) => integrante.usuario_id === usuario.id
         );
         
         if (ehIntegrante) {
-          console.log("Usuário É INTEGRANTE do time:", timeVerificar.nome_time);
-          toast.error(`Você já está no time "${timeVerificar.nome_time}". Saia desse time primeiro para entrar em outro.`);
+          console.log("Usuário É INTEGRANTE do time neste evento:", timeVerificar.nome_time);
+          toast.error(`Você já está no time "${timeVerificar.nome_time}" nesta edição. Saia desse time primeiro para entrar em outro.`);
           return;
         }
       }
       
-      console.log("Usuário NÃO está em nenhum time. Pode continuar.");
+      console.log("Usuário NÃO está em nenhum time neste evento. Pode continuar.");
 
       // Verificar código de convite
       if (!time.senha_convite) {
