@@ -1,18 +1,28 @@
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import { Upload, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Upload, X, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { uploadImageToImgBB } from "@/services/imgbb";
 
 interface TeamLogoUploaderProps {
   onLogoChange: (logoUrl: string) => void;
   currentLogo?: string;
+  label?: string;
+  description?: string;
 }
 
-export function TeamLogoUploader({ onLogoChange, currentLogo }: TeamLogoUploaderProps) {
+export function TeamLogoUploader({
+  onLogoChange,
+  currentLogo,
+  label = "Logo do Time *",
+  description = "Arraste uma imagem, escolha um arquivo ou cole o link de uma imagem externa (máx. 5MB)",
+}: TeamLogoUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>(currentLogo || "");
   const [isUploading, setIsUploading] = useState(false);
+  const [externalUrl, setExternalUrl] = useState("");
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -26,19 +36,18 @@ export function TeamLogoUploader({ onLogoChange, currentLogo }: TeamLogoUploader
     }
 
     setIsUploading(true);
-    
+
     const reader = new FileReader();
     reader.onloadend = async () => {
       try {
         const base64String = reader.result as string;
         setPreviewUrl(base64String);
-        
-        // Upload para ImgBB
+
         const imageUrl = await uploadImageToImgBB(base64String);
-        
+
         onLogoChange(imageUrl);
         setIsUploading(false);
-        toast.success("Logo carregado com sucesso!");
+        toast.success("Imagem carregada com sucesso!");
       } catch (error) {
         console.error("Erro no upload:", error);
         toast.error("Erro ao fazer upload da imagem");
@@ -63,7 +72,7 @@ export function TeamLogoUploader({ onLogoChange, currentLogo }: TeamLogoUploader
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const file = e.dataTransfer.files?.[0];
     if (file) {
       handleFile(file);
@@ -83,20 +92,30 @@ export function TeamLogoUploader({ onLogoChange, currentLogo }: TeamLogoUploader
   const handleRemove = () => {
     setPreviewUrl("");
     onLogoChange("");
-    toast.info("Logo removido");
+    toast.info("Imagem removida");
+  };
+
+  const usarUrlExterna = () => {
+    const url = externalUrl.trim();
+    if (!/^https?:\/\/.+/i.test(url)) {
+      toast.error("Informe uma URL de imagem válida (https://...)");
+      return;
+    }
+    setPreviewUrl(url);
+    onLogoChange(url);
+    setExternalUrl("");
+    toast.success("Imagem externa aplicada!");
   };
 
   return (
     <div className="space-y-2">
-      <Label>Logo do Time *</Label>
-      <p className="text-sm text-muted-foreground">
-        Arraste uma imagem ou clique para selecionar (máx. 5MB)
-      </p>
-      
+      <Label>{label}</Label>
+      <p className="text-sm text-muted-foreground">{description}</p>
+
       <div
         className={`relative border-2 border-dashed rounded-lg p-6 transition-colors ${
-          isDragging 
-            ? "border-primary bg-primary/5" 
+          isDragging
+            ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50"
         } ${isUploading ? "opacity-50 pointer-events-none" : ""}`}
         onDrop={handleDrop}
@@ -137,6 +156,19 @@ export function TeamLogoUploader({ onLogoChange, currentLogo }: TeamLogoUploader
             />
           </label>
         )}
+      </div>
+
+      <div className="flex gap-2">
+        <Input
+          value={externalUrl}
+          onChange={(e) => setExternalUrl(e.target.value)}
+          placeholder="https://exemplo.com/logo.png"
+          disabled={isUploading}
+        />
+        <Button type="button" variant="outline" onClick={usarUrlExterna} disabled={isUploading}>
+          <LinkIcon className="w-4 h-4 mr-2" />
+          Usar link
+        </Button>
       </div>
     </div>
   );
