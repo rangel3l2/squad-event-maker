@@ -884,7 +884,26 @@ export const buscarTodasSubmissoesDinamica = async (
 // Sedes, Eventos e Cores dos Times
 // ==========================
 
-export const EVENTO_ATUAL = 2;
+/**
+ * Código do evento atual.
+ * O valor é lido do arquivo editável `public/evento.txt` no carregamento do app.
+ */
+export let EVENTO_ATUAL = 2;
+
+/** Lê o código do evento do arquivo `evento.txt` (editável sem alterar o código). */
+export const carregarEventoAtual = async (): Promise<number> => {
+  try {
+    const resp = await fetch(`/evento.txt?t=${Date.now()}`, { cache: "no-store" });
+    if (resp.ok) {
+      const texto = (await resp.text()).trim();
+      const numero = parseInt(texto, 10);
+      if (!Number.isNaN(numero) && numero > 0) EVENTO_ATUAL = numero;
+    }
+  } catch {
+    // mantém o valor padrão
+  }
+  return EVENTO_ATUAL;
+};
 
 export interface Sede {
   id: number;
