@@ -99,23 +99,18 @@ export default function Profile() {
     loadProfile();
   }, [user, navigate, form]);
 
-  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
   const onSubmit = async (data: ProfileFormData) => {
-    toast.info("Funcionalidade de salvar perfil temporariamente desativada");
-    return;
-    
-    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
     if (!user || !userId) return;
 
     setIsSubmitting(true);
     try {
       await alterarUsuario(userId, {
-        nome: data.fullName,
+        nome: data.fullName.trim(),
         turma: parseInt(data.classroom),
         periodo: parseInt(data.period),
         url_image_perfil: avatarUrl,
         email: user.email || '',
-        token_gmail: user.email || '', // Usando email ao invés de user.id
+        token_gmail: user.email || '',
       });
 
       toast.success("Perfil atualizado com sucesso!");
@@ -125,7 +120,6 @@ export default function Profile() {
     } finally {
       setIsSubmitting(false);
     }
-    */
   };
 
   // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
@@ -308,19 +302,18 @@ export default function Profile() {
             <CardHeader className="text-center">
               <CardTitle className="text-3xl font-bold">Dados Pessoais</CardTitle>
              <CardDescription className="text-lg">
-               Visualize suas informações (edição temporariamente desativada)
+               Atualize suas informações pessoais
              </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  {/* DESATIVADO TEMPORARIAMENTE - Para reativar, descomente o bloco abaixo */}
-                  {/* <div className="flex justify-center">
+                  <div className="flex justify-center">
                     <AvatarSelector
                       currentAvatar={avatarUrl}
                       onAvatarChange={setAvatarUrl}
                     />
-                  </div> */}
+                  </div>
 
                   <FormField
                     control={form.control}
@@ -329,7 +322,7 @@ export default function Profile() {
                       <FormItem>
                         <FormLabel>Nome Completo *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Seu nome completo" {...field} disabled={true} />
+                          <Input placeholder="Seu nome completo" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -342,7 +335,7 @@ export default function Profile() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Turma *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={true}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione a turma" />
@@ -364,7 +357,7 @@ export default function Profile() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Período *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={true}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione o período" />
@@ -384,8 +377,8 @@ export default function Profile() {
                     )}
                   />
 
-                  <Button type="submit" className="w-full" size="lg" disabled={true}>
-                    Edição Temporariamente Desativada
+                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                    {isSubmitting ? "Salvando..." : "Salvar Alterações"}
                   </Button>
 
                   <Button 
