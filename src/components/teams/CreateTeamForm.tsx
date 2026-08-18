@@ -300,21 +300,57 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="space-y-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Logo do Time *</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate('/logo-editor')}
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Criar com Editor IA
-                  </Button>
-                </div>
+                {timesAnteriores.length > 0 && (
+                  <div className="rounded-lg border bg-muted/40 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <History className="w-4 h-4 text-primary" />
+                      <Label>Duplicar time de edições anteriores</Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Reaproveite nome, logo, miniatura e cor do seu time anterior. Os membros não são
+                      copiados — você adiciona os novos integrantes depois.
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {timesAnteriores.map((t) => (
+                        <div
+                          key={t.id}
+                          className="flex items-center gap-3 rounded-md border bg-background p-2"
+                        >
+                          {t.imagem_time && (
+                            <img
+                              src={t.imagem_time}
+                              alt={`Logo ${t.nome_time}`}
+                              className="w-10 h-10 object-contain rounded"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{t.nome_time}</p>
+                            <p className="text-xs text-muted-foreground">Evento {t.evento ?? "-"}</p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => duplicarTime(t)}
+                          >
+                            Duplicar
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <TeamLogoUploader
                   currentLogo={logoUrl}
                   onLogoChange={setLogoUrl}
+                />
+
+                <TeamLogoUploader
+                  currentLogo={miniLogoUrl}
+                  onLogoChange={setMiniLogoUrl}
+                  label="Miniatura do Logo (mini logo)"
+                  description="Versão reduzida do logo, usada em listagens. Envie um arquivo ou cole o link de uma imagem externa."
                 />
 
                 <FormField
@@ -346,18 +382,15 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
                   </p>
                 </div>
 
-                <div className="pt-2 border-t space-y-2">
-                  <Label>Campus e nível de ensino</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Definidos automaticamente a partir do seu cadastro e gravados no time.
-                  </p>
+                <div className="pt-2 border-t space-y-3">
+                  <SedeSelector value={sedeId} onChange={setSedeId} />
                   <div className="flex flex-wrap gap-2 pt-1">
                     <span className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
                       <MapPin className="w-4 h-4 text-muted-foreground" />
                       {loadingPerfil
                         ? "Carregando..."
                         : sede
-                          ? `${sede.nome_campus} — ${sede.cidade}/${sede.uf}`
+                          ? `Sede do cadastro: ${sede.nome_campus} — ${sede.cidade}/${sede.uf}`
                           : "Campus não definido no seu cadastro"}
                     </span>
                     <span className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
