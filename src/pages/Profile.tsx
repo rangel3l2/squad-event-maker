@@ -72,22 +72,28 @@ export default function Profile() {
           form.setValue('period', usuario.periodo ? usuario.periodo.toString() : '');
           setAvatarUrl(usuario.url_image_perfil || '');
 
-          // Buscar time do usuário
-           const timeUsuario = await mostrarTimeUsuario(usuario.id!);
-           if (timeUsuario && timeUsuario.id != null) {
-             setTeamId(timeUsuario.id);
-             setCurrentTeam({
-               id: String(timeUsuario.id),
-               name: timeUsuario.nome_time || 'Meu Time',
-               logo_url: timeUsuario.imagem_time || '',
-               captain_id: timeUsuario.dono_id != null ? String(timeUsuario.dono_id) : '',
-               event_id: ''
-             });
-           } else {
-             setTeamId(null);
-             setCurrentTeam(null);
-             console.warn("Time do usuário ausente ou inválido:", timeUsuario);
-           }
+          // Buscar todos os times do usuário (em todos os eventos)
+          try {
+            const todosOsTimes = await listarTimes({ evento: null });
+            const timesDoUsuario = todosOsTimes.filter((t: Time) => {
+              if (t.dono_id === usuario.id) return true;
+              const integrantes = t.integrantes || [];
+              return integrantes.some((i: any) => i.usuario_id === usuario.id);
+            });
+
+            const teamsInfo: TeamInfo[] = timesDoUsuario.map((t: Time) => ({
+              id: String(t.id),
+              name: t.nome_time || 'Meu Time',
+              logo_url: t.imagem_time || '',
+              captain_id: t.dono_id != null ? String(t.dono_id) : '',
+              event_id: t.evento != null ? String(t.evento) : ''
+            }));
+
+            setUserTeams(teamsInfo);
+          } catch (error) {
+            console.error("Erro ao carregar times do usuário:", error);
+            setUserTeams([]);
+          }
         }
       } catch (error) {
         console.error("Error loading profile:", error);
