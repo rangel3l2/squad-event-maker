@@ -302,19 +302,18 @@ export default function Profile() {
             <CardHeader className="text-center">
               <CardTitle className="text-3xl font-bold">Dados Pessoais</CardTitle>
              <CardDescription className="text-lg">
-               Visualize suas informações (edição temporariamente desativada)
+               Atualize suas informações pessoais
              </CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  {/* DESATIVADO TEMPORARIAMENTE - Para reativar, descomente o bloco abaixo */}
-                  {/* <div className="flex justify-center">
+                  <div className="flex justify-center">
                     <AvatarSelector
                       currentAvatar={avatarUrl}
                       onAvatarChange={setAvatarUrl}
                     />
-                  </div> */}
+                  </div>
 
                   <FormField
                     control={form.control}
