@@ -91,33 +91,23 @@ serve(async (req) => {
       );
     }
 
-    const IMGBB_API_KEY = Deno.env.get('IMGBB_API_KEY');
-    
-    if (!IMGBB_API_KEY) {
-      console.error("IMGBB_API_KEY not configured");
-      return new Response(
-        JSON.stringify({ error: "Image upload service not configured" }), 
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
+    // Detect mime/extension from the data URL prefix
+    const mimeMatch = /^data:([a-zA-Z0-9/+.-]+);base64,/.exec(base64Image);
+    const mimeType = mimeMatch?.[1] ?? 'image/png';
+    const ext = (mimeType.split('/')[1] || 'png').replace('jpeg', 'jpg');
 
-    // Upload to ImgBB (form-urlencoded is more reliable for base64 payloads)
-    const body = new URLSearchParams();
-    body.append('key', IMGBB_API_KEY);
-    body.append('image', base64Data);
+    const binary = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+    const formData = new FormData();
+    formData.append('files', new Blob([binary], { type: mimeType }), `upload-${Date.now()}.${ext}`);
 
-    const response = await fetch('https://api.imgbb.com/1/upload', {
+    const response = await fetch('https://frontendteamscup.com.br/static/upload-static', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
+      body: formData,
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('ImgBB upload error:', response.status, errorText);
+      console.error('Static upload error:', response.status, errorText);
       return new Response(
         JSON.stringify({ error: "Failed to upload image" }), 
         {
@@ -128,9 +118,10 @@ serve(async (req) => {
     }
 
     const result = await response.json();
+    const filePath = result?.files?.[0]?.url;
 
-    if (!result.success) {
-      console.error('ImgBB upload failed:', result);
+    if (!filePath) {
+      console.error('Static upload failed:', result);
       return new Response(
         JSON.stringify({ error: "Image upload failed" }), 
         {
@@ -140,12 +131,16 @@ serve(async (req) => {
       );
     }
 
-    console.log('Image uploaded successfully:', result.data.image.url);
+    const finalUrl = filePath.startsWith('http')
+      ? filePath
+      : `https://frontendteamscup.com.br${filePath.startsWith('/') ? '' : '/'}${filePath}`;
+
+    console.log('Image uploaded successfully:', finalUrl);
 
     return new Response(
       JSON.stringify({ 
-        url: result.data.image.url,
-        display_url: result.data.display_url 
+        url: finalUrl,
+        display_url: finalUrl 
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
