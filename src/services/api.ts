@@ -126,6 +126,8 @@ export interface Time {
   cor_id?: number | null;
   cor_base?: string | null;
   cor_time?: string | null;
+  /** Miniatura/mini logo do time (importado externamente) */
+  img_logo_pequeno?: string;
 }
 
 export interface Integrante {
