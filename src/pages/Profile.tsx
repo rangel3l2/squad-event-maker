@@ -214,82 +214,105 @@ export default function Profile() {
     */
   };
 
-  const isCaptain = currentTeam && user && currentTeam.captain_id === user.id;
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Seção do Time */}
-          {currentTeam && (
+          {/* Seção dos Times */}
+          {userTeams.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Meu Time
+                  Meus Times
                 </CardTitle>
+                <CardDescription>
+                  Times em que você participa, organizados por edição do evento.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <img 
-                      src={currentTeam.logo_url} 
-                      alt={currentTeam.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                    <div>
-                      <h3 className="text-xl font-bold">{currentTeam.name}</h3>
-                      {isCaptain && (
-                        <span className="text-sm text-muted-foreground">Você é o capitão</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    {/* DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada */}
-                    {isCaptain && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" disabled={true}>
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Deletar Time (Desativado)
+                <div className="space-y-4">
+                  {userTeams.map((team) => {
+                    const isCaptain = user && team.captain_id === user.id;
+                    return (
+                      <div
+                        key={team.id}
+                        className="flex items-center justify-between rounded-lg border p-4"
+                      >
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={team.logo_url || '/placeholder.svg'}
+                            alt={team.name}
+                            className="w-16 h-16 rounded-lg object-cover"
+                          />
+                          <div>
+                            <h3 className="text-xl font-bold">{team.name}</h3>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Trophy className="w-4 h-4" />
+                              <span>Edição {team.event_id || '-'}</span>
+                              {isCaptain && (
+                                <span className="text-primary">• Você é o capitão</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/team-details/${team.id}`)}
+                          >
+                            Ver time
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Deletar Time</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Funcionalidade temporariamente desativada.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Fechar</AlertDialogCancel>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                    
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={true}>
-                          <LogOut className="w-4 h-4 mr-2" />
-                          Sair do Time (Desativado)
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Sair do Time</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Funcionalidade temporariamente desativada.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Fechar</AlertDialogCancel>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+
+                          {/* DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada */}
+                          {isCaptain && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" disabled={true}>
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Deletar (Desativado)
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Deletar Time</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Funcionalidade temporariamente desativada.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Fechar</AlertDialogCancel>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm" disabled={true}>
+                                <LogOut className="w-4 h-4 mr-2" />
+                                Sair (Desativado)
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Sair do Time</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Funcionalidade temporariamente desativada.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Fechar</AlertDialogCancel>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
