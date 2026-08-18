@@ -99,23 +99,18 @@ export default function Profile() {
     loadProfile();
   }, [user, navigate, form]);
 
-  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
   const onSubmit = async (data: ProfileFormData) => {
-    toast.info("Funcionalidade de salvar perfil temporariamente desativada");
-    return;
-    
-    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
     if (!user || !userId) return;
 
     setIsSubmitting(true);
     try {
       await alterarUsuario(userId, {
-        nome: data.fullName,
+        nome: data.fullName.trim(),
         turma: parseInt(data.classroom),
         periodo: parseInt(data.period),
         url_image_perfil: avatarUrl,
         email: user.email || '',
-        token_gmail: user.email || '', // Usando email ao invés de user.id
+        token_gmail: user.email || '',
       });
 
       toast.success("Perfil atualizado com sucesso!");
@@ -125,7 +120,6 @@ export default function Profile() {
     } finally {
       setIsSubmitting(false);
     }
-    */
   };
 
   // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
