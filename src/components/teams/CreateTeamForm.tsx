@@ -176,40 +176,30 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         return;
       }
 
-      // Verificar se já existe um time com o mesmo nome
-      const times = await listarTimes();
-      const timeExistente = times.find(
+      // Verificar se já existe um time com o mesmo nome NESTE EVENTO
+      const timesEventoAtual = await listarTimes({ evento: EVENTO_ATUAL });
+      const timeExistente = timesEventoAtual.find(
         t => t.nome_time.toLowerCase().trim() === data.name.toLowerCase().trim()
       );
 
       if (timeExistente) {
-        toast.error("Já existe um time com esse nome. Por favor, escolha outro nome.");
+        toast.error("Já existe um time com esse nome nesta edição. Por favor, escolha outro nome.");
         setIsSubmitting(false);
         return;
       }
 
-      // Verificar se o usuário já é dono de algum time usando busca específica
-      const timesDoUsuario = await buscarTimesPorDono(usuario.id);
+      // Verificar se o usuário já é dono de algum time NESTE EVENTO
+      const timesDoUsuarioNesteEvento = await buscarTimesPorDono(usuario.id, EVENTO_ATUAL);
       
-      if (timesDoUsuario && timesDoUsuario.length > 0) {
-        const timeAntigo = timesDoUsuario[0];
+      if (timesDoUsuarioNesteEvento && timesDoUsuarioNesteEvento.length > 0) {
+        const timeAntigo = timesDoUsuarioNesteEvento[0];
         
-        try {
-          if (timeAntigo.id) {
-            await deletarTime(timeAntigo.id);
-            toast.success("Time anterior removido. Criando novo time...");
-            // Aguardar para garantir que o backend processou a deleção
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        } catch (deleteError: any) {
-          console.error("Erro ao deletar time antigo:", deleteError);
-          toast.error("Você já possui um time registrado", {
-            description: `Time: ${timeAntigo.nome_time}. Vá em 'Meu Time', saia do time e tente novamente.`,
-            duration: 8000,
-          });
-          setIsSubmitting(false);
-          return;
-        }
+        toast.error("Você já é dono de um time nesta edição", {
+          description: `Time: ${timeAntigo.nome_time}. Vá em 'Meu Time', saia ou transfira a liderança e tente novamente.`,
+          duration: 8000,
+        });
+        setIsSubmitting(false);
+        return;
       }
 
       // Criar time usando a API (a cor é definida em rota dedicada)
