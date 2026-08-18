@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { listarTimes } from "@/services/api";
+import { listarTimes, listarSedesPorEvento, listarUsuarios, EVENTO_ATUAL, type Sede, type Time } from "@/services/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { getSavedLocation } from "@/hooks/useUserLocation";
 import {
   Carousel,
   CarouselContent,
@@ -10,124 +12,171 @@ import {
 } from "@/components/ui/carousel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users, MapPin } from "lucide-react";
 import Autoplay from "embla-carousel-autoplay";
 
-interface Time {
-  id?: number;
-  nome_time: string;
-  dono_id: number;
-  senha_convite?: string;
-  imagem_time?: string;
-  integrantes?: any[];
-  qtd_integrantes?: number;
-}
+const normalize = (v: string) =>
+  v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+const TODAS = "todas";
 
 export const TeamsDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [times, setTimes] = useState<Time[]>([]);
+  const [sedes, setSedes] = useState<Sede[]>([]);
+  const [sedeFiltro, setSedeFiltro] = useState<string>(TODAS);
   const [loading, setLoading] = useState(true);
 
-  const fetchTimes = async () => {
-    try {
-      const timesData = await listarTimes();
-      setTimes(timesData);
-    } catch (error) {
-      console.error("Erro ao carregar times:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Carrega sedes do evento e sugere a sede do usuário (cadastro ou localização)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const listaSedes = await listarSedesPorEvento(EVENTO_ATUAL);
+        if (cancelled) return;
+        setSedes(listaSedes);
+
+        let sedeSugerida: number | null = null;
+        if (user?.email) {
+          try {
+            const usuarios = await listarUsuarios();
+            sedeSugerida = usuarios.find((u) => u.email === user.email)?.sede ?? null;
+          } catch {
+            /* ignore */
+          }
+        }
+        if (!sedeSugerida) {
+          const loc = getSavedLocation();
+          if (loc?.cidade) {
+            sedeSugerida =
+              listaSedes.find((s) => normalize(s.cidade) === normalize(loc.cidade))?.id ?? null;
+          }
+        }
+        if (!cancelled && sedeSugerida) setSedeFiltro(String(sedeSugerida));
+      } catch (error) {
+        console.error("Erro ao carregar sedes:", error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email]);
 
   useEffect(() => {
+    let active = true;
+    const fetchTimes = async () => {
+      try {
+        const timesData = await listarTimes({
+          evento: EVENTO_ATUAL,
+          sede_id: sedeFiltro === TODAS ? null : Number(sedeFiltro),
+        });
+        if (active) setTimes(timesData);
+      } catch (error) {
+        console.error("Erro ao carregar times:", error);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
     fetchTimes();
-    
-    // Atualizar a lista a cada 10 segundos
-    const interval = setInterval(() => {
-      fetchTimes();
-    }, 10000);
-    
-    return () => clearInterval(interval);
-  }, []);
+    const interval = setInterval(fetchTimes, 10000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [sedeFiltro]);
 
-  if (loading) {
-    return (
-      <div className="w-full py-12 text-center">
-        <p className="text-muted-foreground">Carregando times...</p>
-      </div>
-    );
-  }
-
-  if (times.length === 0) {
-    return (
-      <div className="w-full py-12 text-center">
-        <p className="text-muted-foreground">Nenhum time cadastrado ainda. Seja o primeiro!</p>
-      </div>
-    );
-  }
+  const sedeAtual = useMemo(
+    () => sedes.find((s) => String(s.id) === sedeFiltro) ?? null,
+    [sedes, sedeFiltro]
+  );
 
   return (
     <div className="w-full max-w-6xl mx-auto py-8">
-      <div className="flex items-center justify-center gap-3 mb-8">
+      <div className="flex items-center justify-center gap-3 mb-4">
         <Users className="h-10 w-10 text-primary" />
-        <h2 className="text-3xl md:text-4xl font-bold text-center">
-          Times Cadastrados
-        </h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-center">Times Cadastrados</h2>
       </div>
-      
-      <Carousel
-        plugins={[
-          Autoplay({
-            delay: 3000,
-            stopOnInteraction: true,
-          }),
-        ]}
-        opts={{
-          align: "start",
-          loop: true,
-        }}
-        className="w-full"
-      >
-        <CarouselContent>
-          {times.map((time) => (
-            <CarouselItem key={time.id} className="md:basis-1/2 lg:basis-1/3">
-              <div className="p-2">
-                <Card 
-                  className="hover:shadow-glow transition-all duration-300 hover:scale-105 cursor-pointer"
-                  onClick={() => navigate(`/team-details/${time.id}`)}
-                >
-                  <CardHeader className="pb-4">
-                    {time.imagem_time ? (
-                      <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary/20">
-                        <img
-                          src={time.imagem_time}
-                          alt={time.nome_time}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                        <Users className="w-12 h-12 text-primary-foreground" />
-                      </div>
-                    )}
-                    <CardTitle className="text-center text-xl">
-                      {time.nome_time}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-center">
-                    <Badge variant="secondary" className="text-sm">
-                      <Users className="w-3 h-3 mr-1" />
-                      {time.qtd_integrantes ?? time.integrantes?.length ?? 0} membros
-                    </Badge>
-                  </CardContent>
-                </Card>
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious className="left-2" />
-        <CarouselNext className="right-2" />
-      </Carousel>
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
+        <span className="text-sm text-muted-foreground flex items-center gap-1">
+          <MapPin className="w-4 h-4" /> Sede
+        </span>
+        <Select value={sedeFiltro} onValueChange={setSedeFiltro}>
+          <SelectTrigger className="w-full sm:w-[320px]">
+            <SelectValue placeholder="Selecione a sede" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TODAS}>Todas as sedes</SelectItem>
+            {sedes.map((sede) => (
+              <SelectItem key={sede.id} value={String(sede.id)}>
+                {sede.nome_campus} — {sede.cidade}/{sede.uf}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {sedeAtual && (
+          <Badge variant="secondary">Mostrando os times de {sedeAtual.cidade}</Badge>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="w-full py-12 text-center">
+          <p className="text-muted-foreground">Carregando times...</p>
+        </div>
+      ) : times.length === 0 ? (
+        <div className="w-full py-12 text-center">
+          <p className="text-muted-foreground">
+            Nenhum time cadastrado nesta sede ainda. Seja o primeiro!
+          </p>
+        </div>
+      ) : (
+        <Carousel
+          plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
+          opts={{ align: "start", loop: true }}
+          className="w-full"
+        >
+          <CarouselContent>
+            {times.map((time) => (
+              <CarouselItem key={time.id} className="md:basis-1/2 lg:basis-1/3">
+                <div className="p-2">
+                  <Card
+                    className="hover:shadow-glow transition-all duration-300 hover:scale-105 cursor-pointer"
+                    onClick={() => navigate(`/team-details/${time.id}`)}
+                  >
+                    <CardHeader className="pb-4">
+                      {time.imagem_time ? (
+                        <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary/20">
+                          <img
+                            src={time.imagem_time}
+                            alt={time.nome_time}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                          <Users className="w-12 h-12 text-primary-foreground" />
+                        </div>
+                      )}
+                      <CardTitle className="text-center text-xl">{time.nome_time}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center">
+                      <Badge variant="secondary" className="text-sm">
+                        <Users className="w-3 h-3 mr-1" />
+                        {time.qtd_integrantes ?? time.integrantes?.length ?? 0} membros
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="left-2" />
+          <CarouselNext className="right-2" />
+        </Carousel>
+      )}
     </div>
   );
 };
