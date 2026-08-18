@@ -9,7 +9,8 @@ import { Users, PlusCircle, AlertCircle, Search } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, mostrarTimeUsuario, listarTimes, type Time } from "@/services/api";
+import { listarUsuarios, mostrarTimeUsuario, listarTimes, listarSedesPorEvento, EVENTO_ATUAL, type Sede, type Time } from "@/services/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Teams() {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ export default function Teams() {
   const [filteredTeams, setFilteredTeams] = useState<Time[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [sedes, setSedes] = useState<Sede[]>([]);
+  const [sedeFiltro, setSedeFiltro] = useState<string>("todas");
 
   useEffect(() => {
     if (!user) {
@@ -218,8 +221,23 @@ export default function Teams() {
                 Times Cadastrados
               </CardTitle>
               <CardDescription>
-                Explore todos os times participantes da competição
+                Times do evento atual. O filtro começa na sua sede, mas você pode ver as outras.
               </CardDescription>
+              <div className="pt-3">
+                <Select value={sedeFiltro} onValueChange={setSedeFiltro}>
+                  <SelectTrigger className="w-full sm:w-[320px]">
+                    <SelectValue placeholder="Filtrar por sede" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas as sedes</SelectItem>
+                    {sedes.map((sede) => (
+                      <SelectItem key={sede.id} value={String(sede.id)}>
+                        {sede.nome_campus} — {sede.cidade}/{sede.uf}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
               {/* Campo de busca */}
