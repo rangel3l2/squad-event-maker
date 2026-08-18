@@ -24,7 +24,7 @@ interface TeamColorPickerProps {
 
 const clamp = (n: number) => Math.max(0, Math.min(255, Math.round(n)));
 
-/** Aplica variação de tom (-50 a +50) sobre a cor base */
+/** Aplica variação de tom (-25 a +25) sobre a cor base */
 export const aplicarTom = (hex: string, tom: number): string => {
   const clean = hex.replace("#", "");
   const r = parseInt(clean.slice(0, 2), 16);
