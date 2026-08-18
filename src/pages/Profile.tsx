@@ -38,10 +38,9 @@ export default function Profile() {
   const { user, signOut } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentTeam, setCurrentTeam] = useState<TeamInfo | null>(null);
+  const [userTeams, setUserTeams] = useState<TeamInfo[]>([]);
   const [isLeavingTeam, setIsLeavingTeam] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
-  const [teamId, setTeamId] = useState<number | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
