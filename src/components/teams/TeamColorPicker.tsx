@@ -161,8 +161,8 @@ export function TeamColorPicker({
             <Label className="text-sm">Variação de tom</Label>
             <Slider
               value={[tom]}
-              min={-50}
-              max={50}
+              min={-25}
+              max={25}
               step={5}
               onValueChange={(v) => alterarTom(v[0])}
             />
