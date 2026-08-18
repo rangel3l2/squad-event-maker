@@ -219,7 +219,8 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
         dono_id: usuario.id,
         senha_convite: senhaConvite,
         imagem_time: logoUrl,
-        sede: usuario.sede ?? sedeId,
+        img_logo_pequeno: miniLogoUrl || undefined,
+        sede: sedeId,
         categoria: usuario.nivel ?? usuario.categoria ?? nivelUsuario,
         evento: EVENTO_ATUAL,
       });
@@ -282,6 +283,16 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const duplicarTime = (time: Time) => {
+    form.setValue("name", time.nome_time ?? "");
+    if (time.imagem_time) setLogoUrl(time.imagem_time);
+    if (time.img_logo_pequeno) setMiniLogoUrl(time.img_logo_pequeno);
+    if (time.cor_time) setCor({ cor: time.cor_time, nome: time.cor_time } as CorSelecionada);
+    toast.success("Dados do time anterior copiados", {
+      description: "Os membros não foram duplicados — convide os integrantes desta edição.",
+    });
   };
 
   const handleDialogClose = () => {
