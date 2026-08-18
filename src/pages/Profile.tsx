@@ -387,40 +387,52 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          {/* Seção de Exclusão de Conta */}
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <Trash2 className="w-5 h-5" />
-                Zona de Perigo
-              </CardTitle>
-              <CardDescription>
-                Esta ação não pode ser desfeita. Todos os seus dados serão permanentemente excluídos.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada */}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-full" disabled={true}>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Excluir Conta (Desativado)
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Exclusão de Conta</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Funcionalidade temporariamente desativada.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Fechar</AlertDialogCancel>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardContent>
-          </Card>
+          {/* Exclusão de conta - discreta */}
+          <div className="mt-6 flex justify-end">
+            <AlertDialog onOpenChange={(open) => !open && setDeleteConfirmation("")}>
+              <AlertDialogTrigger asChild>
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground/70 underline underline-offset-4 hover:text-destructive transition-colors"
+                >
+                  Excluir minha conta
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir conta</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação não pode ser desfeita. Para confirmar, digite seu nome completo:{" "}
+                    <span className="font-medium text-foreground">{form.getValues("fullName")}</span>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  placeholder="Digite seu nome completo"
+                  autoComplete="off"
+                />
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDeleteAccount();
+                    }}
+                    disabled={
+                      isDeletingAccount ||
+                      deleteConfirmation.trim().toLowerCase() !==
+                        (form.getValues("fullName") || "").trim().toLowerCase()
+                    }
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isDeletingAccount ? "Excluindo..." : "Excluir conta"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+
         </div>
       </main>
     </div>
