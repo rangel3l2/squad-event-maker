@@ -87,22 +87,44 @@ export default function Teams() {
     checkProfile();
   }, [user, navigate]);
 
-  // Carregar todos os times
+  // Carregar sedes do evento e sugerir a sede do usuário
+  useEffect(() => {
+    if (!user?.email) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const listaSedes = await listarSedesPorEvento(EVENTO_ATUAL);
+        if (cancelled) return;
+        setSedes(listaSedes);
+        const usuarios = await listarUsuarios();
+        const minhaSede = usuarios.find((u) => u.email === user.email)?.sede;
+        if (!cancelled && minhaSede) setSedeFiltro(String(minhaSede));
+      } catch (error) {
+        console.error("Erro ao carregar sedes:", error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email]);
+
+  // Carregar times do evento atual (filtrando pela sede escolhida)
   useEffect(() => {
     const loadTeams = async () => {
       try {
-        console.log("Carregando times...");
-        const times = await listarTimes();
-        console.log("Times carregados:", times.length);
+        const times = await listarTimes({
+          evento: EVENTO_ATUAL,
+          sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
+        });
         setAllTeams(times);
         setFilteredTeams(times);
       } catch (error) {
         console.error("Erro ao carregar times:", error);
       }
     };
-    
+
     loadTeams();
-  }, [refreshKey]); // Recarrega quando refreshKey mudar
+  }, [refreshKey, sedeFiltro]); // Recarrega quando refreshKey ou sede mudar
 
   // Filtrar times conforme busca
   useEffect(() => {
