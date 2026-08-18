@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Users, KeyRound, Sparkles, UserCog, Trash2, Trophy, FileCode, FileText, Award, Image, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Users, KeyRound, UserCog, Trash2, Trophy, FileCode, FileText, Award, Image, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { listarUsuarios, mostrarTimeUsuario, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, buscarTodasSubmissoesDinamica, type Usuario, type Time, type Dinamica, type ArquivoDinamica, type SubmissaoDinamica } from "@/services/api";
 import CodeViewer from "@/components/CodeViewer";
@@ -457,13 +457,6 @@ export default function TeamDetails() {
               <div className="flex gap-2">
                 {isUserInTeam && isLeader && (
                   <>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => navigate(`/logo-editor/${teamId || time.id}`)}
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Editar Logo
-                    </Button>
                     
                     <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
                       <DialogTrigger asChild>
