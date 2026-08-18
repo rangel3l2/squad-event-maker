@@ -164,13 +164,6 @@ export type Database = {
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "event_prizes_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "public_events"
-            referencedColumns: ["id"]
-          },
         ]
       }
       event_rules: {
@@ -207,13 +200,6 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_rules_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "public_events"
             referencedColumns: ["id"]
           },
         ]
@@ -436,13 +422,6 @@ export type Database = {
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "teams_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "public_events"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_roles: {
@@ -483,47 +462,6 @@ export type Database = {
       }
     }
     Views: {
-      public_events: {
-        Row: {
-          copa_year: number | null
-          description: string | null
-          edition: string | null
-          event_date: string | null
-          id: string | null
-          is_active: boolean | null
-          logo_url: string | null
-          name: string | null
-        }
-        Insert: {
-          copa_year?: number | null
-          description?: string | null
-          edition?: string | null
-          event_date?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          logo_url?: string | null
-          name?: string | null
-        }
-        Update: {
-          copa_year?: number | null
-          description?: string | null
-          edition?: string | null
-          event_date?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          logo_url?: string | null
-          name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "events_copa_year_fkey"
-            columns: ["copa_year"]
-            isOneToOne: false
-            referencedRelation: "copa_css_config"
-            referencedColumns: ["year"]
-          },
-        ]
-      }
       public_profiles: {
         Row: {
           avatar_url: string | null
