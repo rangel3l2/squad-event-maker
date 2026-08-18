@@ -322,7 +322,7 @@ export default function Profile() {
                       <FormItem>
                         <FormLabel>Nome Completo *</FormLabel>
                         <FormControl>
-                          <Input placeholder="Seu nome completo" {...field} disabled={true} />
+                          <Input placeholder="Seu nome completo" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -335,7 +335,7 @@ export default function Profile() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Turma *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={true}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione a turma" />
@@ -357,7 +357,7 @@ export default function Profile() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Período *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={true}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione o período" />
@@ -377,8 +377,8 @@ export default function Profile() {
                     )}
                   />
 
-                  <Button type="submit" className="w-full" size="lg" disabled={true}>
-                    Edição Temporariamente Desativada
+                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                    {isSubmitting ? "Salvando..." : "Salvar Alterações"}
                   </Button>
 
                   <Button 
