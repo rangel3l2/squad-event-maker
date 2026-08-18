@@ -153,12 +153,6 @@ export default function Profile() {
     */
   };
 
-  const handleEditTeam = () => {
-    if (currentTeam) {
-      navigate(`/team-edit/${currentTeam.id}`);
-    }
-  };
-
   const handleDeleteAccount = async () => {
     const fullName = (form.getValues("fullName") || "").trim();
 
