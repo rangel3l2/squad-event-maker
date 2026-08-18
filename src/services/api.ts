@@ -343,6 +343,8 @@ export const criarTime = async (time: Time): Promise<Time> => {
   if (time.imagem_time) params.set('imagem_time', time.imagem_time);
   if (time.sede !== undefined && time.sede !== null) params.set('sede', String(time.sede));
   if (time.evento !== undefined && time.evento !== null) params.set('evento', String(time.evento));
+  if (time.img_logo_pequeno) params.set('img_logo_pequeno', time.img_logo_pequeno);
+  if (time.cor_time) params.set('cor_time', time.cor_time);
   // Nível de ensino gravado no time no momento da criação (histórico, não depende do usuário)
   if (time.categoria !== undefined && time.categoria !== null) params.set('categoria', String(time.categoria));
 
