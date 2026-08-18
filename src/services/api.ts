@@ -307,11 +307,33 @@ export const mostrarTimeUsuario = async (usuarioId: number) => {
 };
 
 // Times
-export const listarTimes = async (): Promise<Time[]> => {
-  const response = await makeRequest('/times');
+/**
+ * Lista os times. Por padrão só traz os times do evento atual.
+ * Passe `evento: null` para trazer os times de todos os eventos (edições anteriores).
+ */
+export const listarTimes = async (
+  filtros?: { evento?: number | null; sede_id?: number | null }
+): Promise<Time[]> => {
+  const evento = filtros && 'evento' in filtros ? filtros.evento : EVENTO_ATUAL;
+  const params = new URLSearchParams();
+  if (evento !== null && evento !== undefined) params.set('evento', String(evento));
+  if (filtros?.sede_id !== null && filtros?.sede_id !== undefined) {
+    params.set('sede_id', String(filtros.sede_id));
+  }
+  const query = params.toString();
+  const response = await makeRequest(`/times${query ? `?${query}` : ''}`);
   if (!response.ok) throw new Error("Erro ao listar times");
-  return response.json();
+  const data = await response.json();
+  const lista: Time[] = Array.isArray(data) ? data : (data?.times ?? []);
+  // Defesa extra caso a API ignore o filtro
+  return evento === null || evento === undefined
+    ? lista
+    : lista.filter((t) => t.evento === undefined || t.evento === null || Number(t.evento) === Number(evento));
 };
+
+/** Times de todas as edições (usado para duplicar times de eventos anteriores) */
+export const listarTimesTodosEventos = async (): Promise<Time[]> =>
+  listarTimes({ evento: null });
 
 export const criarTime = async (time: Time): Promise<Time> => {
   const params = new URLSearchParams();
