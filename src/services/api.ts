@@ -199,8 +199,7 @@ export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
   const params = new URLSearchParams();
   params.set('nome', usuario.nome);
   if (usuario.token_gmail) params.set('token_gmail', usuario.token_gmail);
-  params.set('turma', String(usuario.turma));
-  params.set('periodo', String(usuario.periodo));
+  params.set('ano_ingresso', String(usuario.ano_ingresso));
   // Sempre enviar o campo, mesmo vazio
   params.set('url_image_perfil', (usuario.url_image_perfil ?? '').toString());
   params.set('email', usuario.email);
@@ -233,8 +232,7 @@ export const alterarUsuario = async (id: number, usuario: Partial<Usuario>): Pro
   const params = new URLSearchParams();
   if (usuario.nome !== undefined) params.set('nome', usuario.nome);
   if (usuario.token_gmail !== undefined) params.set('token_gmail', usuario.token_gmail);
-  if (usuario.turma !== undefined) params.set('turma', String(usuario.turma));
-  if (usuario.periodo !== undefined) params.set('periodo', String(usuario.periodo));
+  if (usuario.ano_ingresso !== undefined) params.set('ano_ingresso', String(usuario.ano_ingresso));
   if (usuario.url_image_perfil !== undefined) params.set('url_image_perfil', usuario.url_image_perfil ?? '');
   if (usuario.email !== undefined) params.set('email', usuario.email);
   if (usuario.sede !== undefined && usuario.sede !== null) params.set('sede', String(usuario.sede));
