@@ -15,13 +15,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { AlertCircle, Users, LogOut, Edit, Trash2, Trophy, History, Copy } from "lucide-react";
-import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, PERIODOS, SEMESTRES, TIPOS_MEDIO, ANOS_MEDIO, anoParaSemestre, type Time } from "@/services/api";
+import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, NIVEIS_ENSINO, type Time } from "@/services/api";
+
+const currentYear = new Date().getFullYear();
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
-  tipoMedio: z.string().min(1, "Selecione o tipo de curso"),
-  classroom: z.string().min(1, "Selecione o semestre/ano"),
-  period: z.string().min(1, "Selecione um período"),
+  nivel: z.string().min(1, "Selecione o nível de ensino"),
+  anoIngresso: z.string().min(1, "Informe o ano de ingresso").refine(
+    (v) => {
+      const year = parseInt(v);
+      return !isNaN(year) && year >= 2000 && year <= currentYear + 1;
+    },
+    { message: `Ano deve estar entre 2000 e ${currentYear + 1}` }
+  ),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
