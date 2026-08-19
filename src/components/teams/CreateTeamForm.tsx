@@ -25,9 +25,11 @@ type CreateTeamFormData = z.infer<typeof createTeamSchema>;
 
 interface CreateTeamFormProps {
   onSuccess: () => void;
+  /** Time de uma edição anterior para pré-preencher o formulário (duplicação) */
+  timeParaDuplicar?: Time | null;
 }
 
-export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
+export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTeamFormProps) {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string>("");

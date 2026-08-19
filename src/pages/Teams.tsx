@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function Teams() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const timeParaDuplicar = (location.state as { duplicarTime?: Time } | null)?.duplicarTime ?? null;
   const { user } = useAuth();
-  const [mode, setMode] = useState<"select" | "create" | "join">("select");
+  const [mode, setMode] = useState<"select" | "create" | "join">(timeParaDuplicar ? "create" : "select");
   const [hasTeam, setHasTeam] = useState(false);
   const [currentTeamName, setCurrentTeamName] = useState<string>("");
   const [allTeams, setAllTeams] = useState<Time[]>([]);
@@ -194,7 +196,7 @@ export default function Teams() {
             <Button variant="outline" onClick={() => setMode("select")} className="mb-4">
               ← Voltar
             </Button>
-            <CreateTeamForm onSuccess={() => {
+            <CreateTeamForm timeParaDuplicar={timeParaDuplicar} onSuccess={() => {
               setMode("select");
               setRefreshKey(prev => prev + 1); // Força atualização da lista
             }} />
