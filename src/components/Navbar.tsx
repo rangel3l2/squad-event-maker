@@ -11,14 +11,14 @@ const Navbar = () => {
 
   return (
     <nav className="border-b border-border/50 backdrop-blur-lg bg-background/80 sticky top-0 z-50">
-      <div className="container mx-auto px-4 h-32 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3 py-3">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2">
           <img 
             src={logoCopa} 
             alt="Frontend Teams Cup Logo" 
-            className="h-28 w-auto object-contain animate-fade-in"
+            className="h-12 w-auto object-contain animate-fade-in"
           />
-          <span className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent leading-tight">
+          <span className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent leading-tight">
             Frontend<br className="md:hidden" /> Teams Cup
           </span>
         </Link>
