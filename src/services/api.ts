@@ -78,10 +78,10 @@ const makeRequest = async (path: string, options?: RequestInit): Promise<Respons
 
 // Períodos de estudo (valores inteiros aceitos pela API)
 export const PERIODOS = [
-  { value: 1, label: "Matutino" },
-  { value: 2, label: "Vespertino" },
+  { value: 0, label: "Matutino" },
+  { value: 1, label: "Vespertino" },
+  { value: 2, label: "Noturno" },
   { value: 3, label: "Integral" },
-  { value: 4, label: "Noturno" },
 ] as const;
 
 // Nível de ensino (campo `nivel` do usuário / `categoria` do time)
@@ -125,7 +125,7 @@ export interface Usuario {
   token_gmail: string;
   /** Semestre atual do aluno */
   turma: number;
-  /** 1 Matutino | 2 Vespertino | 3 Integral | 4 Noturno */
+  /** 0 Matutino | 1 Vespertino | 2 Noturno | 3 Integral */
   periodo: number;
   url_image_perfil?: string;
   email: string;
