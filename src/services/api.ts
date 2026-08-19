@@ -99,15 +99,13 @@ export interface Usuario {
   id?: number;
   nome: string;
   token_gmail: string;
-  /** Semestre atual do aluno */
-  turma: number;
-  /** 0 Matutino | 1 Vespertino | 2 Noturno | 3 Integral */
-  periodo: number;
+  /** Ano de ingresso do aluno (inteiro) */
+  ano_ingresso: number;
   url_image_perfil?: string;
   email: string;
   /** Sede/campus do usuário */
   sede?: number;
-  /** Nível de ensino: 1 Médio | 2 Graduação */
+  /** Nível de ensino: 0 Ensino Médio | 1 Graduação */
   nivel?: number;
   categoria?: number | null;
 }
