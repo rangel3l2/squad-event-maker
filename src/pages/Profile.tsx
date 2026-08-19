@@ -15,13 +15,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { AlertCircle, Users, LogOut, Edit, Trash2, Trophy, History, Copy } from "lucide-react";
-import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, PERIODOS, SEMESTRES, TIPOS_MEDIO, ANOS_MEDIO, anoParaSemestre, type Time } from "@/services/api";
+import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, NIVEIS_ENSINO, type Time } from "@/services/api";
+
+const currentYear = new Date().getFullYear();
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
-  tipoMedio: z.string().min(1, "Selecione o tipo de curso"),
-  classroom: z.string().min(1, "Selecione o semestre/ano"),
-  period: z.string().min(1, "Selecione um período"),
+  nivel: z.string().min(1, "Selecione o nível de ensino"),
+  anoIngresso: z.string().min(1, "Informe o ano de ingresso").refine(
+    (v) => {
+      const year = parseInt(v);
+      return !isNaN(year) && year >= 2000 && year <= currentYear + 1;
+    },
+    { message: `Ano deve estar entre 2000 e ${currentYear + 1}` }
+  ),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -51,13 +58,10 @@ export default function Profile() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: "",
-      tipoMedio: "tecnico",
-      classroom: "",
-      period: "",
+      nivel: "",
+      anoIngresso: String(currentYear),
     },
   });
-
-  const isTecnico = form.watch("tipoMedio") !== "regular";
 
   useEffect(() => {
     if (!user) {
@@ -73,8 +77,8 @@ export default function Profile() {
         if (usuario) {
           setUserId(usuario.id!);
           form.setValue('fullName', usuario.nome || '');
-          form.setValue('classroom', usuario.turma ? usuario.turma.toString() : '');
-          form.setValue('period', usuario.periodo ? usuario.periodo.toString() : '');
+          form.setValue('nivel', usuario.nivel !== undefined && usuario.nivel !== null ? String(usuario.nivel) : '');
+          form.setValue('anoIngresso', usuario.ano_ingresso ? String(usuario.ano_ingresso) : String(currentYear));
           setAvatarUrl(usuario.url_image_perfil || '');
 
           // Buscar todos os times do usuário (em todos os eventos)
@@ -122,11 +126,9 @@ export default function Profile() {
     try {
       await alterarUsuario(userId, {
         nome: data.fullName.trim(),
-        // Ensino médio regular: o usuário escolhe o ano, mas a API recebe o período (ano * 2)
-        turma: data.tipoMedio === "regular"
-          ? anoParaSemestre(parseInt(data.classroom))
-          : parseInt(data.classroom),
-        periodo: parseInt(data.period),
+        ano_ingresso: parseInt(data.anoIngresso),
+        nivel: parseInt(data.nivel),
+        categoria: parseInt(data.nivel),
         url_image_perfil: avatarUrl,
         email: user.email || '',
         token_gmail: user.email || '',
@@ -406,25 +408,19 @@ export default function Profile() {
 
                   <FormField
                     control={form.control}
-                    name="tipoMedio"
+                    name="nivel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tipo de curso *</FormLabel>
-                        <Select
-                          onValueChange={(v) => {
-                            field.onChange(v);
-                            form.setValue("classroom", "");
-                          }}
-                          value={field.value}
-                        >
+                        <FormLabel>Nível de Ensino *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione o tipo de curso" />
+                              <SelectValue placeholder="Selecione o nível de ensino" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {TIPOS_MEDIO.map((t) => (
-                              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                            {NIVEIS_ENSINO.map((n) => (
+                              <SelectItem key={n.value} value={String(n.value)}>{n.label}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -435,56 +431,22 @@ export default function Profile() {
 
                   <FormField
                     control={form.control}
-                    name="classroom"
+                    name="anoIngresso"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{isTecnico ? "Semestre atual *" : "Ano atual *"}</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={isTecnico ? "Selecione o semestre" : "Selecione o ano"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {isTecnico
-                              ? SEMESTRES.map((s) => (
-                                  <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
-                                ))
-                              : ANOS_MEDIO.map((a) => (
-                                  <SelectItem key={a.value} value={String(a.value)}>
-                                    {a.label} ({anoParaSemestre(a.value)}º período)
-                                  </SelectItem>
-                                ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Ano de Ingresso *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={2000}
+                            max={currentYear + 1}
+                            placeholder="Ex: 2024"
+                            {...field}
+                          />
+                        </FormControl>
                         <p className="text-sm text-muted-foreground">
-                          {isTecnico
-                            ? "Cursos técnicos são divididos em semestres/períodos."
-                            : "No ensino médio regular a avaliação é anual — o ano é registrado como o período equivalente."}
+                          Ano em que você ingressou no curso.
                         </p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="period"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Período *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o período" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {PERIODOS.map((p) => (
-                              <SelectItem key={p.value} value={String(p.value)}>{p.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

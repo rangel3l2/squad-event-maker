@@ -85,35 +85,11 @@ export const PERIODOS = [
 ] as const;
 
 // Nível de ensino (campo `nivel` do usuário / `categoria` do time)
+// 0 = Ensino Médio | 1 = Graduação
 export const NIVEIS_ENSINO = [
-  { value: 1, label: "Ensino Médio" },
-  { value: 2, label: "Graduação / Ensino Superior" },
+  { value: 0, label: "Ensino Médio" },
+  { value: 1, label: "Graduação / Ensino Superior" },
 ] as const;
-
-// Tipo de ensino médio: técnico (semestral, com períodos) x regular (anual)
-export const TIPOS_MEDIO = [
-  { value: "tecnico", label: "Ensino Médio Técnico" },
-  { value: "regular", label: "Ensino Médio Regular" },
-] as const;
-export type TipoMedio = (typeof TIPOS_MEDIO)[number]["value"];
-
-// Semestre atual do aluno (armazenado no campo `turma`).
-// Ensino médio técnico: 1º ao 6º semestre/período.
-export const SEMESTRES = [1, 2, 3, 4, 5, 6] as const;
-// Ensino médio regular: avaliação anual (1º, 2º ou 3º ano).
-export const ANOS_MEDIO = [
-  { value: 1, label: "1º ano do Ensino Médio" },
-  { value: 2, label: "2º ano do Ensino Médio" },
-  { value: 3, label: "3º ano do Ensino Médio" },
-] as const;
-
-/**
- * A API sempre trabalha com períodos/semestres (1..6).
- * No ensino médio regular o aluno escolhe o ano (1º, 2º, 3º),
- * que é convertido para o período correspondente (ano * 2).
- */
-export const anoParaSemestre = (ano: number) => ano * 2;
-export const semestreParaAno = (semestre: number) => Math.ceil(semestre / 2);
 
 export const labelPeriodo = (v?: number) => PERIODOS.find((p) => p.value === v)?.label ?? "-";
 export const labelNivel = (v?: number) => NIVEIS_ENSINO.find((n) => n.value === v)?.label ?? "-";
@@ -123,15 +99,13 @@ export interface Usuario {
   id?: number;
   nome: string;
   token_gmail: string;
-  /** Semestre atual do aluno */
-  turma: number;
-  /** 0 Matutino | 1 Vespertino | 2 Noturno | 3 Integral */
-  periodo: number;
+  /** Ano de ingresso do aluno (inteiro) */
+  ano_ingresso: number;
   url_image_perfil?: string;
   email: string;
   /** Sede/campus do usuário */
   sede?: number;
-  /** Nível de ensino: 1 Médio | 2 Graduação */
+  /** Nível de ensino: 0 Ensino Médio | 1 Graduação */
   nivel?: number;
   categoria?: number | null;
 }
@@ -225,8 +199,7 @@ export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
   const params = new URLSearchParams();
   params.set('nome', usuario.nome);
   if (usuario.token_gmail) params.set('token_gmail', usuario.token_gmail);
-  params.set('turma', String(usuario.turma));
-  params.set('periodo', String(usuario.periodo));
+  params.set('ano_ingresso', String(usuario.ano_ingresso));
   // Sempre enviar o campo, mesmo vazio
   params.set('url_image_perfil', (usuario.url_image_perfil ?? '').toString());
   params.set('email', usuario.email);
@@ -259,8 +232,7 @@ export const alterarUsuario = async (id: number, usuario: Partial<Usuario>): Pro
   const params = new URLSearchParams();
   if (usuario.nome !== undefined) params.set('nome', usuario.nome);
   if (usuario.token_gmail !== undefined) params.set('token_gmail', usuario.token_gmail);
-  if (usuario.turma !== undefined) params.set('turma', String(usuario.turma));
-  if (usuario.periodo !== undefined) params.set('periodo', String(usuario.periodo));
+  if (usuario.ano_ingresso !== undefined) params.set('ano_ingresso', String(usuario.ano_ingresso));
   if (usuario.url_image_perfil !== undefined) params.set('url_image_perfil', usuario.url_image_perfil ?? '');
   if (usuario.email !== undefined) params.set('email', usuario.email);
   if (usuario.sede !== undefined && usuario.sede !== null) params.set('sede', String(usuario.sede));

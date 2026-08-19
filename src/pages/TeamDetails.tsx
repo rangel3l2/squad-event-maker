@@ -658,7 +658,7 @@ export default function TeamDetails() {
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Turma {integrante.turma} - Período {integrante.periodo}
+                          Ano de ingresso: {integrante.ano_ingresso ?? '-'}
                         </p>
                       </div>
                     </div>
