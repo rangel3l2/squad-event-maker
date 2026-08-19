@@ -136,7 +136,40 @@ serve(async (req) => {
       }
     }
 
-    const response = await fetch(targetUrl, options);
+    // O servidor externo às vezes demora/recusa a conexão. Tentamos novamente em GET.
+    const attempts = method === 'GET' ? 3 : 1;
+    let response: Response | null = null;
+    let lastError: unknown = null;
+
+    for (let i = 0; i < attempts; i++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+      try {
+        response = await fetch(targetUrl, { ...options, signal: controller.signal });
+        clearTimeout(timer);
+        break;
+      } catch (err) {
+        clearTimeout(timer);
+        lastError = err;
+        console.error(`Tentativa ${i + 1}/${attempts} falhou para ${targetUrl}:`, err);
+        if (i < attempts - 1) await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+      }
+    }
+
+    if (!response) {
+      return new Response(
+        JSON.stringify({
+          error: 'Servidor da Copa indisponível no momento. Tente novamente em instantes.',
+          detail: lastError instanceof Error ? lastError.message : 'Timeout de conexão',
+        }),
+        {
+          status: 504,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+
     
     // Get response content type
     const responseContentType = response.headers.get('content-type') || 'application/json';
