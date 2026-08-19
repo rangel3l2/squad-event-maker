@@ -51,10 +51,13 @@ export default function Profile() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: "",
+      tipoMedio: "tecnico",
       classroom: "",
       period: "",
     },
   });
+
+  const isTecnico = form.watch("tipoMedio") !== "regular";
 
   useEffect(() => {
     if (!user) {
