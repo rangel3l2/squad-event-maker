@@ -107,6 +107,14 @@ export const ANOS_MEDIO = [
   { value: 3, label: "3º ano do Ensino Médio" },
 ] as const;
 
+/**
+ * A API sempre trabalha com períodos/semestres (1..6).
+ * No ensino médio regular o aluno escolhe o ano (1º, 2º, 3º),
+ * que é convertido para o período correspondente (ano * 2).
+ */
+export const anoParaSemestre = (ano: number) => ano * 2;
+export const semestreParaAno = (semestre: number) => Math.ceil(semestre / 2);
+
 export const labelPeriodo = (v?: number) => PERIODOS.find((p) => p.value === v)?.label ?? "-";
 export const labelNivel = (v?: number) => NIVEIS_ENSINO.find((n) => n.value === v)?.label ?? "-";
 

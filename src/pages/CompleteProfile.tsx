@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AvatarSelector } from "@/components/teams/AvatarSelector";
 import { SedeSelector } from "@/components/teams/SedeSelector";
-import { PERIODOS, NIVEIS_ENSINO, SEMESTRES, TIPOS_MEDIO, ANOS_MEDIO } from "@/services/api";
+import { PERIODOS, NIVEIS_ENSINO, SEMESTRES, TIPOS_MEDIO, ANOS_MEDIO, anoParaSemestre } from "@/services/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -88,10 +88,14 @@ export default function CompleteProfile() {
       const { criarUsuario } = await import("@/services/api");
 
       const nivel = parseInt(data.nivel);
+      // Ensino médio regular: o usuário escolhe o ano, mas a API recebe o período (ano * 2)
+      const turma = isTecnico
+        ? parseInt(data.semestre)
+        : anoParaSemestre(parseInt(data.semestre));
       const userData: any = {
         nome: data.fullName.trim(),
         token_gmail: user.email,
-        turma: parseInt(data.semestre),
+        turma,
         periodo: parseInt(data.period),
         email: user.email,
         url_image_perfil: avatarUrl || "", // String vazia se não tiver
@@ -227,14 +231,16 @@ export default function CompleteProfile() {
                               <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
                             ))
                           : ANOS_MEDIO.map((a) => (
-                              <SelectItem key={a.value} value={String(a.value)}>{a.label}</SelectItem>
+                              <SelectItem key={a.value} value={String(a.value)}>
+                                {a.label} ({anoParaSemestre(a.value)}º período)
+                              </SelectItem>
                             ))}
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-muted-foreground">
                       {isTecnico
                         ? "Cursos técnicos são divididos em semestres/períodos."
-                        : "No ensino médio regular a avaliação é anual."}
+                        : "No ensino médio regular a avaliação é anual — o ano escolhido é registrado como o período equivalente."}
                     </p>
                     <FormMessage />
                   </FormItem>
