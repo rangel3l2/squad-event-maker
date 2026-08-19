@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { MapPin, Loader2, LocateFixed } from "lucide-react";
+import { MapPin, Loader2, LocateFixed, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { listarSedesPorEvento, EVENTO_ATUAL, type Sede } from "@/services/api";
-import { getSavedLocation, requestUserLocation } from "@/hooks/useUserLocation";
+import { EVENTO_ATUAL } from "@/services/api";
+import { useSedesOrdenadas, RAIO_PROXIMO_KM } from "@/hooks/useSedesOrdenadas";
+import { cityKey } from "@/lib/geo";
 
 interface SedeSelectorProps {
   value: number | null;
@@ -14,93 +15,91 @@ interface SedeSelectorProps {
   evento?: number;
 }
 
-const normalize = (v: string) =>
-  v
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
+const formatDistancia = (km: number | null) =>
+  km === null ? "" : km < 1 ? " · menos de 1 km" : ` · ${Math.round(km)} km`;
 
 export function SedeSelector({ value, onChange, evento = EVENTO_ATUAL }: SedeSelectorProps) {
-  const [sedes, setSedes] = useState<Sede[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [locating, setLocating] = useState(false);
-  const [localizacao, setLocalizacao] = useState<string>("");
+  const {
+    sedes,
+    cidades,
+    sedeSugerida,
+    loading,
+    location,
+    locating,
+    request,
+    selectCity,
+    resetCity,
+    isManual,
+  } = useSedesOrdenadas(evento);
+  const [autofilled, setAutofilled] = useState(false);
 
+  // Sugere automaticamente a sede mais próxima, mas o usuário pode trocar
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await listarSedesPorEvento(evento);
-        setSedes(data);
-      } catch (error: any) {
-        console.error("Erro ao carregar sedes:", error);
-        toast.error("Não foi possível carregar as sedes");
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [evento]);
-
-  const aplicarLocalizacao = (cidade: string, uf: string, listaSedes: Sede[], silent = false) => {
-    setLocalizacao([cidade, uf].filter(Boolean).join(" - "));
-    const match =
-      listaSedes.find(
-        (s) => normalize(s.cidade) === normalize(cidade) && normalize(s.uf) === normalize(uf)
-      ) ||
-      listaSedes.find((s) => normalize(s.cidade) === normalize(cidade)) ||
-      listaSedes.find((s) => normalize(s.uf) === normalize(uf));
-
-    if (match) {
-      onChange(match.id);
-      if (!silent) toast.success(`Sede sugerida: ${match.nome_campus}`);
-    } else if (!silent) {
-      toast.info("Nenhuma sede encontrada perto de você. Escolha manualmente.");
-    }
-  };
-
-  // Reaproveita a localização já autorizada no login
-  useEffect(() => {
-    if (loading || value) return;
-    const saved = getSavedLocation();
-    if (saved) aplicarLocalizacao(saved.cidade, saved.uf, sedes, true);
+    if (loading || value || autofilled || !sedeSugerida) return;
+    onChange(sedeSugerida.id);
+    setAutofilled(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, sedes]);
+  }, [loading, sedeSugerida, value, autofilled]);
 
   const detectarLocalizacao = async () => {
-    setLocating(true);
-    const loc = await requestUserLocation();
-    setLocating(false);
-    if (!loc) {
-      toast.info("Sem acesso à localização. Selecione a sede manualmente.");
-      return;
-    }
-    aplicarLocalizacao(loc.cidade, loc.uf, sedes);
+    const loc = await request();
+    if (!loc) toast.info("Sem acesso à localização. Selecione a cidade e a sede manualmente.");
   };
 
+  const cidadeAtual = location ? cityKey(location.cidade, location.uf) : "";
   const sedeSelecionada = sedes.find((s) => s.id === value);
+  const proximas = sedes.filter((s) => s.perto);
+  const demais = sedes.filter((s) => !s.perto);
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <Label>Sede *</Label>
-        <Button type="button" variant="outline" size="sm" onClick={detectarLocalizacao} disabled={locating || loading}>
-          {locating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LocateFixed className="w-4 h-4 mr-2" />}
-          Usar minha localização
-        </Button>
+        <div className="flex items-center gap-2">
+          {isManual && (
+            <Button type="button" variant="ghost" size="sm" onClick={resetCity} title="Voltar para minha localização">
+              <RotateCcw className="w-3.5 h-3.5" />
+            </Button>
+          )}
+          <Button type="button" variant="outline" size="sm" onClick={detectarLocalizacao} disabled={locating || loading}>
+            {locating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LocateFixed className="w-4 h-4 mr-2" />}
+            Usar minha localização
+          </Button>
+        </div>
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Podemos usar sua localização (com sua permissão) apenas para sugerir a sede mais próxima. Você pode
-        escolher manualmente a qualquer momento.
+        Usamos sua localização apenas para <strong>sugerir</strong> a sede mais próxima. Você pode trocar a
+        cidade de referência ou escolher outra sede a qualquer momento — a escolha vale para todo o site.
       </p>
 
-      {localizacao && (
-        <Badge variant="secondary" className="gap-1">
-          <MapPin className="w-3 h-3" />
-          {localizacao}
-        </Badge>
-      )}
+      <div className="flex flex-wrap items-center gap-2">
+        {location && (
+          <Badge variant="secondary" className="gap-1">
+            <MapPin className="w-3 h-3" />
+            {[location.cidade, location.uf].filter(Boolean).join(" - ")}
+            {isManual ? " (escolhida)" : ""}
+          </Badge>
+        )}
+        <Select
+          value={cidades.some((c) => cityKey(c.cidade, c.uf) === cidadeAtual) ? cidadeAtual : undefined}
+          onValueChange={(k) => {
+            const c = cidades.find((x) => cityKey(x.cidade, x.uf) === k);
+            if (c) void selectCity(c.cidade, c.uf);
+          }}
+        >
+          <SelectTrigger className="h-8 w-[240px] text-xs">
+            <SelectValue placeholder="Trocar cidade de referência" />
+          </SelectTrigger>
+          <SelectContent>
+            {cidades.map((c) => (
+              <SelectItem key={cityKey(c.cidade, c.uf)} value={cityKey(c.cidade, c.uf)}>
+                {c.cidade}/{c.uf} · {c.total} {c.total > 1 ? "sedes" : "sede"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <Select
         value={value ? String(value) : undefined}
@@ -111,11 +110,31 @@ export function SedeSelector({ value, onChange, evento = EVENTO_ATUAL }: SedeSel
           <SelectValue placeholder={loading ? "Carregando sedes..." : "Selecione a sede"} />
         </SelectTrigger>
         <SelectContent>
-          {sedes.map((sede) => (
-            <SelectItem key={sede.id} value={String(sede.id)}>
-              {sede.nome_campus} — {sede.cidade}/{sede.uf}
-            </SelectItem>
-          ))}
+          {proximas.length > 0 && (
+            <>
+              <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Perto de você (até {RAIO_PROXIMO_KM} km)
+              </div>
+              {proximas.map((sede) => (
+                <SelectItem key={sede.id} value={String(sede.id)}>
+                  {sede.nome_campus} — {sede.cidade}/{sede.uf}
+                  {formatDistancia(sede.distanciaKm)}
+                </SelectItem>
+              ))}
+            </>
+          )}
+          {demais.length > 0 && (
+            <>
+              <div className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Outras sedes (A-Z)
+              </div>
+              {demais.map((sede) => (
+                <SelectItem key={sede.id} value={String(sede.id)}>
+                  {sede.nome_campus} — {sede.cidade}/{sede.uf}
+                </SelectItem>
+              ))}
+            </>
+          )}
         </SelectContent>
       </Select>
 
