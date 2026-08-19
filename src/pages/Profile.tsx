@@ -15,11 +15,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { AlertCircle, Users, LogOut, Edit, Trash2, Trophy, History, Copy } from "lucide-react";
-import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, type Time } from "@/services/api";
+import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, PERIODOS, SEMESTRES, TIPOS_MEDIO, ANOS_MEDIO, anoParaSemestre, type Time } from "@/services/api";
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
-  classroom: z.string().min(1, "Turma é obrigatória"),
+  tipoMedio: z.string().min(1, "Selecione o tipo de curso"),
+  classroom: z.string().min(1, "Selecione o semestre/ano"),
   period: z.string().min(1, "Selecione um período"),
 });
 
@@ -50,10 +51,13 @@ export default function Profile() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: "",
+      tipoMedio: "tecnico",
       classroom: "",
       period: "",
     },
   });
+
+  const isTecnico = form.watch("tipoMedio") !== "regular";
 
   useEffect(() => {
     if (!user) {
@@ -118,7 +122,10 @@ export default function Profile() {
     try {
       await alterarUsuario(userId, {
         nome: data.fullName.trim(),
-        turma: parseInt(data.classroom),
+        // Ensino médio regular: o usuário escolhe o ano, mas a API recebe o período (ano * 2)
+        turma: data.tipoMedio === "regular"
+          ? anoParaSemestre(parseInt(data.classroom))
+          : parseInt(data.classroom),
         periodo: parseInt(data.period),
         url_image_perfil: avatarUrl,
         email: user.email || '',
@@ -399,21 +406,62 @@ export default function Profile() {
 
                   <FormField
                     control={form.control}
-                    name="classroom"
+                    name="tipoMedio"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Turma *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <FormLabel>Tipo de curso *</FormLabel>
+                        <Select
+                          onValueChange={(v) => {
+                            field.onChange(v);
+                            form.setValue("classroom", "");
+                          }}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione a turma" />
+                              <SelectValue placeholder="Selecione o tipo de curso" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="1">Turma 1 (Manhã)</SelectItem>
-                            <SelectItem value="2">Turma 2 (Tarde)</SelectItem>
+                            {TIPOS_MEDIO.map((t) => (
+                              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="classroom"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{isTecnico ? "Semestre atual *" : "Ano atual *"}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={isTecnico ? "Selecione o semestre" : "Selecione o ano"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {isTecnico
+                              ? SEMESTRES.map((s) => (
+                                  <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
+                                ))
+                              : ANOS_MEDIO.map((a) => (
+                                  <SelectItem key={a.value} value={String(a.value)}>
+                                    {a.label} ({anoParaSemestre(a.value)}º período)
+                                  </SelectItem>
+                                ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-sm text-muted-foreground">
+                          {isTecnico
+                            ? "Cursos técnicos são divididos em semestres/períodos."
+                            : "No ensino médio regular a avaliação é anual — o ano é registrado como o período equivalente."}
+                        </p>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -432,12 +480,9 @@ export default function Profile() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="1">1º Período</SelectItem>
-                            <SelectItem value="2">2º Período</SelectItem>
-                            <SelectItem value="3">3º Período</SelectItem>
-                            <SelectItem value="4">4º Período</SelectItem>
-                            <SelectItem value="5">5º Período</SelectItem>
-                            <SelectItem value="6">6º Período</SelectItem>
+                            {PERIODOS.map((p) => (
+                              <SelectItem key={p.value} value={String(p.value)}>{p.label}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
