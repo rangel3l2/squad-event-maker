@@ -14,8 +14,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
-import { AlertCircle, Users, LogOut, Edit, Trash2, Trophy } from "lucide-react";
-import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, type Time } from "@/services/api";
+import { AlertCircle, Users, LogOut, Edit, Trash2, Trophy, History, Copy } from "lucide-react";
+import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, type Time } from "@/services/api";
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
@@ -39,6 +39,7 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userTeams, setUserTeams] = useState<TeamInfo[]>([]);
+  const [pastTeams, setPastTeams] = useState<Time[]>([]);
   const [isLeavingTeam, setIsLeavingTeam] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
@@ -81,6 +82,11 @@ export default function Profile() {
               return integrantes.some((i: any) => i.usuario_id === usuario.id);
             });
 
+            const anteriores = timesDoUsuario.filter(
+              (t: Time) => t.evento != null && Number(t.evento) !== Number(EVENTO_ATUAL)
+            );
+            setPastTeams(anteriores);
+
             const teamsInfo: TeamInfo[] = timesDoUsuario.map((t: Time) => ({
               id: String(t.id),
               name: t.nome_time || 'Meu Time',
@@ -93,6 +99,7 @@ export default function Profile() {
           } catch (error) {
             console.error("Erro ao carregar times do usuário:", error);
             setUserTeams([]);
+            setPastTeams([]);
           }
         }
       } catch (error) {
@@ -213,6 +220,52 @@ export default function Profile() {
       <Navbar />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">
+          {/* Eventos anteriores — só aparece se o usuário já participou de outra edição */}
+          {pastTeams.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="w-5 h-5" />
+                  Eventos anteriores
+                </CardTitle>
+                <CardDescription>
+                  Edições da Copa em que você já participou. Você pode duplicar um desses times para a
+                  edição atual — nome, logo e miniatura são reaproveitados, os membros não.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {pastTeams.map((t) => (
+                  <div
+                    key={`past-${t.id}`}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border p-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={t.imagem_time || '/placeholder.svg'}
+                        alt={t.nome_time}
+                        className="w-14 h-14 rounded-lg object-cover"
+                      />
+                      <div>
+                        <h3 className="text-lg font-bold">{t.nome_time}</h3>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Trophy className="w-4 h-4" />
+                          <span>Edição {t.evento}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => navigate("/teams", { state: { duplicarTime: t } })}
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      Duplicar para a edição atual
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Seção dos Times */}
           {userTeams.length > 0 && (
             <Card>

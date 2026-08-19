@@ -25,9 +25,11 @@ type CreateTeamFormData = z.infer<typeof createTeamSchema>;
 
 interface CreateTeamFormProps {
   onSuccess: () => void;
+  /** Time de uma edição anterior para pré-preencher o formulário (duplicação) */
+  timeParaDuplicar?: Time | null;
 }
 
-export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
+export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTeamFormProps) {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string>("");
@@ -112,6 +114,20 @@ export function CreateTeamForm({ onSuccess }: CreateTeamFormProps) {
       name: "",
     },
   });
+
+  // Pré-preenche quando o usuário escolheu duplicar um time de edição anterior (vindo do perfil)
+  useEffect(() => {
+    if (!timeParaDuplicar) return;
+    form.setValue("name", timeParaDuplicar.nome_time ?? "");
+    if (timeParaDuplicar.imagem_time) setLogoUrl(timeParaDuplicar.imagem_time);
+    if (timeParaDuplicar.img_logo_pequeno) setMiniLogoUrl(timeParaDuplicar.img_logo_pequeno);
+    toast.success("Dados do time anterior copiados", {
+      description: "Escolha a cor do time nesta edição. Os membros não foram duplicados.",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeParaDuplicar?.id]);
+
+
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(inviteCode);
