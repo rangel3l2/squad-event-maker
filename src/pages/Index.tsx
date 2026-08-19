@@ -149,8 +149,8 @@ const Index = () => {
             </p>
           )}
           <HeroCarousel />
-          <div className="flex justify-center">
-            <p className="typewriter-text text-xl md:text-2xl text-muted-foreground">
+          <div className="flex justify-center overflow-hidden px-2">
+            <p className="typewriter-text text-xl md:text-2xl text-muted-foreground max-w-full">
               A maior competição de futebol entre turmas de desenvolvimento web
             </p>
           </div>

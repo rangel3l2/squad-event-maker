@@ -84,6 +84,13 @@ export default {
           from: { width: "0" },
           to: { width: "100%" },
         },
+        "typewriter-loop": {
+          "0%": { width: "0" },
+          "40%": { width: "100%" },
+          "55%": { width: "100%" },
+          "95%": { width: "0" },
+          "100%": { width: "0" },
+        },
         "blink-cursor": {
           "0%, 100%": { borderRightColor: "rgba(255,255,255,.75)" },
           "50%": { borderRightColor: "transparent" },
@@ -93,6 +100,7 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "typewriter": "typewriter 4s steps(65) 1s 1 normal both",
+        "typewriter-loop": "typewriter-loop 8s steps(65) infinite both",
         "blink-cursor": "blink-cursor 500ms steps(65) infinite normal",
       },
     },
