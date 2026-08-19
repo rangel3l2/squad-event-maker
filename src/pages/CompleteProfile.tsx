@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AvatarSelector } from "@/components/teams/AvatarSelector";
 import { SedeSelector } from "@/components/teams/SedeSelector";
-import { PERIODOS, NIVEIS_ENSINO, SEMESTRES, TIPOS_MEDIO, ANOS_MEDIO } from "@/services/api";
+import { PERIODOS, NIVEIS_ENSINO, SEMESTRES, TIPOS_MEDIO, ANOS_MEDIO, anoParaSemestre } from "@/services/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
