@@ -77,8 +77,8 @@ export default function Profile() {
         if (usuario) {
           setUserId(usuario.id!);
           form.setValue('fullName', usuario.nome || '');
-          form.setValue('classroom', usuario.turma ? usuario.turma.toString() : '');
-          form.setValue('period', usuario.periodo ? usuario.periodo.toString() : '');
+          form.setValue('nivel', usuario.nivel !== undefined && usuario.nivel !== null ? String(usuario.nivel) : '');
+          form.setValue('anoIngresso', usuario.ano_ingresso ? String(usuario.ano_ingresso) : String(currentYear));
           setAvatarUrl(usuario.url_image_perfil || '');
 
           // Buscar todos os times do usuário (em todos os eventos)
