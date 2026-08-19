@@ -408,25 +408,19 @@ export default function Profile() {
 
                   <FormField
                     control={form.control}
-                    name="tipoMedio"
+                    name="nivel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tipo de curso *</FormLabel>
-                        <Select
-                          onValueChange={(v) => {
-                            field.onChange(v);
-                            form.setValue("classroom", "");
-                          }}
-                          value={field.value}
-                        >
+                        <FormLabel>Nível de Ensino *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione o tipo de curso" />
+                              <SelectValue placeholder="Selecione o nível de ensino" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {TIPOS_MEDIO.map((t) => (
-                              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                            {NIVEIS_ENSINO.map((n) => (
+                              <SelectItem key={n.value} value={String(n.value)}>{n.label}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -437,56 +431,22 @@ export default function Profile() {
 
                   <FormField
                     control={form.control}
-                    name="classroom"
+                    name="anoIngresso"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{isTecnico ? "Semestre atual *" : "Ano atual *"}</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={isTecnico ? "Selecione o semestre" : "Selecione o ano"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {isTecnico
-                              ? SEMESTRES.map((s) => (
-                                  <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
-                                ))
-                              : ANOS_MEDIO.map((a) => (
-                                  <SelectItem key={a.value} value={String(a.value)}>
-                                    {a.label} ({anoParaSemestre(a.value)}º período)
-                                  </SelectItem>
-                                ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Ano de Ingresso *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={2000}
+                            max={currentYear + 1}
+                            placeholder="Ex: 2024"
+                            {...field}
+                          />
+                        </FormControl>
                         <p className="text-sm text-muted-foreground">
-                          {isTecnico
-                            ? "Cursos técnicos são divididos em semestres/períodos."
-                            : "No ensino médio regular a avaliação é anual — o ano é registrado como o período equivalente."}
+                          Ano em que você ingressou no curso.
                         </p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="period"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Período *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o período" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {PERIODOS.map((p) => (
-                              <SelectItem key={p.value} value={String(p.value)}>{p.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
