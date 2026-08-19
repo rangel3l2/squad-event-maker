@@ -2,8 +2,9 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Users, LogOut, UserCircle } from "lucide-react";
+import logoAsset from "@/assets/logodeitadoFigurinha.png.asset.json";
 
-const logoCopa = "/logo-copa-2026-transp.png";
+const logoCopa = logoAsset.url;
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -14,7 +15,7 @@ const Navbar = () => {
         <Link to="/" className="flex items-center gap-3 py-3">
           <img 
             src={logoCopa} 
-            alt="Frontend Teams Cup - Três Lagoas Logo" 
+            alt="Frontend Teams Cup Logo" 
             className="h-28 w-auto object-contain animate-fade-in"
           />
           <span className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent leading-tight">
