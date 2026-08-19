@@ -324,11 +324,20 @@ export const listarTimes = async (
   if (!response.ok) throw new Error("Erro ao listar times");
   const data = await response.json();
   const lista: Time[] = Array.isArray(data) ? data : (data?.times ?? []);
-  // Defesa extra caso a API ignore o filtro
-  return evento === null || evento === undefined
-    ? lista
-    : lista.filter((t) => t.evento === undefined || t.evento === null || Number(t.evento) === Number(evento));
+  // Defesa extra caso a API ignore os filtros
+  return lista.filter((t) => {
+    const okEvento =
+      evento === null || evento === undefined
+        ? true
+        : t.evento === undefined || t.evento === null || Number(t.evento) === Number(evento);
+    const okSede =
+      filtros?.sede_id === null || filtros?.sede_id === undefined
+        ? true
+        : t.sede === undefined || t.sede === null || Number(t.sede) === Number(filtros.sede_id);
+    return okEvento && okSede;
+  });
 };
+
 
 /** Times de todas as edições (usado para duplicar times de eventos anteriores) */
 export const listarTimesTodosEventos = async (): Promise<Time[]> =>
@@ -429,11 +438,38 @@ export const mostrarTime = async (timeId: number) => {
   } as Time;
 };
 
-export const listarTimesIncompletos = async () => {
-  const response = await makeRequest('/times/incompletos');
+/**
+ * Times que ainda têm vagas. Por padrão filtra pelo evento atual e aceita
+ * também o código da sede/cidade.
+ */
+export const listarTimesIncompletos = async (
+  filtros?: { evento?: number | null; sede_id?: number | null }
+): Promise<Time[]> => {
+  const evento = filtros && 'evento' in filtros ? filtros.evento : EVENTO_ATUAL;
+  const params = new URLSearchParams();
+  if (evento !== null && evento !== undefined) params.set('evento', String(evento));
+  if (filtros?.sede_id !== null && filtros?.sede_id !== undefined) {
+    params.set('sede_id', String(filtros.sede_id));
+  }
+  const query = params.toString();
+  const response = await makeRequest(`/times/incompletos${query ? `?${query}` : ''}`);
   if (!response.ok) throw new Error("Erro ao listar times incompletos");
-  return response.json();
+  const data = await response.json();
+  const lista: Time[] = Array.isArray(data) ? data : (data?.times ?? []);
+  // Defesa extra caso a API ignore os filtros
+  return lista.filter((t) => {
+    const okEvento =
+      evento === null || evento === undefined
+        ? true
+        : t.evento === undefined || t.evento === null || Number(t.evento) === Number(evento);
+    const okSede =
+      filtros?.sede_id === null || filtros?.sede_id === undefined
+        ? true
+        : t.sede === undefined || t.sede === null || Number(t.sede) === Number(filtros.sede_id);
+    return okEvento && okSede;
+  });
 };
+
 
 export const adicionarIntegrante = async (timeId: number, integrante: Integrante) => {
   console.log("=== API adicionarIntegrante ===");
