@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarUsuarios } from "@/services/api";
-import { getApiToken } from "@/services/apiAuth";
+import { getApiToken, ensureApiToken } from "@/services/apiAuth";
 import { toast } from "sonner";
 
 const safeNext = (value: string | null) =>
@@ -22,11 +22,17 @@ const Auth = () => {
       if (!user) return;
 
       if (requiresReauthentication) {
-        // Reauth finished only when the external API token was re-issued.
-        if (!getApiToken()) return;
+        // Wait for the external API token to be re-issued before leaving.
+        try {
+          if (!getApiToken()) await ensureApiToken(true);
+        } catch (error) {
+          toast.error("Não foi possível renovar a sessão. Tente entrar novamente.");
+          return;
+        }
         window.location.href = next ?? "/";
         return;
       }
+
 
       if (next) {
         window.location.href = next;
