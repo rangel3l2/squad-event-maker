@@ -100,6 +100,7 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "typewriter": "typewriter 4s steps(65) 1s 1 normal both",
+        "typewriter-loop": "typewriter-loop 8s steps(65) infinite both",
         "blink-cursor": "blink-cursor 500ms steps(65) infinite normal",
       },
     },
