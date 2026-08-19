@@ -80,10 +80,20 @@ export default {
             height: "0",
           },
         },
+        "typewriter": {
+          from: { width: "0" },
+          to: { width: "100%" },
+        },
+        "blink-cursor": {
+          "0%, 100%": { borderRightColor: "rgba(255,255,255,.75)" },
+          "50%": { borderRightColor: "transparent" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "typewriter": "typewriter 4s steps(65) 1s 1 normal both",
+        "blink-cursor": "blink-cursor 500ms steps(65) infinite normal",
       },
     },
   },

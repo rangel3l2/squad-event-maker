@@ -57,3 +57,16 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .typewriter-text {
+    font-family: 'Anonymous Pro', monospace;
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    border-right: 2px solid rgba(255,255,255,.75);
+    animation:
+      typewriter 4s steps(65) 1s 1 normal both,
+      blink-cursor 500ms steps(65) infinite normal;
+  }
+}
