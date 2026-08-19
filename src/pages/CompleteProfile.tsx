@@ -10,17 +10,19 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AvatarSelector } from "@/components/teams/AvatarSelector";
 import { SedeSelector } from "@/components/teams/SedeSelector";
-import { PERIODOS, NIVEIS_ENSINO, SEMESTRES } from "@/services/api";
+import { PERIODOS, NIVEIS_ENSINO, SEMESTRES, TIPOS_MEDIO, ANOS_MEDIO } from "@/services/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
   fullName: z.string().trim().min(3, "Nome completo deve ter pelo menos 3 caracteres").max(100, "Nome deve ter no máximo 100 caracteres"),
-  semestre: z.string().min(1, "Selecione o semestre"),
+  tipoMedio: z.string().min(1, "Selecione o tipo de curso"),
+  semestre: z.string().min(1, "Selecione o semestre/ano"),
   period: z.string().min(1, "Selecione um período"),
   nivel: z.string().min(1, "Selecione o nível de ensino"),
 });
+
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
@@ -35,11 +37,15 @@ export default function CompleteProfile() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: "",
+      tipoMedio: "tecnico",
       semestre: "",
       period: "",
       nivel: "",
     },
   });
+
+  const isTecnico = form.watch("tipoMedio") !== "regular";
+
 
   useEffect(() => {
     if (!user) {
@@ -176,29 +182,65 @@ export default function CompleteProfile() {
 
               <FormField
                 control={form.control}
-                name="semestre"
+                name="tipoMedio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Semestre atual *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>Tipo de curso *</FormLabel>
+                    <Select
+                      onValueChange={(v) => {
+                        field.onChange(v);
+                        form.setValue("semestre", "");
+                      }}
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o semestre" />
+                          <SelectValue placeholder="Selecione o tipo de curso" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {SEMESTRES.map((s) => (
-                          <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
+                        {TIPOS_MEDIO.map((t) => (
+                          <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="semestre"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{isTecnico ? "Semestre atual *" : "Ano atual *"}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={isTecnico ? "Selecione o semestre" : "Selecione o ano"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {isTecnico
+                          ? SEMESTRES.map((s) => (
+                              <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
+                            ))
+                          : ANOS_MEDIO.map((a) => (
+                              <SelectItem key={a.value} value={String(a.value)}>{a.label}</SelectItem>
+                            ))}
+                      </SelectContent>
+                    </Select>
                     <p className="text-sm text-muted-foreground">
-                      Curso anual? Use 1º ano = 1º/2º semestre, 2º ano = 3º/4º semestre, e assim por diante.
+                      {isTecnico
+                        ? "Cursos técnicos são divididos em semestres/períodos."
+                        : "No ensino médio regular a avaliação é anual."}
                     </p>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
 
               <FormField
                 control={form.control}

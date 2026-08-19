@@ -90,12 +90,26 @@ export const NIVEIS_ENSINO = [
   { value: 2, label: "Graduação / Ensino Superior" },
 ] as const;
 
+// Tipo de ensino médio: técnico (semestral, com períodos) x regular (anual)
+export const TIPOS_MEDIO = [
+  { value: "tecnico", label: "Ensino Médio Técnico" },
+  { value: "regular", label: "Ensino Médio Regular" },
+] as const;
+export type TipoMedio = (typeof TIPOS_MEDIO)[number]["value"];
+
 // Semestre atual do aluno (armazenado no campo `turma`).
-// Cursos anuais: 1º ano = 1º/2º semestre, 2º ano = 3º/4º, e assim por diante.
-export const SEMESTRES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+// Ensino médio técnico: 1º ao 6º semestre/período.
+export const SEMESTRES = [1, 2, 3, 4, 5, 6] as const;
+// Ensino médio regular: avaliação anual (1º, 2º ou 3º ano).
+export const ANOS_MEDIO = [
+  { value: 1, label: "1º ano do Ensino Médio" },
+  { value: 2, label: "2º ano do Ensino Médio" },
+  { value: 3, label: "3º ano do Ensino Médio" },
+] as const;
 
 export const labelPeriodo = (v?: number) => PERIODOS.find((p) => p.value === v)?.label ?? "-";
 export const labelNivel = (v?: number) => NIVEIS_ENSINO.find((n) => n.value === v)?.label ?? "-";
+
 
 export interface Usuario {
   id?: number;
