@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarUsuarios } from "@/services/api";
-import { getApiToken } from "@/services/apiAuth";
+import { getApiToken, ensureApiToken } from "@/services/apiAuth";
 import { toast } from "sonner";
 
 const safeNext = (value: string | null) =>
