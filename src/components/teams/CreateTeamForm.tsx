@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -108,6 +108,8 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
     };
   }, [user?.email]);
 
+  const usuarioIdRef = useRef<number | null>(null);
+
   const form = useForm<CreateTeamFormData>({
     resolver: zodResolver(createTeamSchema),
     defaultValues: {
@@ -185,6 +187,7 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
       // Buscar informações do usuário na API
       const usuarios = await listarUsuarios();
       const usuario = usuarios.find(u => u.email === user.email);
+      usuarioIdRef.current = usuario?.id ?? null;
 
       if (!usuario || !usuario.id) {
         toast.error("Complete suas informações de cadastro primeiro");
@@ -277,11 +280,26 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
     } catch (error: any) {
       console.error("Error creating team:", error);
       
-      // Verificar se é erro de duplicata de dono_id
-      if (error.message.includes("times_dono_id_key") || error.message.includes("duplicate key")) {
-        toast.error("Você já é dono de um time", {
-          description: "Você precisa sair do time atual antes de criar um novo. Vá em 'Meu Time' e clique em 'Sair do Time'.",
-          duration: 6000,
+      // Duplicata de dono_id: a API mantém a restrição sem considerar o evento
+      const msg = String(error?.message ?? "");
+      if (msg.includes("times_dono_id_key") || msg.includes("duplicate key")) {
+        let detalhe = "";
+        try {
+          const todos = await listarTimes({ evento: null });
+          const donoDe = todos.filter((t) => t.dono_id === usuarioIdRef.current);
+          const outroEvento = donoDe.find(
+            (t) => t.evento != null && Number(t.evento) !== Number(EVENTO_ATUAL)
+          );
+          if (outroEvento) {
+            detalhe = ` Você consta como dono do time "${outroEvento.nome_time}" da edição ${outroEvento.evento}.`;
+          }
+        } catch {
+          // ignora falha ao detalhar
+        }
+        toast.error("A API ainda não permite ser dono de dois times", {
+          description:
+            `O servidor bloqueou o cadastro porque o mesmo dono já possui um time (a validação da rota /times não leva o evento em conta).${detalhe} Peça a liberação por edição ou transfira a liderança do time anterior.`,
+          duration: 10000,
         });
       } else {
         toast.error("Erro ao criar time: " + error.message);
