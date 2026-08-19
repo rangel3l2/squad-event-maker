@@ -231,14 +231,16 @@ export default function CompleteProfile() {
                               <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
                             ))
                           : ANOS_MEDIO.map((a) => (
-                              <SelectItem key={a.value} value={String(a.value)}>{a.label}</SelectItem>
+                              <SelectItem key={a.value} value={String(a.value)}>
+                                {a.label} ({anoParaSemestre(a.value)}º período)
+                              </SelectItem>
                             ))}
                       </SelectContent>
                     </Select>
                     <p className="text-sm text-muted-foreground">
                       {isTecnico
                         ? "Cursos técnicos são divididos em semestres/períodos."
-                        : "No ensino médio regular a avaliação é anual."}
+                        : "No ensino médio regular a avaliação é anual — o ano escolhido é registrado como o período equivalente."}
                     </p>
                     <FormMessage />
                   </FormItem>
