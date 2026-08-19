@@ -118,7 +118,7 @@ export function TeamLogoUploader({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      <p className="text-sm text-muted-foreground">{finalDescription}</p>
 
       <div
         className={`relative border-2 border-dashed rounded-lg p-6 transition-colors ${
@@ -153,7 +153,7 @@ export function TeamLogoUploader({
               {isUploading ? "Carregando..." : "Clique ou arraste uma imagem aqui"}
             </span>
             <span className="text-xs text-muted-foreground mt-1">
-              PNG, JPG, GIF até 5MB
+              PNG, JPG, GIF até {sizeLabel}
             </span>
             <input
               type="file"
