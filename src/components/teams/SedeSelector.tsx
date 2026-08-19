@@ -51,6 +51,16 @@ export function SedeSelector({ value, onChange, evento = EVENTO_ATUAL }: SedeSel
   const proximas = sedes.filter((s) => s.perto);
   const demais = sedes.filter((s) => !s.perto);
 
+  // Escolher uma sede também define a cidade de referência para todo o site
+  const handleSelectSede = (id: number) => {
+    onChange(id);
+    const sede = sedes.find((s) => s.id === id);
+    if (sede && cityKey(sede.cidade, sede.uf) !== cidadeAtual) {
+      void selectCity(sede.cidade, sede.uf);
+    }
+  };
+
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
@@ -103,7 +113,7 @@ export function SedeSelector({ value, onChange, evento = EVENTO_ATUAL }: SedeSel
 
       <Select
         value={value ? String(value) : undefined}
-        onValueChange={(v) => onChange(Number(v))}
+        onValueChange={(v) => handleSelectSede(Number(v))}
         disabled={loading}
       >
         <SelectTrigger>

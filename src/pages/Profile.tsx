@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AvatarSelector } from "@/components/teams/AvatarSelector";
+import { SedeSelector } from "@/components/teams/SedeSelector";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,6 +46,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [sedeId, setSedeId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userTeams, setUserTeams] = useState<TeamInfo[]>([]);
   const [pastTeams, setPastTeams] = useState<Time[]>([]);
@@ -80,6 +82,7 @@ export default function Profile() {
           form.setValue('nivel', usuario.nivel !== undefined && usuario.nivel !== null ? String(usuario.nivel) : '');
           form.setValue('anoIngresso', usuario.ano_ingresso ? String(usuario.ano_ingresso) : String(currentYear));
           setAvatarUrl(usuario.url_image_perfil || '');
+          if (usuario.sede !== undefined && usuario.sede !== null) setSedeId(Number(usuario.sede));
 
           // Buscar todos os times do usuário (em todos os eventos)
           try {
@@ -122,9 +125,15 @@ export default function Profile() {
   const onSubmit = async (data: ProfileFormData) => {
     if (!user || !userId) return;
 
+    if (!sedeId) {
+      toast.error("Selecione a sua sede/campus");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await alterarUsuario(userId, {
+        sede: sedeId,
         nome: data.fullName.trim(),
         ano_ingresso: parseInt(data.anoIngresso),
         nivel: parseInt(data.nivel),
@@ -451,6 +460,8 @@ export default function Profile() {
                       </FormItem>
                     )}
                   />
+
+                  <SedeSelector value={sedeId} onChange={setSedeId} />
 
                   <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                     {isSubmitting ? "Salvando..." : "Salvar Alterações"}
