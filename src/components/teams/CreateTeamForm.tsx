@@ -240,10 +240,15 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
 
       if (timeCriado && timeCriado.id) {
         // Adicionar o criador como integrante com função "Líder"
-        await adicionarIntegrante(timeCriado.id, {
-          usuario_id: usuario.id,
-          funcao: "Líder"
-        });
+        try {
+          await adicionarIntegrante(timeCriado.id, {
+            usuario_id: usuario.id,
+            funcao: "Líder"
+          });
+        } catch (integranteError: any) {
+          // Pode já ter sido adicionado automaticamente pela API
+          console.warn("Não foi possível adicionar o líder (talvez já exista):", integranteError);
+        }
 
         // Definir a cor do time pela rota dedicada (respeita limite por sede)
         if (cor) {
