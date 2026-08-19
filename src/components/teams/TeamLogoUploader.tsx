@@ -11,18 +11,25 @@ interface TeamLogoUploaderProps {
   currentLogo?: string;
   label?: string;
   description?: string;
+  maxSizeKB?: number;
 }
 
 export function TeamLogoUploader({
   onLogoChange,
   currentLogo,
   label = "Logo do Time *",
-  description = "Arraste uma imagem, escolha um arquivo ou cole o link de uma imagem externa (máx. 5MB)",
+  description,
+  maxSizeKB = 400,
 }: TeamLogoUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>(currentLogo || "");
   const [isUploading, setIsUploading] = useState(false);
   const [externalUrl, setExternalUrl] = useState("");
+
+  const sizeLabel = maxSizeKB >= 1024 ? `${(maxSizeKB / 1024).toFixed(1)}MB` : `${maxSizeKB}KB`;
+  const finalDescription =
+    description ??
+    `Arraste uma imagem, escolha um arquivo ou cole o link de uma imagem externa (máx. ${sizeLabel})`;
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -30,10 +37,11 @@ export function TeamLogoUploader({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 5MB");
+    if (file.size > maxSizeKB * 1024) {
+      toast.error(`A imagem deve ter no máximo ${sizeLabel}`);
       return;
     }
+
 
     setIsUploading(true);
 
