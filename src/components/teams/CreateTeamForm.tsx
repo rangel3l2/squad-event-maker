@@ -115,6 +115,20 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
     },
   });
 
+  // Pré-preenche quando o usuário escolheu duplicar um time de edição anterior (vindo do perfil)
+  useEffect(() => {
+    if (!timeParaDuplicar) return;
+    form.setValue("name", timeParaDuplicar.nome_time ?? "");
+    if (timeParaDuplicar.imagem_time) setLogoUrl(timeParaDuplicar.imagem_time);
+    if (timeParaDuplicar.img_logo_pequeno) setMiniLogoUrl(timeParaDuplicar.img_logo_pequeno);
+    toast.success("Dados do time anterior copiados", {
+      description: "Escolha a cor do time nesta edição. Os membros não foram duplicados.",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeParaDuplicar?.id]);
+
+
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(inviteCode);
     setCopied(true);
