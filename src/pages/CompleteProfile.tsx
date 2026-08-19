@@ -37,11 +37,15 @@ export default function CompleteProfile() {
     resolver: zodResolver(profileSchema),
     defaultValues: {
       fullName: "",
+      tipoMedio: "tecnico",
       semestre: "",
       period: "",
       nivel: "",
     },
   });
+
+  const isTecnico = form.watch("tipoMedio") !== "regular";
+
 
   useEffect(() => {
     if (!user) {
