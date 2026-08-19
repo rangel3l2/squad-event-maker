@@ -88,10 +88,14 @@ export default function CompleteProfile() {
       const { criarUsuario } = await import("@/services/api");
 
       const nivel = parseInt(data.nivel);
+      // Ensino médio regular: o usuário escolhe o ano, mas a API recebe o período (ano * 2)
+      const turma = isTecnico
+        ? parseInt(data.semestre)
+        : anoParaSemestre(parseInt(data.semestre));
       const userData: any = {
         nome: data.fullName.trim(),
         token_gmail: user.email,
-        turma: parseInt(data.semestre),
+        turma,
         periodo: parseInt(data.period),
         email: user.email,
         url_image_perfil: avatarUrl || "", // String vazia se não tiver
