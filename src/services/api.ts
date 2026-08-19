@@ -85,35 +85,11 @@ export const PERIODOS = [
 ] as const;
 
 // Nível de ensino (campo `nivel` do usuário / `categoria` do time)
+// 0 = Ensino Médio | 1 = Graduação
 export const NIVEIS_ENSINO = [
-  { value: 1, label: "Ensino Médio" },
-  { value: 2, label: "Graduação / Ensino Superior" },
+  { value: 0, label: "Ensino Médio" },
+  { value: 1, label: "Graduação / Ensino Superior" },
 ] as const;
-
-// Tipo de ensino médio: técnico (semestral, com períodos) x regular (anual)
-export const TIPOS_MEDIO = [
-  { value: "tecnico", label: "Ensino Médio Técnico" },
-  { value: "regular", label: "Ensino Médio Regular" },
-] as const;
-export type TipoMedio = (typeof TIPOS_MEDIO)[number]["value"];
-
-// Semestre atual do aluno (armazenado no campo `turma`).
-// Ensino médio técnico: 1º ao 6º semestre/período.
-export const SEMESTRES = [1, 2, 3, 4, 5, 6] as const;
-// Ensino médio regular: avaliação anual (1º, 2º ou 3º ano).
-export const ANOS_MEDIO = [
-  { value: 1, label: "1º ano do Ensino Médio" },
-  { value: 2, label: "2º ano do Ensino Médio" },
-  { value: 3, label: "3º ano do Ensino Médio" },
-] as const;
-
-/**
- * A API sempre trabalha com períodos/semestres (1..6).
- * No ensino médio regular o aluno escolhe o ano (1º, 2º, 3º),
- * que é convertido para o período correspondente (ano * 2).
- */
-export const anoParaSemestre = (ano: number) => ano * 2;
-export const semestreParaAno = (semestre: number) => Math.ceil(semestre / 2);
 
 export const labelPeriodo = (v?: number) => PERIODOS.find((p) => p.value === v)?.label ?? "-";
 export const labelNivel = (v?: number) => NIVEIS_ENSINO.find((n) => n.value === v)?.label ?? "-";
