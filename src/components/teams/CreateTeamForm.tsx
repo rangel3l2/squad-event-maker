@@ -360,14 +360,17 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
                 <TeamLogoUploader
                   currentLogo={logoUrl}
                   onLogoChange={setLogoUrl}
+                  maxSizeKB={400}
                 />
 
                 <TeamLogoUploader
                   currentLogo={miniLogoUrl}
                   onLogoChange={setMiniLogoUrl}
                   label="Miniatura do Logo (mini logo)"
-                  description="Versão reduzida do logo, usada em listagens. Envie um arquivo ou cole o link de uma imagem externa."
+                  description="Versão reduzida do logo, usada em listagens (máx. 50KB). Envie um arquivo ou cole o link de uma imagem externa."
+                  maxSizeKB={50}
                 />
+
 
                 <FormField
                   control={form.control}
