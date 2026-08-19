@@ -126,11 +126,9 @@ export default function Profile() {
     try {
       await alterarUsuario(userId, {
         nome: data.fullName.trim(),
-        // Ensino médio regular: o usuário escolhe o ano, mas a API recebe o período (ano * 2)
-        turma: data.tipoMedio === "regular"
-          ? anoParaSemestre(parseInt(data.classroom))
-          : parseInt(data.classroom),
-        periodo: parseInt(data.period),
+        ano_ingresso: parseInt(data.anoIngresso),
+        nivel: parseInt(data.nivel),
+        categoria: parseInt(data.nivel),
         url_image_perfil: avatarUrl,
         email: user.email || '',
         token_gmail: user.email || '',
