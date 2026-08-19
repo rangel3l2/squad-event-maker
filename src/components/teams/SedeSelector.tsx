@@ -113,7 +113,7 @@ export function SedeSelector({ value, onChange, evento = EVENTO_ATUAL }: SedeSel
 
       <Select
         value={value ? String(value) : undefined}
-        onValueChange={(v) => onChange(Number(v))}
+        onValueChange={(v) => handleSelectSede(Number(v))}
         disabled={loading}
       >
         <SelectTrigger>
