@@ -23,7 +23,9 @@ export const getProviderToken = (): string | null => {
   if (!token) return null;
   const issuedAt = Number(localStorage.getItem(PROVIDER_TOKEN_AT_KEY) || 0);
   if (!issuedAt || Date.now() - issuedAt > PROVIDER_TOKEN_TTL_MS) {
-    clearApiAuth();
+    // Só o token do Google morre aqui. O token da API continua salvo e válido
+    // por muitos dias — não faz sentido deslogar quem já tem token da API.
+    clearProviderToken();
     return null;
   }
   return token;
@@ -41,6 +43,11 @@ export class ApiReauthenticationRequiredError extends Error {
 export const setApiToken = (token: string | null) => {
   if (token) localStorage.setItem(API_TOKEN_KEY, token);
   else localStorage.removeItem(API_TOKEN_KEY);
+};
+
+export const clearProviderToken = () => {
+  localStorage.removeItem(PROVIDER_TOKEN_KEY);
+  localStorage.removeItem(PROVIDER_TOKEN_AT_KEY);
 };
 
 export const clearApiAuth = () => {
@@ -92,7 +99,7 @@ export const loginExternalApi = async (providerTokenArg?: string | null): Promis
   if (!response.ok) {
     const text = await response.text();
     // Provider token rejected/expired: drop it so we stop retrying with a dead token.
-    if (response.status === 401) clearApiAuth();
+    if (response.status === 401) clearProviderToken();
     throw new Error(`Falha no login da API (${response.status}): ${text}`);
   }
 
