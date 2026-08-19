@@ -176,29 +176,65 @@ export default function CompleteProfile() {
 
               <FormField
                 control={form.control}
-                name="semestre"
+                name="tipoMedio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Semestre atual *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <FormLabel>Tipo de curso *</FormLabel>
+                    <Select
+                      onValueChange={(v) => {
+                        field.onChange(v);
+                        form.setValue("semestre", "");
+                      }}
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione o semestre" />
+                          <SelectValue placeholder="Selecione o tipo de curso" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {SEMESTRES.map((s) => (
-                          <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
+                        {TIPOS_MEDIO.map((t) => (
+                          <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="semestre"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{isTecnico ? "Semestre atual *" : "Ano atual *"}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={isTecnico ? "Selecione o semestre" : "Selecione o ano"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {isTecnico
+                          ? SEMESTRES.map((s) => (
+                              <SelectItem key={s} value={String(s)}>{s}º semestre</SelectItem>
+                            ))
+                          : ANOS_MEDIO.map((a) => (
+                              <SelectItem key={a.value} value={String(a.value)}>{a.label}</SelectItem>
+                            ))}
+                      </SelectContent>
+                    </Select>
                     <p className="text-sm text-muted-foreground">
-                      Curso anual? Use 1º ano = 1º/2º semestre, 2º ano = 3º/4º semestre, e assim por diante.
+                      {isTecnico
+                        ? "Cursos técnicos são divididos em semestres/períodos."
+                        : "No ensino médio regular a avaliação é anual."}
                     </p>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
 
               <FormField
                 control={form.control}
