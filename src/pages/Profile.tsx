@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { AlertCircle, Users, LogOut, Edit, Trash2, Trophy, History, Copy } from "lucide-react";
-import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, PERIODOS, SEMESTRES, TIPOS_MEDIO, ANOS_MEDIO, anoParaSemestre, semestreParaAno, type Time } from "@/services/api";
+import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, PERIODOS, SEMESTRES, TIPOS_MEDIO, ANOS_MEDIO, anoParaSemestre, type Time } from "@/services/api";
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
