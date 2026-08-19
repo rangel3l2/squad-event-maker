@@ -370,11 +370,38 @@ export const criarTime = async (time: Time): Promise<Time> => {
   if (!response.ok) {
     const errorText = await response.text();
     console.error("Erro da API:", errorText);
+
+    // A API às vezes grava o time e mesmo assim devolve erro (ex.: restrição de
+    // dono_id que ignora o evento). Confirmamos no banco antes de falhar.
+    try {
+      const criado = await buscarTimeCriado(time);
+      if (criado) {
+        console.warn("Time foi criado apesar do erro retornado pela API. Seguindo com o time encontrado.");
+        return criado;
+      }
+    } catch (checkError) {
+      console.error("Falha ao verificar se o time foi criado:", checkError);
+    }
+
     throw new Error(`Erro ao criar time: ${response.status} - ${errorText}`);
   }
-  
+
   return response.json();
 };
+
+/** Procura o time recém-enviado (usado quando a API responde erro mas grava o registro). */
+export const buscarTimeCriado = async (time: Time): Promise<Time | null> => {
+  const candidatos = await listarTimes({ evento: time.evento ?? EVENTO_ATUAL });
+  const nome = (time.nome_time || "").toLowerCase().trim();
+  return (
+    candidatos.find((t) => time.senha_convite && t.senha_convite === time.senha_convite) ||
+    candidatos.find(
+      (t) => t.dono_id === time.dono_id && (t.nome_time || "").toLowerCase().trim() === nome
+    ) ||
+    null
+  );
+};
+
 
 export const mostrarTime = async (timeId: number) => {
   const response = await makeRequest(`/times/${timeId}`);

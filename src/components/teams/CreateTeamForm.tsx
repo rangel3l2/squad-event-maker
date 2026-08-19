@@ -240,10 +240,15 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
 
       if (timeCriado && timeCriado.id) {
         // Adicionar o criador como integrante com função "Líder"
-        await adicionarIntegrante(timeCriado.id, {
-          usuario_id: usuario.id,
-          funcao: "Líder"
-        });
+        try {
+          await adicionarIntegrante(timeCriado.id, {
+            usuario_id: usuario.id,
+            funcao: "Líder"
+          });
+        } catch (integranteError: any) {
+          // Pode já ter sido adicionado automaticamente pela API
+          console.warn("Não foi possível adicionar o líder (talvez já exista):", integranteError);
+        }
 
         // Definir a cor do time pela rota dedicada (respeita limite por sede)
         if (cor) {
@@ -279,10 +284,33 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
       setSenhaConvite(newCode);
     } catch (error: any) {
       console.error("Error creating team:", error);
-      
+
+      // A API pode responder erro mesmo tendo gravado o time: confirmamos antes de avisar
+      try {
+        const criados = await listarTimes({ evento: EVENTO_ATUAL });
+        const jaCriado = criados.find(
+          (t) =>
+            t.senha_convite === senhaConvite ||
+            (t.dono_id === usuarioIdRef.current &&
+              (t.nome_time || "").toLowerCase().trim() === data.name.toLowerCase().trim())
+        );
+        if (jaCriado) {
+          setInviteCode(jaCriado.senha_convite || senhaConvite);
+          setShowInviteDialog(true);
+          toast.success("Time criado com sucesso!");
+          form.reset();
+          setLogoUrl("");
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (verifyError) {
+        console.error("Falha ao verificar criação do time:", verifyError);
+      }
+
       // Duplicata de dono_id: a API mantém a restrição sem considerar o evento
       const msg = String(error?.message ?? "");
       if (msg.includes("times_dono_id_key") || msg.includes("duplicate key")) {
+
         let detalhe = "";
         try {
           const todos = await listarTimes({ evento: null });
