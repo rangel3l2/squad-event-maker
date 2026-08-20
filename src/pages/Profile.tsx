@@ -158,14 +158,23 @@ export default function Profile() {
     }
   };
 
-  const handleLeaveTeam = async (teamId: number) => {
-    if (!userId || !teamId) return;
+  const handleLeaveTeam = async () => {
+    const team = leaveTeamDialog.team;
+    if (!userId || !team) return;
+
+    const teamName = team.name.trim();
+    if (leaveConfirmation.trim().toLowerCase() !== teamName.toLowerCase()) {
+      toast.error("Digite o nome do time exatamente para confirmar");
+      return;
+    }
 
     setIsLeavingTeam(true);
     try {
-      const resultado = await sairDoTime(teamId, userId);
+      const resultado = await sairDoTime(Number(team.id), userId);
       toast.success(resultado?.message || "Você saiu do time");
-      setUserTeams((prev) => prev.filter((t) => String(t.id) !== String(teamId)));
+      setUserTeams((prev) => prev.filter((t) => String(t.id) !== String(team.id)));
+      setLeaveTeamDialog({ open: false, team: null });
+      setLeaveConfirmation("");
     } catch (error: any) {
       console.error("Erro ao sair do time:", error);
       toast.error("Erro ao sair do time: " + error.message);
