@@ -299,8 +299,11 @@ export const listarUsuariosSemTime = async (): Promise<Usuario[]> => {
   return response.json();
 };
 
-export const mostrarTimeUsuario = async (usuarioId: number) => {
-  const response = await makeRequest(`/usuarios/${usuarioId}/time`);
+export const mostrarTimeUsuario = async (usuarioId: number, evento?: number | null) => {
+  const params = new URLSearchParams();
+  if (evento !== undefined && evento !== null) params.set('evento', String(evento));
+  const query = params.toString();
+  const response = await makeRequest(`/usuarios/${usuarioId}/time${query ? `?${query}` : ''}`);
   if (!response.ok) throw new Error("Erro ao mostrar time do usuário");
   const data = await response.json();
 
