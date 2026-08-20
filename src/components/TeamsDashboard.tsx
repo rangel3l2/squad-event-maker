@@ -10,6 +10,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,24 @@ export const TeamsDashboard = () => {
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [sedeFiltro, setSedeFiltro] = useState<string>(TODAS);
   const [loading, setLoading] = useState(true);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    const onSelect = () => {
+      setCanScrollPrev(carouselApi.canScrollPrev());
+      setCanScrollNext(carouselApi.canScrollNext());
+    };
+    onSelect();
+    carouselApi.on("select", onSelect);
+    carouselApi.on("reInit", onSelect);
+    return () => {
+      carouselApi.off("select", onSelect);
+      carouselApi.off("reInit", onSelect);
+    };
+  }, [carouselApi]);
 
   // Carrega sedes do evento e sugere a sede do usuário (cadastro ou localização)
   useEffect(() => {
@@ -173,9 +192,10 @@ export const TeamsDashboard = () => {
         </div>
       ) : (
         <Carousel
+          setApi={setCarouselApi}
           plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
           opts={{ align: "start", loop: true }}
-          className="w-full"
+          className="w-full px-10 md:px-12"
         >
           <CarouselContent>
             {times.map((time) => (
@@ -191,8 +211,8 @@ export const TeamsDashboard = () => {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-2" />
-          <CarouselNext className="right-2" />
+          {canScrollPrev && <CarouselPrevious className="left-0 md:-left-2" />}
+          {canScrollNext && <CarouselNext className="right-0 md:-right-2" />}
         </Carousel>
       )}
     </div>
