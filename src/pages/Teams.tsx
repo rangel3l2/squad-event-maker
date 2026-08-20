@@ -107,8 +107,8 @@ export default function Teams() {
         for (const time of todosOsTimes) {
           if (time.id == null) continue;
           const ehDono = Number(time.dono_id) === meuId;
-          const ehIntegrante = (time.integrantes || []).some(
-            (integrante: any) => Number(integrante.usuario_id) === meuId
+          const ehIntegrante = (time.integrantes || []).some((integrante: any) =>
+            Number(integrante.usuario_id ?? integrante.usuario?.id ?? integrante.id) === meuId
           );
           if (!ehDono && !ehIntegrante) continue;
 

@@ -107,11 +107,10 @@ export default function Profile() {
             const detalhesPorId = new Map(
               detalhes.filter((t): t is Time => t?.id != null).map((t) => [Number(t.id), t])
             );
-            const timesComIntegrantes = todosOsTimes.map((t) =>
-              t.id != null && detalhesPorId.has(Number(t.id))
-                ? { ...t, ...detalhesPorId.get(Number(t.id)) }
-                : t
-            );
+            const timesComIntegrantes = todosOsTimes.map((t) => {
+              const detalhe = t.id != null ? detalhesPorId.get(Number(t.id)) : undefined;
+              return detalhe ? { ...t, ...detalhe } : t;
+            });
             const timesDoUsuario = timesComIntegrantes.filter((t: Time) => {
               if (Number(t.dono_id) === Number(usuario.id)) return true;
               const integrantes = t.integrantes || [];
