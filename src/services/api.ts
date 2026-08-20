@@ -84,8 +84,12 @@ const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Pr
     redirectToReauth();
     throw new ApiReauthenticationRequiredError();
   }
-  
+
+  // Deu certo: zera o guarda de renovação silenciosa.
+  sessionStorage.removeItem(REAUTH_GUARD_KEY);
+
   return response;
+
 };
 
 
