@@ -74,8 +74,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       provider: 'google',
       options: {
         redirectTo,
-        // Force Google to hand back a new provider_token (needed by the external API /login).
-        queryParams: { prompt: 'consent', access_type: 'offline' },
+        // access_type=offline garante novo provider_token; sem prompt=consent
+        // a renovação é silenciosa quando o usuário já está logado no Google.
+        queryParams: { access_type: 'offline' },
       },
     });
 

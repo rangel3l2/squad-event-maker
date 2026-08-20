@@ -8,8 +8,6 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const API_TOKEN_KEY = 'ftc_api_token';
 const PROVIDER_TOKEN_KEY = 'ftc_provider_token';
 const PROVIDER_TOKEN_AT_KEY = 'ftc_provider_token_at';
-// Google access tokens live ~1h; treat them as dead a bit earlier.
-const PROVIDER_TOKEN_TTL_MS = 50 * 60 * 1000;
 
 export const setProviderToken = (token: string | null) => {
   if (token) {
@@ -19,16 +17,9 @@ export const setProviderToken = (token: string | null) => {
 };
 
 export const getProviderToken = (): string | null => {
-  const token = localStorage.getItem(PROVIDER_TOKEN_KEY);
-  if (!token) return null;
-  const issuedAt = Number(localStorage.getItem(PROVIDER_TOKEN_AT_KEY) || 0);
-  if (!issuedAt || Date.now() - issuedAt > PROVIDER_TOKEN_TTL_MS) {
-    // Só o token do Google morre aqui. O token da API continua salvo e válido
-    // por muitos dias — não faz sentido deslogar quem já tem token da API.
-    clearProviderToken();
-    return null;
-  }
-  return token;
+  // Não expiramos o token do Google por tempo: só o descartamos quando a API
+  // realmente o rejeita. Assim o usuário continua logado no mesmo dispositivo.
+  return localStorage.getItem(PROVIDER_TOKEN_KEY);
 };
 
 export const getApiToken = (): string | null => localStorage.getItem(API_TOKEN_KEY);
