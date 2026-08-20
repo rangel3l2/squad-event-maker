@@ -162,6 +162,11 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
       return;
     }
 
+    if (!miniLogoUrl) {
+      toast.error("A miniatura do logo (mini logo) é obrigatória");
+      return;
+    }
+
     if (!senhaConvite || senhaConvite.length !== 5) {
       toast.error("A senha de convite deve ter exatamente 5 caracteres");
       return;
@@ -412,7 +417,7 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
                 <TeamLogoUploader
                   currentLogo={miniLogoUrl}
                   onLogoChange={setMiniLogoUrl}
-                  label="Miniatura do Logo (mini logo)"
+                  label="Miniatura do Logo (mini logo) *"
                   description="Versão reduzida do logo, usada em listagens (máx. 50KB). Envie um arquivo ou cole o link de uma imagem externa."
                   maxSizeKB={50}
                 />
