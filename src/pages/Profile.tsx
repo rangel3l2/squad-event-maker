@@ -196,31 +196,21 @@ export default function Profile() {
   };
 
 
-  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
-  const handleDeleteTeam = async () => {
-    toast.info("Funcionalidade de deletar time temporariamente desativada");
-    return;
-    
-    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
+  const handleDeleteTeam = async (teamId: number) => {
     if (!teamId) return;
 
     setIsDeletingTeam(true);
     try {
       await deletarTime(teamId);
-      
       toast.success("Time deletado com sucesso!");
-      setCurrentTeam(null);
-      
-      setTimeout(() => {
-        navigate("/teams");
-      }, 1000);
+      setUserTeams((prev) => prev.filter((t) => String(t.id) !== String(teamId)));
+      setPastTeams((prev) => prev.filter((t) => String(t.id) !== String(teamId)));
     } catch (error: any) {
       console.error("Erro ao deletar time:", error);
       toast.error("Erro ao deletar time: " + error.message);
     } finally {
       setIsDeletingTeam(false);
     }
-    */
   };
 
   return (
