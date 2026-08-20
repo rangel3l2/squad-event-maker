@@ -10,7 +10,7 @@ import { Users, PlusCircle, AlertCircle, Search, History } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, listarTimes, listarSedesPorEvento, mostrarTime, EVENTO_ATUAL, buscarTimesPorDono, type Sede, type Time, type Usuario } from "@/services/api";
+import { listarUsuarios, listarTimes, listarSedesPorEvento, mostrarTime, EVENTO_ATUAL, type Sede, type Time, type Usuario } from "@/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Teams() {
@@ -56,50 +56,71 @@ export default function Teams() {
         // Buscar todos os times do usuário em todos os eventos
         let currentTeam: Time | null = null;
         const previousTeams: Time[] = [];
+        const meuId = Number(usuario.id);
 
-        // Verificar se é dono de algum time em qualquer evento
+        // Todos os times de todos os eventos
+        let todosOsTimes: Time[] = [];
         try {
-          const timesDoDono = await buscarTimesPorDono(usuario.id!, null);
-          for (const t of timesDoDono) {
-            if (t.id == null) continue;
-            if (Number(t.evento) === Number(EVENTO_ATUAL)) {
-              currentTeam = t;
-            } else {
-              previousTeams.push(t);
-            }
+          todosOsTimes = await listarTimes({ evento: null });
+        } catch (e) {
+          console.error("Erro ao listar times (todos eventos):", e);
+        }
+        if (todosOsTimes.length === 0) {
+          try {
+            todosOsTimes = await listarTimes({ evento: EVENTO_ATUAL });
+          } catch {
+            /* ignore */
           }
-        } catch (error) {
-          console.log("Usuário não é dono de nenhum time");
         }
 
-        // Verificar se é integrante de algum time em qualquer evento
-        const todosOsTimes = await listarTimes({ evento: null });
-        for (const time of todosOsTimes) {
-          const integrantes = time.integrantes || [];
-          const ehIntegrante = integrantes.some(
-            (integrante: any) => integrante.usuario_id === usuario.id
+        // A listagem nem sempre retorna os integrantes: buscar detalhes quando faltar
+        const semIntegrantes = todosOsTimes.filter(
+          (t) => t.id != null && !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
+        );
+        if (semIntegrantes.length > 0) {
+          const detalhes = await Promise.all(
+            semIntegrantes.slice(0, 40).map(async (t) => {
+              try {
+                const det = await mostrarTime(t.id as number);
+                return { id: t.id, integrantes: ((det as any)?.integrantes ?? []) as any[] };
+              } catch {
+                return null;
+              }
+            })
           );
-          if (!ehIntegrante) continue;
+          const mapa = new Map<number, any[]>();
+          detalhes.forEach((d) => d && mapa.set(d.id as number, d.integrantes));
+          todosOsTimes = todosOsTimes.map((t) =>
+            t.id != null && mapa.has(t.id) ? { ...t, integrantes: mapa.get(t.id) as any } : t
+          );
+        }
+
+        for (const time of todosOsTimes) {
+          if (time.id == null) continue;
+          const ehDono = Number(time.dono_id) === meuId;
+          const ehIntegrante = (time.integrantes || []).some(
+            (integrante: any) => Number(integrante.usuario_id) === meuId
+          );
+          if (!ehDono && !ehIntegrante) continue;
 
           if (Number(time.evento) === Number(EVENTO_ATUAL)) {
             if (!currentTeam) currentTeam = time;
-          } else {
-            if (!previousTeams.some((t) => t.id === time.id)) {
-              previousTeams.push(time);
-            }
+          } else if (!previousTeams.some((t) => t.id === time.id)) {
+            previousTeams.push(time);
           }
         }
 
+        console.log("Meus times encontrados:", { currentTeam, previousTeams });
+
         if (currentTeam) {
-          console.log("Usuário está no time deste evento:", currentTeam.nome_time);
           setHasTeam(true);
           setCurrentTeamName(currentTeam.nome_time || "");
           setMyTeam(currentTeam);
         } else {
-          console.log("Usuário NÃO está em nenhum time neste evento");
           setHasTeam(false);
           setMyTeam(null);
         }
+
 
         setPastTeams(previousTeams);
       } catch (error) {
