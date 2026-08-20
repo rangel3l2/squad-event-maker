@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { listarTimes, listarSedesPorEvento, listarUsuarios, EVENTO_ATUAL, type Sede, type Time } from "@/services/api";
+import { listarTimes, listarSedesPorEvento, listarUsuarios, mostrarTime, EVENTO_ATUAL, type Sede, type Time, type Usuario } from "@/services/api";
+import { TeamCard } from "@/components/teams/TeamCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSavedLocation } from "@/hooks/useUserLocation";
 import {
@@ -25,6 +26,7 @@ export const TeamsDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [times, setTimes] = useState<Time[]>([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [sedeFiltro, setSedeFiltro] = useState<string>(TODAS);
   const [loading, setLoading] = useState(true);
@@ -41,8 +43,9 @@ export const TeamsDashboard = () => {
         let sedeSugerida: number | null = null;
         if (user?.email) {
           try {
-            const usuarios = await listarUsuarios();
-            sedeSugerida = usuarios.find((u) => u.email === user.email)?.sede ?? null;
+            const lista = await listarUsuarios();
+            setUsuarios(lista);
+            sedeSugerida = lista.find((u) => u.email === user.email)?.sede ?? null;
           } catch {
             /* ignore */
           }
@@ -65,6 +68,17 @@ export const TeamsDashboard = () => {
   }, [user?.email]);
 
   useEffect(() => {
+    if (usuarios.length > 0) return;
+    let cancelled = false;
+    listarUsuarios()
+      .then((lista) => !cancelled && setUsuarios(lista))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [usuarios.length]);
+
+  useEffect(() => {
     let active = true;
     const fetchTimes = async () => {
       try {
@@ -72,7 +86,32 @@ export const TeamsDashboard = () => {
           evento: EVENTO_ATUAL,
           sede_id: sedeFiltro === TODAS ? null : Number(sedeFiltro),
         });
-        if (active) setTimes(timesData);
+        if (!active) return;
+        setTimes(timesData);
+
+        // A listagem nem sempre traz os integrantes: completamos para exibir os avatares.
+        const faltando = timesData.filter(
+          (t) => t.id != null && !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
+        );
+        if (faltando.length > 0) {
+          const detalhes = await Promise.all(
+            faltando.slice(0, 24).map(async (t) => {
+              try {
+                const det: any = await mostrarTime(t.id as number);
+                return { id: t.id as number, integrantes: det?.integrantes ?? det?.time?.integrantes ?? [] };
+              } catch {
+                return null;
+              }
+            })
+          );
+          const mapa = new Map<number, any[]>();
+          detalhes.forEach((d) => d && mapa.set(d.id, d.integrantes));
+          if (active && mapa.size > 0) {
+            setTimes((prev) =>
+              prev.map((t) => (t.id != null && mapa.has(t.id) ? { ...t, integrantes: mapa.get(t.id) as any } : t))
+            );
+          }
+        }
       } catch (error) {
         console.error("Erro ao carregar times:", error);
       } finally {
@@ -142,33 +181,11 @@ export const TeamsDashboard = () => {
             {times.map((time) => (
               <CarouselItem key={time.id} className="md:basis-1/2 lg:basis-1/3">
                 <div className="p-2">
-                  <Card
-                    className="hover:shadow-glow transition-all duration-300 hover:scale-105 cursor-pointer"
-                    onClick={() => navigate(`/team-details/${time.id}`)}
-                  >
-                    <CardHeader className="pb-4">
-                      {time.imagem_time ? (
-                        <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-primary/20">
-                          <img
-                            src={time.imagem_time}
-                            alt={time.nome_time}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                          <Users className="w-12 h-12 text-primary-foreground" />
-                        </div>
-                      )}
-                      <CardTitle className="text-center text-xl">{time.nome_time}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-center">
-                      <Badge variant="secondary" className="text-sm">
-                        <Users className="w-3 h-3 mr-1" />
-                        {time.qtd_integrantes ?? time.integrantes?.length ?? 0} membros
-                      </Badge>
-                    </CardContent>
-                  </Card>
+                  <TeamCard
+                    time={time}
+                    usuarios={usuarios}
+                    onClick={() => time.id != null && navigate(`/team-details/${time.id}`)}
+                  />
                 </div>
               </CarouselItem>
             ))}
