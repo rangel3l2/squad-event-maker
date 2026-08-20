@@ -473,9 +473,11 @@ export default function TeamDetails() {
               )}
               <CardTitle className="text-3xl">{time.nome_time}</CardTitle>
               
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap justify-center">
                 {isUserInTeam && isLeader && (
                   <>
+                    <EditTeamDialog time={time} onUpdated={(t) => setTime(t)} />
+
                     
                     <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
                       <DialogTrigger asChild>
