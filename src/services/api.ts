@@ -356,7 +356,13 @@ export const criarTime = async (time: Time): Promise<Time> => {
   const params = new URLSearchParams();
   params.set('nome_time', time.nome_time);
   params.set('dono_id', String(time.dono_id));
-  if (time.senha_convite) params.set('senha_convite', time.senha_convite);
+  // Código/senha de convite é sempre gravado junto do time (gerado quando ausente)
+  const codigoConvite =
+    time.senha_convite ||
+    Array.from({ length: 5 }, () =>
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]
+    ).join('');
+  params.set('senha_convite', codigoConvite);
   if (time.imagem_time) params.set('imagem_time', time.imagem_time);
   if (time.sede !== undefined && time.sede !== null) params.set('sede', String(time.sede));
   if (time.evento !== undefined && time.evento !== null) params.set('evento', String(time.evento));
