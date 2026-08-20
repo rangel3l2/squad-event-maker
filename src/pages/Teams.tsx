@@ -161,32 +161,87 @@ export default function Teams() {
     }
   }, [searchTerm, allTeams]);
 
-  const renderTeamCard = (time: Time, isCurrent: boolean) => (
-    <Card
-      className={`hover:shadow-lg transition-all cursor-pointer ${isCurrent ? "border-primary/40" : ""}`}
-      onClick={() => time.id != null && navigate(`/team-details/${time.id}`)}
-    >
-      <CardContent className="flex items-center gap-3 py-4">
-        {time.imagem_time && (
-          <img
-            src={time.imagem_time}
-            alt={`Logo ${time.nome_time}`}
-            className="w-12 h-12 object-contain rounded-lg flex-shrink-0"
-          />
-        )}
-        <div className="flex-1 min-w-0 text-left">
-          <p className="font-semibold truncate">{time.nome_time}</p>
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            {time.qtd_integrantes ?? time.quantidade ?? 0}/4 membros
-          </p>
-          {!isCurrent && time.evento != null && (
-            <p className="text-xs text-muted-foreground">Edição {time.evento}</p>
+  const getMembrosDoTime = (time: Time) => {
+    const integrantes = Array.isArray(time.integrantes) ? time.integrantes : [];
+    return integrantes
+      .map((i: any) => usuarios.find((u) => u.id === (i.usuario_id ?? i.id)))
+      .filter((u): u is Usuario => !!u);
+  };
+
+  const renderTeamCard = (time: Time, isCurrent: boolean, compact = false) => {
+    const cor = time.cor_time || time.cor_base || "hsl(var(--primary))";
+    const membros = getMembrosDoTime(time);
+    const totalMembros = time.qtd_integrantes ?? time.quantidade ?? membros.length ?? 0;
+
+    return (
+      <Card
+        className={`overflow-hidden transition-all cursor-pointer hover:shadow-lg hover:scale-[1.02] ${isCurrent ? "ring-2 ring-primary/40" : ""}`}
+        style={{
+          backgroundImage: `linear-gradient(135deg, ${cor}15 0%, transparent 55%)`,
+          borderColor: `${cor}40`,
+        }}
+        onClick={() => time.id != null && navigate(`/team-details/${time.id}`)}
+      >
+        <div className="h-1.5 w-full" style={{ backgroundColor: cor }} />
+        <CardContent className={`flex items-center gap-3 ${compact ? "py-3 px-3" : "py-4 px-4"}`}>
+          {time.imagem_time ? (
+            <div className="relative flex-shrink-0">
+              <div
+                className="absolute inset-0 rounded-lg blur-sm opacity-40"
+                style={{ backgroundColor: cor }}
+              />
+              <img
+                src={time.imagem_time}
+                alt={`Bandeira ${time.nome_time}`}
+                className={`relative object-contain rounded-lg flex-shrink-0 bg-card/80 border border-white/10 ${compact ? "w-10 h-10" : "w-14 h-14"}`}
+              />
+            </div>
+          ) : (
+            <div
+              className={`flex-shrink-0 rounded-lg flex items-center justify-center bg-muted ${compact ? "w-10 h-10" : "w-14 h-14"}`}
+            >
+              <Users className={`text-muted-foreground ${compact ? "w-5 h-5" : "w-7 h-7"}`} />
+            </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
-  );
+
+          <div className="flex-1 min-w-0 text-left">
+            <p className={`font-bold truncate ${compact ? "text-sm" : "text-base"}`}>{time.nome_time}</p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              {totalMembros}/4
+            </p>
+            {!isCurrent && time.evento != null && (
+              <p className="text-xs text-muted-foreground">Edição {time.evento}</p>
+            )}
+          </div>
+
+          <div className="flex -space-x-2 overflow-hidden pl-1">
+            {membros.slice(0, 4).map((m, idx) => (
+              <Avatar
+                key={idx}
+                className={`inline-block ring-2 ring-background ${compact ? "w-6 h-6" : "w-8 h-8"}`}
+              >
+                <AvatarImage src={m.url_image_perfil} alt="" />
+                <AvatarFallback className="text-[8px] bg-muted">
+                  {m.nome?.charAt(0).toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+            ))}
+            {membros.length > 4 && (
+              <div
+                className={`flex items-center justify-center rounded-full bg-muted ring-2 ring-background text-[8px] font-medium ${compact ? "w-6 h-6" : "w-8 h-8"}`}
+              >
+                +{membros.length - 4}
+              </div>
+            )}
+            {membros.length === 0 && totalMembros > 0 && (
+              <span className="text-[10px] text-muted-foreground">{totalMembros} membro(s)</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
