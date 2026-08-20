@@ -10,7 +10,7 @@ import { Users, PlusCircle, AlertCircle, Search, History } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, listarTimes, listarSedesPorEvento, EVENTO_ATUAL, buscarTimesPorDono, type Sede, type Time, type Usuario } from "@/services/api";
+import { listarUsuarios, listarTimes, listarSedesPorEvento, mostrarTime, EVENTO_ATUAL, buscarTimesPorDono, type Sede, type Time, type Usuario } from "@/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Teams() {
@@ -141,6 +141,36 @@ export default function Teams() {
         });
         setAllTeams(times);
         setFilteredTeams(times);
+
+        // Alguns endpoints de listagem não retornam os integrantes.
+        // Enriquecemos os times sem integrantes para exibir os avatares nos cards.
+        const faltando = times.filter(
+          (t) => t.id != null && !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
+        );
+        if (faltando.length > 0) {
+          const detalhes = await Promise.all(
+            faltando.slice(0, 30).map(async (t) => {
+              try {
+                const det = await mostrarTime(t.id as number);
+                return { id: t.id, integrantes: (det as any)?.integrantes ?? [] };
+              } catch {
+                return null;
+              }
+            })
+          );
+          const mapa = new Map<number, any[]>();
+          detalhes.forEach((d) => d && mapa.set(d.id as number, d.integrantes));
+          if (mapa.size > 0) {
+            const merge = (lista: Time[]) =>
+              lista.map((t) =>
+                t.id != null && mapa.has(t.id)
+                  ? { ...t, integrantes: mapa.get(t.id) as any }
+                  : t
+              );
+            setAllTeams((prev) => merge(prev));
+            setFilteredTeams((prev) => merge(prev));
+          }
+        }
       } catch (error) {
         console.error("Erro ao carregar times:", error);
       }
@@ -163,8 +193,11 @@ export default function Teams() {
 
   const getMembrosDoTime = (time: Time) => {
     const integrantes = Array.isArray(time.integrantes) ? time.integrantes : [];
-    return integrantes
-      .map((i: any) => usuarios.find((u) => u.id === (i.usuario_id ?? i.id)))
+    const ids = integrantes.map((i: any) => i.usuario_id ?? i.id);
+    // Garante que o dono apareça mesmo que a API não o liste como integrante
+    if (time.dono_id != null && !ids.includes(time.dono_id)) ids.unshift(time.dono_id);
+    return ids
+      .map((id) => usuarios.find((u) => u.id === id))
       .filter((u): u is Usuario => !!u);
   };
 
