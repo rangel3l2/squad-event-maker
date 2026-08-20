@@ -287,13 +287,13 @@ export default function Teams() {
               </div>
 
               {/* Grid de Times */}
-              {filteredTeams.length === 0 ? (
+              {filteredTeams.filter((t) => t.id !== myTeam?.id).length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   {searchTerm ? "Nenhum time encontrado com esse nome" : "Nenhum time cadastrado ainda"}
                 </p>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredTeams.map((time) => (
+                  {filteredTeams.filter((t) => t.id !== myTeam?.id).map((time) => (
                     <Card
                       key={time.id}
                       className="hover:shadow-lg transition-all cursor-pointer hover:scale-105"
