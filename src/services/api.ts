@@ -101,6 +101,8 @@ export interface Usuario {
   token_gmail: string;
   /** Ano de ingresso do aluno (inteiro) */
   ano_ingresso: number;
+  /** Período de estudo: 0 Matutino | 1 Vespertino | 2 Noturno | 3 Integral */
+  periodo?: number;
   url_image_perfil?: string;
   email: string;
   /** Sede/campus do usuário */
@@ -200,6 +202,9 @@ export const criarUsuario = async (usuario: Usuario): Promise<Usuario> => {
   params.set('nome', usuario.nome);
   if (usuario.token_gmail) params.set('token_gmail', usuario.token_gmail);
   params.set('ano_ingresso', String(usuario.ano_ingresso));
+  // A API usa `turma` para o ano de ingresso
+  params.set('turma', String(usuario.ano_ingresso));
+  if (usuario.periodo !== undefined && usuario.periodo !== null) params.set('periodo', String(usuario.periodo));
   // Sempre enviar o campo, mesmo vazio
   params.set('url_image_perfil', (usuario.url_image_perfil ?? '').toString());
   params.set('email', usuario.email);
@@ -232,7 +237,11 @@ export const alterarUsuario = async (id: number, usuario: Partial<Usuario>): Pro
   const params = new URLSearchParams();
   if (usuario.nome !== undefined) params.set('nome', usuario.nome);
   if (usuario.token_gmail !== undefined) params.set('token_gmail', usuario.token_gmail);
-  if (usuario.ano_ingresso !== undefined) params.set('ano_ingresso', String(usuario.ano_ingresso));
+  if (usuario.ano_ingresso !== undefined) {
+    params.set('ano_ingresso', String(usuario.ano_ingresso));
+    params.set('turma', String(usuario.ano_ingresso));
+  }
+  if (usuario.periodo !== undefined && usuario.periodo !== null) params.set('periodo', String(usuario.periodo));
   if (usuario.url_image_perfil !== undefined) params.set('url_image_perfil', usuario.url_image_perfil ?? '');
   if (usuario.email !== undefined) params.set('email', usuario.email);
   if (usuario.sede !== undefined && usuario.sede !== null) params.set('sede', String(usuario.sede));
