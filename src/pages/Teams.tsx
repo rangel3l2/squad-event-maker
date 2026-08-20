@@ -141,6 +141,36 @@ export default function Teams() {
         });
         setAllTeams(times);
         setFilteredTeams(times);
+
+        // Alguns endpoints de listagem não retornam os integrantes.
+        // Enriquecemos os times sem integrantes para exibir os avatares nos cards.
+        const faltando = times.filter(
+          (t) => t.id != null && !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
+        );
+        if (faltando.length > 0) {
+          const detalhes = await Promise.all(
+            faltando.slice(0, 30).map(async (t) => {
+              try {
+                const det = await mostrarTime(t.id as number);
+                return { id: t.id, integrantes: (det as any)?.integrantes ?? [] };
+              } catch {
+                return null;
+              }
+            })
+          );
+          const mapa = new Map<number, any[]>();
+          detalhes.forEach((d) => d && mapa.set(d.id as number, d.integrantes));
+          if (mapa.size > 0) {
+            const merge = (lista: Time[]) =>
+              lista.map((t) =>
+                t.id != null && mapa.has(t.id)
+                  ? { ...t, integrantes: mapa.get(t.id) as any }
+                  : t
+              );
+            setAllTeams((prev) => merge(prev));
+            setFilteredTeams((prev) => merge(prev));
+          }
+        }
       } catch (error) {
         console.error("Erro ao carregar times:", error);
       }
