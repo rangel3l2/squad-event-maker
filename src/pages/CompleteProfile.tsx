@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AvatarSelector } from "@/components/teams/AvatarSelector";
 import { SedeSelector } from "@/components/teams/SedeSelector";
-import { NIVEIS_ENSINO } from "@/services/api";
+import { NIVEIS_ENSINO, PERIODOS } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
