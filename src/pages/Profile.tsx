@@ -351,24 +351,39 @@ export default function Profile() {
                               </AlertDialogContent>
                             </AlertDialog>
                           ) : (
-                            <AlertDialog>
+                            <AlertDialog open={leaveTeamDialog.open && leaveTeamDialog.team?.id === team.id} onOpenChange={(open) => { if (!open) { setLeaveTeamDialog({ open: false, team: null }); setLeaveConfirmation(""); } }}>
                               <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm" disabled={isLeavingTeam}>
-                                  <LogOut className="w-4 h-4 mr-2" />
-                                  {isLeavingTeam ? "Saindo..." : "Sair do time"}
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={isLeavingTeam}
+                                  onClick={() => setLeaveTeamDialog({ open: true, team })}
+                                >
+                                  <LogOut className="w-4 h-4" />
+                                  <span className="sr-only sm:not-sr-only sm:ml-2">Sair</span>
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Sair do Time</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Tem certeza que deseja sair do time "{team.name}"?
+                                    Tem certeza que deseja sair do time <span className="font-medium text-foreground">"{team.name}"</span>? Para confirmar, digite o nome completo do time.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
+                                <Input
+                                  value={leaveConfirmation}
+                                  onChange={(e) => setLeaveConfirmation(e.target.value)}
+                                  placeholder="Digite o nome do time"
+                                  autoComplete="off"
+                                />
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleLeaveTeam(Number(team.id))}>
-                                    Sair
+                                  <AlertDialogCancel onClick={() => { setLeaveTeamDialog({ open: false, team: null }); setLeaveConfirmation(""); }}>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={(e) => { e.preventDefault(); handleLeaveTeam(); }}
+                                    disabled={isLeavingTeam || leaveConfirmation.trim().toLowerCase() !== team.name.trim().toLowerCase()}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    {isLeavingTeam ? "Saindo..." : "Sair"}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
