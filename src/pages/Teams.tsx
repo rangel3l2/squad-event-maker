@@ -301,7 +301,7 @@ export default function Teams() {
                   <div className="space-y-3">
                     {pastTeams.map((time) => (
                       <div key={`past-${time.id}`}>
-                        {renderTeamCard(time, false)}
+                        {renderTeamCard(time, false, true)}
                       </div>
                     ))}
                   </div>
