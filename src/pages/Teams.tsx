@@ -388,30 +388,9 @@ export default function Teams() {
                   ) : (
                     <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
                       {filteredTeams.filter((t) => t.id !== myTeam?.id).map((time) => (
-                        <Card
-                          key={time.id}
-                          className="hover:shadow-lg transition-all cursor-pointer hover:scale-105"
-                          onClick={() => navigate(`/team-details/${time.id}`)}
-                        >
-                          <CardHeader className="text-center pb-3">
-                            {time.imagem_time && (
-                              <div className="flex justify-center mb-3">
-                                <img
-                                  src={time.imagem_time}
-                                  alt={`Logo ${time.nome_time}`}
-                                  className="w-24 h-24 object-contain rounded-lg"
-                                />
-                              </div>
-                            )}
-                            <CardTitle className="text-lg">{time.nome_time}</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                              <Users className="w-4 h-4" />
-                              <span>{time.qtd_integrantes ?? time.quantidade ?? 0}/4 membros</span>
-                            </div>
-                          </CardContent>
-                        </Card>
+                        <div key={time.id}>
+                          {renderTeamCard(time, false, false)}
+                        </div>
                       ))}
                     </div>
                   )}
