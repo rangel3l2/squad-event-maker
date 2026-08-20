@@ -24,7 +24,7 @@ const createTeamSchema = z.object({
 type CreateTeamFormData = z.infer<typeof createTeamSchema>;
 
 interface CreateTeamFormProps {
-  onSuccess: () => void;
+  onSuccess: (teamId?: number) => void;
   /** Time de uma edição anterior para pré-preencher o formulário (duplicação) */
   timeParaDuplicar?: Time | null;
 }
@@ -37,6 +37,7 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
   const [sedeId, setSedeId] = useState<number | null>(null);
   const [timesAnteriores, setTimesAnteriores] = useState<Time[]>([]);
   const [inviteCode, setInviteCode] = useState<string>("");
+  const [createdTeamId, setCreatedTeamId] = useState<number | null>(null);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [senhaConvite, setSenhaConvite] = useState("");
@@ -244,6 +245,7 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
       const timeCriado = timesAtualizados.find(t => t.senha_convite === senhaConvite);
 
       if (timeCriado && timeCriado.id) {
+        setCreatedTeamId(Number(timeCriado.id));
         // Adicionar o criador como integrante com função "Líder"
         try {
           await adicionarIntegrante(timeCriado.id, {
@@ -302,6 +304,7 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
               (t.nome_time || "").toLowerCase().trim() === data.name.toLowerCase().trim())
         );
         if (jaCriado) {
+          if (jaCriado.id != null) setCreatedTeamId(Number(jaCriado.id));
           setInviteCode(jaCriado.senha_convite || senhaConvite);
           setShowInviteDialog(true);
           toast.success("Time criado com sucesso!");
@@ -355,7 +358,7 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
 
   const handleDialogClose = () => {
     setShowInviteDialog(false);
-    onSuccess();
+    onSuccess(createdTeamId ?? undefined);
   };
 
   return (

@@ -120,17 +120,17 @@ export const HeroCarousel = () => {
   }, [api, slides.length]);
 
   return (
-    <div className="w-full flex-1 flex flex-col min-h-0">
-      <Carousel setApi={setApi} className="w-full flex-1 group" opts={{ loop: slides.length > 1 }}>
-        <CarouselContent className="h-full">
+    <div className="w-full max-w-5xl mx-auto">
+      <Carousel setApi={setApi} className="w-full group" opts={{ loop: slides.length > 1 }}>
+        <CarouselContent>
           {slides.map((slide, index) => (
-            <CarouselItem key={index} className="h-full">
-              <div className="relative h-full w-full overflow-hidden bg-muted">
+            <CarouselItem key={index}>
+              <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border shadow-card bg-muted">
                 {slide.type === "video" ? (
                   <video
                     ref={videoRef}
                     src={slide.src}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     autoPlay
                     muted
                     playsInline
@@ -145,7 +145,7 @@ export const HeroCarousel = () => {
                   <img
                     src={slide.src}
                     alt={`Copa 2026 - imagem ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                     loading="lazy"
                   />
                 )}
