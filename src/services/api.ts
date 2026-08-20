@@ -666,26 +666,31 @@ export const atualizarTime = async (timeId: number, time: Partial<Time>): Promis
   if (time.nome_time !== undefined) params.set('nome_time', time.nome_time);
   if (time.senha_convite !== undefined) params.set('senha_convite', time.senha_convite);
   if (time.imagem_time !== undefined) params.set('imagem_time', time.imagem_time);
+  if (time.img_logo_pequeno !== undefined) params.set('img_logo_pequeno', time.img_logo_pequeno);
+  if (time.sede !== undefined && time.sede !== null) params.set('sede', String(time.sede));
+  if (time.categoria !== undefined && time.categoria !== null) params.set('categoria', String(time.categoria));
+  if (time.evento !== undefined && time.evento !== null) params.set('evento', String(time.evento));
+  if (time.cor_time !== undefined && time.cor_time !== null) params.set('cor_time', time.cor_time);
 
   console.log("=== API atualizarTime ===");
   console.log("Time ID:", timeId);
   console.log("Dados para atualizar:", time);
-  console.log("URLSearchParams:", params.toString());
+  console.log("Query:", params.toString());
 
-  const response = await makeRequest(`/times/${timeId}`, {
+  // A rota oficial de atualização é PUT /times/{id}/atualizar (parâmetros via query string)
+  const response = await makeRequest(`/times/${timeId}/atualizar?${params.toString()}`, {
     method: "PUT",
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
   });
-  
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error("Erro da API:", errorText);
     throw new Error(`Erro ao atualizar time: ${response.status} - ${errorText}`);
   }
-  
+
   return response.json();
 };
+
 
 export const deletarUsuario = async (usuarioId: number, confirmacao: string) => {
   console.log("=== DELETANDO USUÁRIO ===");
