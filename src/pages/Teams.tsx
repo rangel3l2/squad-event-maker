@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, PlusCircle, AlertCircle, Search, History } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, listarTimes, listarSedesPorEvento, EVENTO_ATUAL, buscarTimesPorDono, type Sede, type Time } from "@/services/api";
+import { listarUsuarios, listarTimes, listarSedesPorEvento, EVENTO_ATUAL, buscarTimesPorDono, type Sede, type Time, type Usuario } from "@/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Teams() {
