@@ -42,6 +42,7 @@ export default function Teams() {
       try {
         // Verificar perfil completo via API
         const usuarios = await listarUsuarios();
+        setUsuarios(usuarios);
         const usuario = usuarios.find(u => u.email === user.email);
 
         if (!usuario) {
