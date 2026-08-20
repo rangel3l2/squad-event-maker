@@ -10,7 +10,7 @@ import { Users, PlusCircle, AlertCircle, Search, History } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, listarTimes, listarSedesPorEvento, mostrarTime, EVENTO_ATUAL, buscarTimesPorDono, type Sede, type Time, type Usuario } from "@/services/api";
+import { listarUsuarios, listarTimes, listarSedesPorEvento, mostrarTime, EVENTO_ATUAL, type Sede, type Time, type Usuario } from "@/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Teams() {
