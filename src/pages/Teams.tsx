@@ -29,6 +29,7 @@ export default function Teams() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [sedeFiltro, setSedeFiltro] = useState<string>("todas");
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
 
   useEffect(() => {
     if (!user) {
