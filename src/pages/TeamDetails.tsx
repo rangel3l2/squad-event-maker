@@ -15,6 +15,8 @@ import { listarUsuarios, mostrarTime, sairDoTime, transferirDono, deletarTime, a
 import CodeViewer from "@/components/CodeViewer";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { TeamColorManager } from "@/components/teams/TeamColorManager";
+import { EditTeamDialog } from "@/components/teams/EditTeamDialog";
+
 import { EVENTO_ATUAL } from "@/services/api";
 
 export default function TeamDetails() {
