@@ -604,9 +604,8 @@ export const sairDoTime = async (timeId: number, usuarioId: number) => {
       console.log("Transferindo liderança para:", novoLiderId);
       
       // Atualizar o dono do time
-      await atualizarTime(timeId, {
-        dono_id: novoLiderId
-      });
+      await transferirDono(timeId, novoLiderId);
+
       
       console.log("Liderança transferida com sucesso");
       
