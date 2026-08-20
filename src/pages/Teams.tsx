@@ -346,12 +346,6 @@ export default function Teams() {
                     Meu Time
                   </h2>
                   {renderTeamCard(myTeam, true, true)}
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="text-xs">
-                      Você já está neste time nesta edição. Para trocar, saia do time atual primeiro.
-                    </AlertDescription>
-                  </Alert>
                 </div>
               )}
 
