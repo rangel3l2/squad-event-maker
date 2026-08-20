@@ -21,6 +21,7 @@ export default function Teams() {
   const [hasTeam, setHasTeam] = useState(false);
   const [currentTeamName, setCurrentTeamName] = useState<string>("");
   const [myTeam, setMyTeam] = useState<Time | null>(null);
+  const [pastTeams, setPastTeams] = useState<Time[]>([]);
   const [allTeams, setAllTeams] = useState<Time[]>([]);
   const [filteredTeams, setFilteredTeams] = useState<Time[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
