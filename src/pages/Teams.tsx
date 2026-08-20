@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { Users, PlusCircle, AlertCircle, Search } from "lucide-react";
+import { Users, PlusCircle, AlertCircle, Search, History } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
