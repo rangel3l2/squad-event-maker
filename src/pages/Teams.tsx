@@ -282,7 +282,7 @@ export default function Teams() {
                     <Users className="w-5 h-5 text-primary" />
                     Meu Time
                   </h2>
-                  {renderTeamCard(myTeam, true)}
+                  {renderTeamCard(myTeam, true, true)}
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription className="text-xs">
