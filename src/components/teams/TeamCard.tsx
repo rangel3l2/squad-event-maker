@@ -8,6 +8,7 @@ interface TeamCardProps {
   usuarios?: Usuario[];
   isCurrent?: boolean;
   compact?: boolean;
+  variant?: "row" | "column";
   onClick?: () => void;
 }
 
@@ -40,11 +41,76 @@ export const TeamCard = ({
   usuarios = [],
   isCurrent = false,
   compact = false,
+  variant = "row",
   onClick,
 }: TeamCardProps) => {
   const cor = time.cor_time || time.cor_base || "hsl(var(--primary))";
   const membros = getMembrosDoTime(time, usuarios);
   const totalMembros = time.qtd_integrantes ?? (time as any).quantidade ?? membros.length ?? 0;
+
+  const avatarSize = compact ? "w-5 h-5" : variant === "column" ? "w-8 h-8" : "w-6 h-6";
+  const logoSize = compact ? "w-10 h-10" : variant === "column" ? "w-12 h-12" : "w-14 h-14";
+
+  const logoBlock = time.imagem_time ? (
+    <div className="relative flex-shrink-0">
+      <div
+        className="absolute inset-0 rounded-lg blur-sm opacity-40"
+        style={{ backgroundColor: cor }}
+      />
+      <img
+        src={time.imagem_time}
+        alt={`Bandeira ${time.nome_time}`}
+        className={`relative object-contain rounded-lg flex-shrink-0 bg-card/80 border border-white/10 ${logoSize}`}
+      />
+    </div>
+  ) : (
+    <div
+      className={`flex-shrink-0 rounded-lg flex items-center justify-center bg-muted ${logoSize}`}
+    >
+      <Users className={`text-muted-foreground ${compact ? "w-5 h-5" : "w-7 h-7"}`} />
+    </div>
+  );
+
+  const infoBlock = (
+    <div className="flex-1 min-w-0 text-left">
+      <p className={`font-bold truncate ${compact ? "text-sm" : variant === "column" ? "text-lg" : "text-base"}`}>
+        {time.nome_time}
+      </p>
+      <p className="text-xs text-muted-foreground flex items-center gap-1">
+        <Users className="w-3 h-3" />
+        {totalMembros}/4
+      </p>
+      {!isCurrent && time.evento != null && (
+        <p className="text-xs text-muted-foreground">Edição {time.evento}</p>
+      )}
+    </div>
+  );
+
+  const membersBlock = (
+    <div className="flex flex-nowrap -space-x-2 overflow-hidden pl-1">
+      {membros.slice(0, 4).map((m, idx) => (
+        <Avatar
+          key={idx}
+          className={`inline-block ring-2 ring-background ${avatarSize}`}
+        >
+          <AvatarImage src={m.url_image_perfil} alt="" />
+          <AvatarFallback className="text-[9px] bg-muted">
+            {m.nome?.charAt(0).toUpperCase() || "?"}
+          </AvatarFallback>
+        </Avatar>
+      ))}
+      {membros.length > 4 && (
+        <div
+          className={`flex items-center justify-center rounded-full bg-muted ring-2 ring-background text-[9px] font-medium ${avatarSize}`}
+        >
+          +{membros.length - 4}
+        </div>
+      )}
+      {membros.length === 0 && totalMembros > 0 && (
+        <span className="text-[10px] text-muted-foreground">{totalMembros} membro(s)</span>
+      )}
+    </div>
+  );
 
   return (
     <Card
@@ -58,70 +124,21 @@ export const TeamCard = ({
       onClick={onClick}
     >
       <div className="h-1.5 w-full" style={{ backgroundColor: cor }} />
-      <CardContent className={`flex items-center gap-3 ${compact ? "py-3 px-3" : "py-5 px-4"}`}>
-        {time.imagem_time ? (
-          <div className="relative flex-shrink-0">
-            <div
-              className="absolute inset-0 rounded-lg blur-sm opacity-40"
-              style={{ backgroundColor: cor }}
-            />
-            <img
-              src={time.imagem_time}
-              alt={`Bandeira ${time.nome_time}`}
-              className={`relative object-contain rounded-lg flex-shrink-0 bg-card/80 border border-white/10 ${
-                compact ? "w-10 h-10" : "w-14 h-14"
-              }`}
-            />
+      {variant === "column" ? (
+        <CardContent className="flex flex-col gap-4 py-5 px-4">
+          <div className="flex items-center gap-3">
+            {logoBlock}
+            {infoBlock}
           </div>
-        ) : (
-          <div
-            className={`flex-shrink-0 rounded-lg flex items-center justify-center bg-muted ${
-              compact ? "w-10 h-10" : "w-14 h-14"
-            }`}
-          >
-            <Users className={`text-muted-foreground ${compact ? "w-5 h-5" : "w-7 h-7"}`} />
-          </div>
-        )}
-
-        <div className="flex-1 min-w-0 text-left">
-          <p className={`font-bold truncate ${compact ? "text-sm" : "text-base"}`}>
-            {time.nome_time}
-          </p>
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            {totalMembros}/4
-          </p>
-          {!isCurrent && time.evento != null && (
-            <p className="text-xs text-muted-foreground">Edição {time.evento}</p>
-          )}
-        </div>
-
-        <div className="flex flex-nowrap -space-x-1.5 overflow-hidden pl-1">
-          {membros.slice(0, 4).map((m, idx) => (
-            <Avatar
-              key={idx}
-              className={`inline-block ring-2 ring-background ${compact ? "w-5 h-5" : "w-6 h-6"}`}
-            >
-              <AvatarImage src={m.url_image_perfil} alt="" />
-              <AvatarFallback className="text-[7px] bg-muted">
-                {m.nome?.charAt(0).toUpperCase() || "?"}
-              </AvatarFallback>
-            </Avatar>
-          ))}
-          {membros.length > 4 && (
-            <div
-              className={`flex items-center justify-center rounded-full bg-muted ring-2 ring-background text-[7px] font-medium ${
-                compact ? "w-5 h-5" : "w-6 h-6"
-              }`}
-            >
-              +{membros.length - 4}
-            </div>
-          )}
-          {membros.length === 0 && totalMembros > 0 && (
-            <span className="text-[10px] text-muted-foreground">{totalMembros} membro(s)</span>
-          )}
-        </div>
-      </CardContent>
+          <div className="pt-1 border-t border-border/40">{membersBlock}</div>
+        </CardContent>
+      ) : (
+        <CardContent className={`flex items-center gap-3 ${compact ? "py-3 px-3" : "py-5 px-4"}`}>
+          {logoBlock}
+          {infoBlock}
+          {membersBlock}
+        </CardContent>
+      )}
     </Card>
   );
 };
