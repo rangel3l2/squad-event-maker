@@ -152,30 +152,20 @@ export default function Profile() {
     }
   };
 
-  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
-  const handleLeaveTeam = async () => {
-    toast.info("Funcionalidade de sair do time temporariamente desativada");
-    return;
-    
-    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
+  const handleLeaveTeam = async (teamId: number) => {
     if (!userId || !teamId) return;
 
     setIsLeavingTeam(true);
     try {
       const resultado = await sairDoTime(teamId, userId);
-      
-      toast.success(resultado.message);
-      setCurrentTeam(null);
-      
-      setTimeout(() => {
-        navigate("/teams");
-      }, 1000);
+      toast.success(resultado?.message || "Você saiu do time");
+      setUserTeams((prev) => prev.filter((t) => String(t.id) !== String(teamId)));
     } catch (error: any) {
+      console.error("Erro ao sair do time:", error);
       toast.error("Erro ao sair do time: " + error.message);
     } finally {
       setIsLeavingTeam(false);
     }
-    */
   };
 
   const handleDeleteAccount = async () => {
@@ -206,31 +196,21 @@ export default function Profile() {
   };
 
 
-  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
-  const handleDeleteTeam = async () => {
-    toast.info("Funcionalidade de deletar time temporariamente desativada");
-    return;
-    
-    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
+  const handleDeleteTeam = async (teamId: number) => {
     if (!teamId) return;
 
     setIsDeletingTeam(true);
     try {
       await deletarTime(teamId);
-      
       toast.success("Time deletado com sucesso!");
-      setCurrentTeam(null);
-      
-      setTimeout(() => {
-        navigate("/teams");
-      }, 1000);
+      setUserTeams((prev) => prev.filter((t) => String(t.id) !== String(teamId)));
+      setPastTeams((prev) => prev.filter((t) => String(t.id) !== String(teamId)));
     } catch (error: any) {
       console.error("Erro ao deletar time:", error);
       toast.error("Erro ao deletar time: " + error.message);
     } finally {
       setIsDeletingTeam(false);
     }
-    */
   };
 
   return (
@@ -299,7 +279,7 @@ export default function Profile() {
               <CardContent>
                 <div className="space-y-4">
                   {userTeams.map((team) => {
-                    const isCaptain = user && team.captain_id === user.id;
+                    const isCaptain = userId != null && String(team.captain_id) === String(userId);
                     return (
                       <div
                         key={team.id}
@@ -332,48 +312,53 @@ export default function Profile() {
                             Ver time
                           </Button>
 
-                          {/* DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada */}
-                          {isCaptain && (
+                          {isCaptain ? (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm" disabled={true}>
+                                <Button variant="destructive" size="sm" disabled={isDeletingTeam}>
                                   <Trash2 className="w-4 h-4 mr-2" />
-                                  Deletar (Desativado)
+                                  {isDeletingTeam ? "Deletando..." : "Deletar time"}
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Deletar Time</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Funcionalidade temporariamente desativada.
+                                    Tem certeza que deseja deletar o time "{team.name}"? Essa ação não pode ser desfeita e removerá todos os integrantes.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Fechar</AlertDialogCancel>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteTeam(Number(team.id))}>
+                                    Deletar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          ) : (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" disabled={isLeavingTeam}>
+                                  <LogOut className="w-4 h-4 mr-2" />
+                                  {isLeavingTeam ? "Saindo..." : "Sair do time"}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Sair do Time</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja sair do time "{team.name}"?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleLeaveTeam(Number(team.id))}>
+                                    Sair
+                                  </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
-
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="sm" disabled={true}>
-                                <LogOut className="w-4 h-4 mr-2" />
-                                Sair (Desativado)
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Sair do Time</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Funcionalidade temporariamente desativada.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Fechar</AlertDialogCancel>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
                         </div>
                       </div>
                     );
