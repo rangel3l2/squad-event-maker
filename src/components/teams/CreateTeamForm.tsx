@@ -248,9 +248,11 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
         try {
           await adicionarIntegrante(timeCriado.id, {
             usuario_id: usuario.id,
-            funcao: "Líder"
+            funcao: "Líder",
+            evento: EVENTO_ATUAL,
           });
         } catch (integranteError: any) {
+
           // Pode já ter sido adicionado automaticamente pela API
           console.warn("Não foi possível adicionar o líder (talvez já exista):", integranteError);
         }

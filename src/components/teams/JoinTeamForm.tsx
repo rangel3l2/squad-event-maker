@@ -89,9 +89,11 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
       const integranteData = {
         usuario_id: usuario.id,
         funcao: "Membro",
+        evento: timeEncontrado.evento ?? undefined,
       };
       
       const resultado = await adicionarIntegrante(timeEncontrado.id!, integranteData);
+
 
       toast.success(`Você entrou no time "${timeEncontrado.nome_time}" com sucesso!`);
       form.reset();

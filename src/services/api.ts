@@ -136,7 +136,10 @@ export interface Time {
 export interface Integrante {
   usuario_id: number;
   funcao: string;
+  /** Código do evento ao qual o vínculo do integrante pertence */
+  evento?: number;
 }
+
 
 export interface Dinamica {
   evento: string;
@@ -494,6 +497,9 @@ export const adicionarIntegrante = async (timeId: number, integrante: Integrante
   const params = new URLSearchParams();
   params.set('usuario_id', String(integrante.usuario_id));
   if (integrante.funcao) params.set('funcao', integrante.funcao);
+  if (integrante.evento !== undefined && integrante.evento !== null) {
+    params.set('evento', String(integrante.evento));
+  }
   console.log("Body (form):", params.toString());
 
   const response = await makeRequest(`/times/${timeId}/integrantes`, {
@@ -501,6 +507,7 @@ export const adicionarIntegrante = async (timeId: number, integrante: Integrante
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: params.toString(),
   });
+
   
   console.log("Status da resposta:", response.status);
   
