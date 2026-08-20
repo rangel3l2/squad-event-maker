@@ -610,6 +610,57 @@ export default function TeamDetails() {
           </CardHeader>
         </Card>
 
+        {/* Código de convite — sempre visível para membros */}
+        {isUserInTeam && time.senha_convite && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <KeyRound className="w-4 h-4 text-primary" />
+                    Código do time
+                  </div>
+                  <p className="font-mono text-2xl font-bold tracking-widest">
+                    {time.senha_convite}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Compartilhe com quem você quer no time.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(time.senha_convite!);
+                      toast.success("Código copiado!");
+                    }}
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copiar
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      const texto = `Bora jogar comigo na Frontend Teams Cup! 🏆\nTime: ${time.nome_time}\nCódigo de convite: ${time.senha_convite}\n${window.location.origin}/teams/${time.id}`;
+                      window.open(
+                        `https://wa.me/?text=${encodeURIComponent(texto)}`,
+                        "_blank",
+                        "noopener,noreferrer"
+                      );
+                    }}
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Compartilhar
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+
+
         {/* Cor do Time (apenas líder) */}
         {isUserInTeam && isLeader && time.id && time.dono_id && (
           <TeamColorManager
