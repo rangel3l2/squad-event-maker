@@ -192,9 +192,10 @@ export const TeamsDashboard = () => {
         </div>
       ) : (
         <Carousel
+          setApi={setCarouselApi}
           plugins={[Autoplay({ delay: 3000, stopOnInteraction: true })]}
           opts={{ align: "start", loop: true }}
-          className="w-full"
+          className="w-full px-10 md:px-12"
         >
           <CarouselContent>
             {times.map((time) => (
@@ -210,8 +211,8 @@ export const TeamsDashboard = () => {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="left-2" />
-          <CarouselNext className="right-2" />
+          {canScrollPrev && <CarouselPrevious className="left-0 md:-left-2" />}
+          {canScrollNext && <CarouselNext className="right-0 md:-right-2" />}
         </Carousel>
       )}
     </div>
