@@ -216,7 +216,7 @@ export default function Teams() {
         onClick={() => time.id != null && navigate(`/team-details/${time.id}`)}
       >
         <div className="h-1.5 w-full" style={{ backgroundColor: cor }} />
-        <CardContent className={`flex items-center gap-3 ${compact ? "py-3 px-3" : "py-4 px-4"}`}>
+        <CardContent className={`flex items-center gap-3 ${compact ? "py-3 px-3" : "py-5 px-4"}`}>
           {time.imagem_time ? (
             <div className="relative flex-shrink-0">
               <div
@@ -248,21 +248,21 @@ export default function Teams() {
             )}
           </div>
 
-          <div className="flex -space-x-2 overflow-hidden pl-1">
+          <div className="flex flex-nowrap -space-x-1.5 overflow-hidden pl-1">
             {membros.slice(0, 4).map((m, idx) => (
               <Avatar
                 key={idx}
-                className={`inline-block ring-2 ring-background ${compact ? "w-6 h-6" : "w-8 h-8"}`}
+                className={`inline-block ring-2 ring-background ${compact ? "w-5 h-5" : "w-6 h-6"}`}
               >
                 <AvatarImage src={m.url_image_perfil} alt="" />
-                <AvatarFallback className="text-[8px] bg-muted">
+                <AvatarFallback className="text-[7px] bg-muted">
                   {m.nome?.charAt(0).toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
             ))}
             {membros.length > 4 && (
               <div
-                className={`flex items-center justify-center rounded-full bg-muted ring-2 ring-background text-[8px] font-medium ${compact ? "w-6 h-6" : "w-8 h-8"}`}
+                className={`flex items-center justify-center rounded-full bg-muted ring-2 ring-background text-[7px] font-medium ${compact ? "w-5 h-5" : "w-6 h-6"}`}
               >
                 +{membros.length - 4}
               </div>
