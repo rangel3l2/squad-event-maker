@@ -376,7 +376,9 @@ export default function TeamDetails() {
       await adicionarIntegrante(time.id!, {
         usuario_id: usuario.id!,
         funcao: "Membro",
+        evento: time.evento ?? EVENTO_ATUAL,
       });
+
 
       toast.success(`Você entrou no time "${time.nome_time}" com sucesso!`);
       
