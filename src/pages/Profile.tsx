@@ -152,30 +152,20 @@ export default function Profile() {
     }
   };
 
-  // DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada
-  const handleLeaveTeam = async () => {
-    toast.info("Funcionalidade de sair do time temporariamente desativada");
-    return;
-    
-    /* CÓDIGO ORIGINAL - Para reativar, descomente e remova o return acima
+  const handleLeaveTeam = async (teamId: number) => {
     if (!userId || !teamId) return;
 
     setIsLeavingTeam(true);
     try {
       const resultado = await sairDoTime(teamId, userId);
-      
-      toast.success(resultado.message);
-      setCurrentTeam(null);
-      
-      setTimeout(() => {
-        navigate("/teams");
-      }, 1000);
+      toast.success(resultado?.message || "Você saiu do time");
+      setUserTeams((prev) => prev.filter((t) => String(t.id) !== String(teamId)));
     } catch (error: any) {
+      console.error("Erro ao sair do time:", error);
       toast.error("Erro ao sair do time: " + error.message);
     } finally {
       setIsLeavingTeam(false);
     }
-    */
   };
 
   const handleDeleteAccount = async () => {
