@@ -174,7 +174,7 @@ export function CreateTeamForm({ onSuccess, timeParaDuplicar = null }: CreateTea
       return;
     }
 
-    if (!nivelUsuario) {
+    if (nivelUsuario === null || nivelUsuario === undefined) {
       toast.error("Seu cadastro não tem nível de ensino definido", {
         description: "Informe se você é do Ensino Médio ou da Graduação antes de criar um time.",
       });
