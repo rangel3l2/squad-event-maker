@@ -15,6 +15,8 @@ import { listarUsuarios, mostrarTime, sairDoTime, transferirDono, deletarTime, a
 import CodeViewer from "@/components/CodeViewer";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { TeamColorManager } from "@/components/teams/TeamColorManager";
+import { EditTeamDialog } from "@/components/teams/EditTeamDialog";
+
 import { EVENTO_ATUAL } from "@/services/api";
 
 export default function TeamDetails() {
@@ -473,9 +475,11 @@ export default function TeamDetails() {
               )}
               <CardTitle className="text-3xl">{time.nome_time}</CardTitle>
               
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap justify-center">
                 {isUserInTeam && isLeader && (
                   <>
+                    <EditTeamDialog time={time} onUpdated={(t) => setTime(t)} />
+
                     
                     <Dialog open={showTransferDialog} onOpenChange={setShowTransferDialog}>
                       <DialogTrigger asChild>
