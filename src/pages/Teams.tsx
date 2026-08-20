@@ -193,8 +193,11 @@ export default function Teams() {
 
   const getMembrosDoTime = (time: Time) => {
     const integrantes = Array.isArray(time.integrantes) ? time.integrantes : [];
-    return integrantes
-      .map((i: any) => usuarios.find((u) => u.id === (i.usuario_id ?? i.id)))
+    const ids = integrantes.map((i: any) => i.usuario_id ?? i.id);
+    // Garante que o dono apareça mesmo que a API não o liste como integrante
+    if (time.dono_id != null && !ids.includes(time.dono_id)) ids.unshift(time.dono_id);
+    return ids
+      .map((id) => usuarios.find((u) => u.id === id))
       .filter((u): u is Usuario => !!u);
   };
 
