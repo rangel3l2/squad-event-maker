@@ -56,6 +56,8 @@ export default function Profile() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
+  const [leaveTeamDialog, setLeaveTeamDialog] = useState<{ open: boolean; team: TeamInfo | null }>({ open: false, team: null });
+  const [leaveConfirmation, setLeaveConfirmation] = useState("");
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
