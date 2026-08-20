@@ -184,6 +184,7 @@ export const TeamsDashboard = () => {
                   <TeamCard
                     time={time}
                     usuarios={usuarios}
+                    variant="column"
                     onClick={() => time.id != null && navigate(`/team-details/${time.id}`)}
                   />
                 </div>
