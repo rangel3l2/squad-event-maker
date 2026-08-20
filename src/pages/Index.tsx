@@ -139,23 +139,14 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
-      {/* Hero Section */}
-      <section className="py-20 px-4 text-center bg-gradient-to-b from-background to-card">
-        <div className="max-w-5xl mx-auto space-y-8">
-          {events.length > 0 && events[0].edition && (
-            <p className="text-2xl md:text-3xl font-semibold text-primary mb-4">
-              {events[0].edition}
-            </p>
-          )}
+
+      {/* Hero Section - vídeo em tela cheia */}
+      <section className="relative flex flex-col -mt-16 pt-16 min-h-screen text-center bg-gradient-to-b from-background to-card overflow-hidden">
+        <div className="flex-1 flex flex-col w-full h-full">
           <HeroCarousel />
-          <div className="flex justify-center overflow-hidden px-2">
-            <p className="typewriter-text text-xl md:text-2xl text-muted-foreground max-w-full">
-              A maior competição de futebol entre turmas de desenvolvimento web
-            </p>
-          </div>
         </div>
       </section>
+
 
       {/* CTA Section - Cadastre-se Agora - Apenas para não cadastrados */}
       {!checkingUser && !isUserRegistered && (
