@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import { Users, PlusCircle, AlertCircle, Search } from "lucide-react";
+import { Users, PlusCircle, AlertCircle, Search, History } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +21,7 @@ export default function Teams() {
   const [hasTeam, setHasTeam] = useState(false);
   const [currentTeamName, setCurrentTeamName] = useState<string>("");
   const [myTeam, setMyTeam] = useState<Time | null>(null);
+  const [pastTeams, setPastTeams] = useState<Time[]>([]);
   const [allTeams, setAllTeams] = useState<Time[]>([]);
   const [filteredTeams, setFilteredTeams] = useState<Time[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,46 +50,55 @@ export default function Teams() {
         console.log("=== VERIFICANDO SE USUÁRIO JÁ ESTÁ EM UM TIME DESTE EVENTO ===");
         console.log("ID do usuário:", usuario.id, "Evento atual:", EVENTO_ATUAL);
 
-        // Verificar se é dono de algum time no evento atual
+        // Buscar todos os times do usuário em todos os eventos
+        let currentTeam: Time | null = null;
+        const previousTeams: Time[] = [];
+
+        // Verificar se é dono de algum time em qualquer evento
         try {
-          const timesDoDono = await buscarTimesPorDono(usuario.id!, EVENTO_ATUAL);
-          const timeAtual = timesDoDono.find(t => Number(t.evento) === Number(EVENTO_ATUAL));
-          
-          if (timeAtual && timeAtual.id != null) {
-            console.log("Usuário é DONO do time neste evento:", timeAtual.nome_time);
-            setHasTeam(true);
-            setCurrentTeamName(timeAtual.nome_time || "");
-            setMyTeam(timeAtual);
-            return;
+          const timesDoDono = await buscarTimesPorDono(usuario.id!, null);
+          for (const t of timesDoDono) {
+            if (t.id == null) continue;
+            if (Number(t.evento) === Number(EVENTO_ATUAL)) {
+              currentTeam = t;
+            } else {
+              previousTeams.push(t);
+            }
           }
         } catch (error) {
-          console.log("Usuário não é dono de nenhum time neste evento");
+          console.log("Usuário não é dono de nenhum time");
         }
 
-        // Verificar se é integrante de algum time no evento atual
-        const times = await listarTimes({ evento: EVENTO_ATUAL });
-        console.log("Total de times do evento atual:", times.length);
-        
-        for (const time of times) {
+        // Verificar se é integrante de algum time em qualquer evento
+        const todosOsTimes = await listarTimes({ evento: null });
+        for (const time of todosOsTimes) {
           const integrantes = time.integrantes || [];
-          console.log(`Time "${time.nome_time}" tem ${integrantes.length} integrantes`);
-          
           const ehIntegrante = integrantes.some(
             (integrante: any) => integrante.usuario_id === usuario.id
           );
-          
-          if (ehIntegrante) {
-            console.log("Usuário é INTEGRANTE do time neste evento:", time.nome_time);
-            setHasTeam(true);
-            setCurrentTeamName(time.nome_time);
-            setMyTeam(time);
-            return;
+          if (!ehIntegrante) continue;
+
+          if (Number(time.evento) === Number(EVENTO_ATUAL)) {
+            if (!currentTeam) currentTeam = time;
+          } else {
+            if (!previousTeams.some((t) => t.id === time.id)) {
+              previousTeams.push(time);
+            }
           }
         }
 
-        console.log("Usuário NÃO está em nenhum time neste evento");
-        setHasTeam(false);
-        setMyTeam(null);
+        if (currentTeam) {
+          console.log("Usuário está no time deste evento:", currentTeam.nome_time);
+          setHasTeam(true);
+          setCurrentTeamName(currentTeam.nome_time || "");
+          setMyTeam(currentTeam);
+        } else {
+          console.log("Usuário NÃO está em nenhum time neste evento");
+          setHasTeam(false);
+          setMyTeam(null);
+        }
+
+        setPastTeams(previousTeams);
       } catch (error) {
         console.error("Error checking profile:", error);
       }
@@ -148,79 +158,37 @@ export default function Teams() {
     }
   }, [searchTerm, allTeams]);
 
+  const renderTeamCard = (time: Time, isCurrent: boolean) => (
+    <Card
+      className={`hover:shadow-lg transition-all cursor-pointer ${isCurrent ? "border-primary/40" : ""}`}
+      onClick={() => time.id != null && navigate(`/team-details/${time.id}`)}
+    >
+      <CardContent className="flex items-center gap-3 py-4">
+        {time.imagem_time && (
+          <img
+            src={time.imagem_time}
+            alt={`Logo ${time.nome_time}`}
+            className="w-12 h-12 object-contain rounded-lg flex-shrink-0"
+          />
+        )}
+        <div className="flex-1 min-w-0 text-left">
+          <p className="font-semibold truncate">{time.nome_time}</p>
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <Users className="w-3 h-3" />
+            {time.qtd_integrantes ?? time.quantidade ?? 0}/4 membros
+          </p>
+          {!isCurrent && time.evento != null && (
+            <p className="text-xs text-muted-foreground">Edição {time.evento}</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8">
-        {mode === "select" && (
-          <>
-            {hasTeam ? (
-              <div className="max-w-3xl mx-auto space-y-4">
-                <h2 className="text-2xl font-bold flex items-center gap-2">
-                  <Users className="w-6 h-6 text-primary" />
-                  Meu Time
-                </h2>
-                <Card
-                  className="border-primary/40 hover:shadow-lg transition-all cursor-pointer"
-                  onClick={() => myTeam?.id != null && navigate(`/team-details/${myTeam.id}`)}
-                >
-                  <CardContent className="flex items-center gap-4 py-6">
-                    {myTeam?.imagem_time && (
-                      <img
-                        src={myTeam.imagem_time}
-                        alt={`Logo ${currentTeamName}`}
-                        className="w-20 h-20 object-contain rounded-lg"
-                      />
-                    )}
-                    <div className="flex-1 text-left">
-                      <p className="text-xl font-bold">{currentTeamName}</p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        {myTeam?.qtd_integrantes ?? myTeam?.quantidade ?? 0}/4 membros
-                      </p>
-                    </div>
-                    <Button variant="outline">Ver time</Button>
-                  </CardContent>
-                </Card>
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Você já está neste time nesta edição da Copa. Para entrar em outro time ou criar um novo, primeiro saia do seu time atual.
-                  </AlertDescription>
-                </Alert>
-              </div>
-            ) : (
-              <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("join")}>
-                  <CardHeader>
-                    <Users className="w-12 h-12 mb-4 text-primary" />
-                    <CardTitle>Entrar em um Time</CardTitle>
-                    <CardDescription>
-                      Escolha um time existente e cadastre suas informações para participar
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button className="w-full">Selecionar</Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("create")}>
-                  <CardHeader>
-                    <PlusCircle className="w-12 h-12 mb-4 text-primary" />
-                    <CardTitle>Criar Novo Time</CardTitle>
-                    <CardDescription>
-                      Crie seu próprio time com logo, nome e informações personalizadas
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button className="w-full">Criar Time</Button>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </>
-        )}
-
         {mode === "create" && (
           <div className="max-w-2xl mx-auto">
             <Button variant="outline" onClick={() => setMode("select")} className="mb-4">
@@ -246,84 +214,154 @@ export default function Teams() {
           </div>
         )}
 
-        {/* Lista de Times Cadastrados */}
-        <div className="max-w-6xl mx-auto mt-12">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <Users className="w-6 h-6" />
-                {hasTeam ? "Outros Times" : "Times Cadastrados"}
-              </CardTitle>
-              <CardDescription>
-                Times do evento atual. O filtro começa na sua sede, mas você pode ver as outras.
-              </CardDescription>
-              <div className="pt-3">
-                <Select value={sedeFiltro} onValueChange={setSedeFiltro}>
-                  <SelectTrigger className="w-full sm:w-[320px]">
-                    <SelectValue placeholder="Filtrar por sede" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todas">Todas as sedes</SelectItem>
-                    {sedes.map((sede) => (
-                      <SelectItem key={sede.id} value={String(sede.id)}>
-                        {sede.nome_campus} — {sede.cidade}/{sede.uf}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {/* Campo de busca */}
-              <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <Input
-                  type="text"
-                  placeholder="Buscar time pelo nome..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-
-              {/* Grid de Times */}
-              {filteredTeams.filter((t) => t.id !== myTeam?.id).length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  {searchTerm ? "Nenhum time encontrado com esse nome" : "Nenhum time cadastrado ainda"}
-                </p>
-              ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredTeams.filter((t) => t.id !== myTeam?.id).map((time) => (
-                    <Card
-                      key={time.id}
-                      className="hover:shadow-lg transition-all cursor-pointer hover:scale-105"
-                      onClick={() => navigate(`/team-details/${time.id}`)}
-                    >
-                      <CardHeader className="text-center pb-3">
-                        {time.imagem_time && (
-                          <div className="flex justify-center mb-3">
-                            <img
-                              src={time.imagem_time}
-                              alt={`Logo ${time.nome_time}`}
-                              className="w-24 h-24 object-contain rounded-lg"
-                            />
-                          </div>
-                        )}
-                        <CardTitle className="text-lg">{time.nome_time}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                          <Users className="w-4 h-4" />
-                          <span>{time.qtd_integrantes ?? time.quantidade ?? 0}/4 membros</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+        {mode === "select" && (
+          <div className="max-w-7xl mx-auto grid lg:grid-cols-4 gap-6 items-start">
+            {/* Sidebar - Meu Time */}
+            <aside className="lg:col-span-1 space-y-6">
+              {hasTeam && myTeam && (
+                <div className="space-y-3">
+                  <h2 className="text-lg font-bold flex items-center gap-2">
+                    <Users className="w-5 h-5 text-primary" />
+                    Meu Time
+                  </h2>
+                  {renderTeamCard(myTeam, true)}
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-xs">
+                      Você já está neste time nesta edição. Para trocar, saia do time atual primeiro.
+                    </AlertDescription>
+                  </Alert>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
+
+              {pastTeams.length > 0 && (
+                <div className="space-y-3">
+                  <h2 className="text-lg font-bold flex items-center gap-2">
+                    <History className="w-5 h-5 text-primary" />
+                    Eventos anteriores
+                  </h2>
+                  <div className="space-y-3">
+                    {pastTeams.map((time) => (
+                      <div key={`past-${time.id}`}>
+                        {renderTeamCard(time, false)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </aside>
+
+            {/* Conteúdo principal */}
+            <section className="lg:col-span-3 space-y-8">
+              {!hasTeam && (
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("join")}>
+                    <CardHeader>
+                      <Users className="w-12 h-12 mb-4 text-primary" />
+                      <CardTitle>Entrar em um Time</CardTitle>
+                      <CardDescription>
+                        Escolha um time existente e cadastre suas informações para participar
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button className="w-full">Selecionar</Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("create")}>
+                    <CardHeader>
+                      <PlusCircle className="w-12 h-12 mb-4 text-primary" />
+                      <CardTitle>Criar Novo Time</CardTitle>
+                      <CardDescription>
+                        Crie seu próprio time com logo, nome e informações personalizadas
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button className="w-full">Criar Time</Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Lista de Times Cadastrados */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-2xl flex items-center gap-2">
+                    <Users className="w-6 h-6" />
+                    {hasTeam ? "Outros Times" : "Times Cadastrados"}
+                  </CardTitle>
+                  <CardDescription>
+                    Times do evento atual. O filtro começa na sua sede, mas você pode ver as outras.
+                  </CardDescription>
+                  <div className="pt-3">
+                    <Select value={sedeFiltro} onValueChange={setSedeFiltro}>
+                      <SelectTrigger className="w-full sm:w-[320px]">
+                        <SelectValue placeholder="Filtrar por sede" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todas">Todas as sedes</SelectItem>
+                        {sedes.map((sede) => (
+                          <SelectItem key={sede.id} value={String(sede.id)}>
+                            {sede.nome_campus} — {sede.cidade}/{sede.uf}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {/* Campo de busca */}
+                  <div className="relative mb-6">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                    <Input
+                      type="text"
+                      placeholder="Buscar time pelo nome..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+
+                  {/* Grid de Times */}
+                  {filteredTeams.filter((t) => t.id !== myTeam?.id).length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      {searchTerm ? "Nenhum time encontrado com esse nome" : "Nenhum time cadastrado ainda"}
+                    </p>
+                  ) : (
+                    <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {filteredTeams.filter((t) => t.id !== myTeam?.id).map((time) => (
+                        <Card
+                          key={time.id}
+                          className="hover:shadow-lg transition-all cursor-pointer hover:scale-105"
+                          onClick={() => navigate(`/team-details/${time.id}`)}
+                        >
+                          <CardHeader className="text-center pb-3">
+                            {time.imagem_time && (
+                              <div className="flex justify-center mb-3">
+                                <img
+                                  src={time.imagem_time}
+                                  alt={`Logo ${time.nome_time}`}
+                                  className="w-24 h-24 object-contain rounded-lg"
+                                />
+                              </div>
+                            )}
+                            <CardTitle className="text-lg">{time.nome_time}</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                              <Users className="w-4 h-4" />
+                              <span>{time.qtd_integrantes ?? time.quantidade ?? 0}/4 membros</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+          </div>
+        )}
       </main>
     </div>
   );
