@@ -140,8 +140,8 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero Section - vídeo em tela cheia */}
-      <section className="relative flex flex-col -mt-16 pt-16 min-h-screen text-center bg-gradient-to-b from-background to-card overflow-hidden">
+      {/* Hero Section - vídeo ajustado */}
+      <section className="relative flex flex-col -mt-20 pt-20 h-[80vh] text-center bg-gradient-to-b from-background to-card overflow-hidden">
         <div className="flex-1 flex flex-col w-full h-full">
           <HeroCarousel />
         </div>
