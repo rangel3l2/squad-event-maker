@@ -10,7 +10,7 @@ import { Users, PlusCircle, AlertCircle, Search, History } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, listarTimes, listarSedesPorEvento, mostrarTime, EVENTO_ATUAL, type Sede, type Time, type Usuario } from "@/services/api";
+import { listarUsuarios, listarTimes, listarSedesPorEvento, mostrarTime, mostrarTimeUsuario, EVENTO_ATUAL, type Sede, type Time, type Usuario } from "@/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Teams() {
@@ -53,10 +53,19 @@ export default function Teams() {
         console.log("=== VERIFICANDO SE USUÁRIO JÁ ESTÁ EM UM TIME DESTE EVENTO ===");
         console.log("ID do usuário:", usuario.id, "Evento atual:", EVENTO_ATUAL);
 
-        // Buscar todos os times do usuário em todos os eventos
+        // A rota específica do usuário é a fonte principal para o time atual.
+        // A listagem geral nem sempre inclui os integrantes e não deve decidir
+        // sozinha se o usuário pertence ou não a um time.
         let currentTeam: Time | null = null;
         const previousTeams: Time[] = [];
         const meuId = Number(usuario.id);
+
+        try {
+          const timeAtual = await mostrarTimeUsuario(meuId, EVENTO_ATUAL);
+          if (timeAtual?.id != null) currentTeam = timeAtual;
+        } catch (error) {
+          console.info("Usuário sem time retornado pela rota específica neste evento", error);
+        }
 
         // Todos os times de todos os eventos
         let todosOsTimes: Time[] = [];
@@ -98,12 +107,12 @@ export default function Teams() {
         for (const time of todosOsTimes) {
           if (time.id == null) continue;
           const ehDono = Number(time.dono_id) === meuId;
-          const ehIntegrante = (time.integrantes || []).some(
-            (integrante: any) => Number(integrante.usuario_id) === meuId
+          const ehIntegrante = (time.integrantes || []).some((integrante: any) =>
+            Number(integrante.usuario_id ?? integrante.usuario?.id ?? integrante.id) === meuId
           );
           if (!ehDono && !ehIntegrante) continue;
 
-          if (Number(time.evento) === Number(EVENTO_ATUAL)) {
+           if (Number(time.evento) === Number(EVENTO_ATUAL)) {
             if (!currentTeam) currentTeam = time;
           } else if (!previousTeams.some((t) => t.id === time.id)) {
             previousTeams.push(time);

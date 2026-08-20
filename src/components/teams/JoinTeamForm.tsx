@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { KeyRound } from "lucide-react";
-import { adicionarIntegrante, listarUsuarios, listarTimes } from "@/services/api";
+import { adicionarIntegrante, listarUsuarios, listarTimes, EVENTO_ATUAL } from "@/services/api";
 
 const joinTeamSchema = z.object({
   inviteCode: z.string().trim().min(1, "Digite o código de convite"),
@@ -89,7 +89,7 @@ export function JoinTeamForm({ onSuccess }: JoinTeamFormProps) {
       const integranteData = {
         usuario_id: usuario.id,
         funcao: "Membro",
-        evento: timeEncontrado.evento ?? undefined,
+        evento: timeEncontrado.evento ?? EVENTO_ATUAL,
       };
       
       const resultado = await adicionarIntegrante(timeEncontrado.id!, integranteData);

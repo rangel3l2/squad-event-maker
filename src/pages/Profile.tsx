@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { AlertCircle, Users, LogOut, Edit, Trash2, Trophy, History, Copy } from "lucide-react";
-import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, NIVEIS_ENSINO, PERIODOS, type Time } from "@/services/api";
+import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, mostrarTime, mostrarTimeUsuario, EVENTO_ATUAL, NIVEIS_ENSINO, PERIODOS, type Time } from "@/services/api";
 
 const currentYear = new Date().getFullYear();
 
@@ -92,11 +92,41 @@ export default function Profile() {
           // Buscar todos os times do usuário (em todos os eventos)
           try {
             const todosOsTimes = await listarTimes({ evento: null });
-            const timesDoUsuario = todosOsTimes.filter((t: Time) => {
-              if (t.dono_id === usuario.id) return true;
-              const integrantes = t.integrantes || [];
-              return integrantes.some((i: any) => i.usuario_id === usuario.id);
+            const semIntegrantes = todosOsTimes.filter(
+              (t) => t.id != null && !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
+            );
+            const detalhes = await Promise.all(
+              semIntegrantes.slice(0, 40).map(async (t) => {
+                try {
+                  return await mostrarTime(Number(t.id));
+                } catch {
+                  return null;
+                }
+              })
+            );
+            const detalhesPorId = new Map(
+              detalhes.filter((t): t is Time => t?.id != null).map((t) => [Number(t.id), t])
+            );
+            const timesComIntegrantes = todosOsTimes.map((t) => {
+              const detalhe = t.id != null ? detalhesPorId.get(Number(t.id)) : undefined;
+              return detalhe ? { ...t, ...detalhe } : t;
             });
+            const timesDoUsuario = timesComIntegrantes.filter((t: Time) => {
+              if (Number(t.dono_id) === Number(usuario.id)) return true;
+              const integrantes = t.integrantes || [];
+              return integrantes.some((i: any) => Number(i.usuario_id ?? i.usuario?.id) === Number(usuario.id));
+            });
+
+            // A rota dedicada identifica com segurança o vínculo recém-criado,
+            // mesmo quando GET /times ainda retorna a listagem sem integrantes.
+            try {
+              const timeAtual = await mostrarTimeUsuario(Number(usuario.id), EVENTO_ATUAL);
+              if (timeAtual?.id != null && !timesDoUsuario.some((t) => Number(t.id) === Number(timeAtual.id))) {
+                timesDoUsuario.unshift(timeAtual);
+              }
+            } catch {
+              // Sem vínculo no evento atual; os times anteriores continuam válidos.
+            }
 
             const anteriores = timesDoUsuario.filter(
               (t: Time) => t.evento != null && Number(t.evento) !== Number(EVENTO_ATUAL)
