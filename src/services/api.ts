@@ -11,12 +11,30 @@ const getAuthToken = async (): Promise<string | null> => {
   return session?.access_token || null;
 };
 
-// Sends the user back to Google sign-in, remembering where they were.
+// Renova a autorização com o Google de forma silenciosa (sem tela de "sessão
+// expirada"): o usuário volta exatamente para a página onde estava.
+const REAUTH_GUARD_KEY = 'ftc_silent_reauth_at';
 const redirectToReauth = () => {
   if (window.location.pathname === '/auth') return;
-  const next = encodeURIComponent(window.location.pathname + window.location.search);
-  window.location.assign(`/auth?reauth=1&next=${next}`);
+
+  // Evita loop de redirecionamento caso o Google/API continue recusando.
+  const last = Number(sessionStorage.getItem(REAUTH_GUARD_KEY) || 0);
+  const here = window.location.pathname + window.location.search;
+  if (last && Date.now() - last < 60_000) {
+    window.location.assign(`/auth?reauth=1&next=${encodeURIComponent(here)}`);
+    return;
+  }
+  sessionStorage.setItem(REAUTH_GUARD_KEY, String(Date.now()));
+
+  void supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/auth?next=${encodeURIComponent(here)}`,
+      queryParams: { access_type: 'offline' },
+    },
+  });
 };
+
 
 // Make authenticated request through edge function proxy
 const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Promise<Response> => {
@@ -66,8 +84,12 @@ const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Pr
     redirectToReauth();
     throw new ApiReauthenticationRequiredError();
   }
-  
+
+  // Deu certo: zera o guarda de renovação silenciosa.
+  sessionStorage.removeItem(REAUTH_GUARD_KEY);
+
   return response;
+
 };
 
 
