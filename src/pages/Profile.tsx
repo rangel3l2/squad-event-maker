@@ -279,7 +279,7 @@ export default function Profile() {
               <CardContent>
                 <div className="space-y-4">
                   {userTeams.map((team) => {
-                    const isCaptain = user && team.captain_id === user.id;
+                    const isCaptain = userId != null && String(team.captain_id) === String(userId);
                     return (
                       <div
                         key={team.id}
