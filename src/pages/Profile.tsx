@@ -312,48 +312,53 @@ export default function Profile() {
                             Ver time
                           </Button>
 
-                          {/* DESATIVADO TEMPORARIAMENTE - Persistência de dados bloqueada */}
-                          {isCaptain && (
+                          {isCaptain ? (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm" disabled={true}>
+                                <Button variant="destructive" size="sm" disabled={isDeletingTeam}>
                                   <Trash2 className="w-4 h-4 mr-2" />
-                                  Deletar (Desativado)
+                                  {isDeletingTeam ? "Deletando..." : "Deletar time"}
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Deletar Time</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Funcionalidade temporariamente desativada.
+                                    Tem certeza que deseja deletar o time "{team.name}"? Essa ação não pode ser desfeita e removerá todos os integrantes.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Fechar</AlertDialogCancel>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteTeam(Number(team.id))}>
+                                    Deletar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          ) : (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm" disabled={isLeavingTeam}>
+                                  <LogOut className="w-4 h-4 mr-2" />
+                                  {isLeavingTeam ? "Saindo..." : "Sair do time"}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Sair do Time</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja sair do time "{team.name}"?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleLeaveTeam(Number(team.id))}>
+                                    Sair
+                                  </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
-
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="sm" disabled={true}>
-                                <LogOut className="w-4 h-4 mr-2" />
-                                Sair (Desativado)
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Sair do Time</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Funcionalidade temporariamente desativada.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Fechar</AlertDialogCancel>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
                         </div>
                       </div>
                     );
