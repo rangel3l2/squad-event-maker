@@ -16,13 +16,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { AlertCircle, Users, LogOut, Edit, Trash2, Trophy, History, Copy } from "lucide-react";
-import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, NIVEIS_ENSINO, type Time } from "@/services/api";
+import { listarUsuarios, alterarUsuario, sairDoTime, deletarTime, deletarUsuario, listarTimes, EVENTO_ATUAL, NIVEIS_ENSINO, PERIODOS, type Time } from "@/services/api";
 
 const currentYear = new Date().getFullYear();
 
 const profileSchema = z.object({
   fullName: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
   nivel: z.string().min(1, "Selecione o nível de ensino"),
+  periodo: z.string().min(1, "Selecione o período"),
   anoIngresso: z.string().min(1, "Informe o ano de ingresso").refine(
     (v) => {
       const year = parseInt(v);
@@ -61,6 +62,7 @@ export default function Profile() {
     defaultValues: {
       fullName: "",
       nivel: "",
+      periodo: "",
       anoIngresso: String(currentYear),
     },
   });
@@ -80,6 +82,7 @@ export default function Profile() {
           setUserId(usuario.id!);
           form.setValue('fullName', usuario.nome || '');
           form.setValue('nivel', usuario.nivel !== undefined && usuario.nivel !== null ? String(usuario.nivel) : '');
+          form.setValue('periodo', usuario.periodo !== undefined && usuario.periodo !== null ? String(usuario.periodo) : '');
           form.setValue('anoIngresso', usuario.ano_ingresso ? String(usuario.ano_ingresso) : String(currentYear));
           setAvatarUrl(usuario.url_image_perfil || '');
           if (usuario.sede !== undefined && usuario.sede !== null) setSedeId(Number(usuario.sede));
@@ -136,6 +139,7 @@ export default function Profile() {
         sede: sedeId,
         nome: data.fullName.trim(),
         ano_ingresso: parseInt(data.anoIngresso),
+        periodo: parseInt(data.periodo),
         nivel: parseInt(data.nivel),
         categoria: parseInt(data.nivel),
         url_image_perfil: avatarUrl,
@@ -441,6 +445,30 @@ export default function Profile() {
                         <p className="text-sm text-muted-foreground">
                           Ano em que você ingressou no curso.
                         </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+
+                  <FormField
+                    control={form.control}
+                    name="periodo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Período *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o período" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {PERIODOS.map((p) => (
+                              <SelectItem key={p.value} value={String(p.value)}>{p.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

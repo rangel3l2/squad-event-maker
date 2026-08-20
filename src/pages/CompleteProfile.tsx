@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AvatarSelector } from "@/components/teams/AvatarSelector";
 import { SedeSelector } from "@/components/teams/SedeSelector";
-import { NIVEIS_ENSINO } from "@/services/api";
+import { NIVEIS_ENSINO, PERIODOS } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -19,6 +19,7 @@ const currentYear = new Date().getFullYear();
 const profileSchema = z.object({
   fullName: z.string().trim().min(3, "Nome completo deve ter pelo menos 3 caracteres").max(100, "Nome deve ter no máximo 100 caracteres"),
   nivel: z.string().min(1, "Selecione o nível de ensino"),
+  periodo: z.string().min(1, "Selecione o período"),
   anoIngresso: z.string().min(1, "Informe o ano de ingresso").refine(
     (v) => {
       const year = parseInt(v);
@@ -42,6 +43,7 @@ export default function CompleteProfile() {
     defaultValues: {
       fullName: "",
       nivel: "",
+      periodo: "",
       anoIngresso: String(currentYear),
     },
   });
@@ -91,6 +93,7 @@ export default function CompleteProfile() {
         nome: data.fullName.trim(),
         token_gmail: user.email,
         ano_ingresso: parseInt(data.anoIngresso),
+        periodo: parseInt(data.periodo),
         email: user.email,
         url_image_perfil: avatarUrl || "",
         sede: sedeId,
@@ -195,6 +198,30 @@ export default function CompleteProfile() {
                     <p className="text-sm text-muted-foreground">
                       Ano em que você ingressou no curso.
                     </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+
+              <FormField
+                control={form.control}
+                name="periodo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Período *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o período" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {PERIODOS.map((p) => (
+                          <SelectItem key={p.value} value={String(p.value)}>{p.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
