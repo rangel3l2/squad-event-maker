@@ -20,6 +20,7 @@ export default function Teams() {
   const [mode, setMode] = useState<"select" | "create" | "join">(timeParaDuplicar ? "create" : "select");
   const [hasTeam, setHasTeam] = useState(false);
   const [currentTeamName, setCurrentTeamName] = useState<string>("");
+  const [myTeam, setMyTeam] = useState<Time | null>(null);
   const [allTeams, setAllTeams] = useState<Time[]>([]);
   const [filteredTeams, setFilteredTeams] = useState<Time[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -57,6 +58,7 @@ export default function Teams() {
             console.log("Usuário é DONO do time neste evento:", timeAtual.nome_time);
             setHasTeam(true);
             setCurrentTeamName(timeAtual.nome_time || "");
+            setMyTeam(timeAtual);
             return;
           }
         } catch (error) {
@@ -79,12 +81,14 @@ export default function Teams() {
             console.log("Usuário é INTEGRANTE do time neste evento:", time.nome_time);
             setHasTeam(true);
             setCurrentTeamName(time.nome_time);
+            setMyTeam(time);
             return;
           }
         }
 
         console.log("Usuário NÃO está em nenhum time neste evento");
         setHasTeam(false);
+        setMyTeam(null);
       } catch (error) {
         console.error("Error checking profile:", error);
       }
@@ -151,11 +155,37 @@ export default function Teams() {
         {mode === "select" && (
           <>
             {hasTeam ? (
-              <div className="max-w-2xl mx-auto">
+              <div className="max-w-3xl mx-auto space-y-4">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <Users className="w-6 h-6 text-primary" />
+                  Meu Time
+                </h2>
+                <Card
+                  className="border-primary/40 hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() => myTeam?.id != null && navigate(`/team-details/${myTeam.id}`)}
+                >
+                  <CardContent className="flex items-center gap-4 py-6">
+                    {myTeam?.imagem_time && (
+                      <img
+                        src={myTeam.imagem_time}
+                        alt={`Logo ${currentTeamName}`}
+                        className="w-20 h-20 object-contain rounded-lg"
+                      />
+                    )}
+                    <div className="flex-1 text-left">
+                      <p className="text-xl font-bold">{currentTeamName}</p>
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        {myTeam?.qtd_integrantes ?? myTeam?.quantidade ?? 0}/4 membros
+                      </p>
+                    </div>
+                    <Button variant="outline">Ver time</Button>
+                  </CardContent>
+                </Card>
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-lg">
-                    Você já está no time "{currentTeamName}" nesta edição da Copa. Para entrar em outro time ou criar um novo nesta edição, primeiro saia do seu time atual.
+                  <AlertDescription>
+                    Você já está neste time nesta edição da Copa. Para entrar em outro time ou criar um novo, primeiro saia do seu time atual.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -196,9 +226,10 @@ export default function Teams() {
             <Button variant="outline" onClick={() => setMode("select")} className="mb-4">
               ← Voltar
             </Button>
-            <CreateTeamForm timeParaDuplicar={timeParaDuplicar} onSuccess={() => {
+            <CreateTeamForm timeParaDuplicar={timeParaDuplicar} onSuccess={(teamId) => {
               setMode("select");
-              setRefreshKey(prev => prev + 1); // Força atualização da lista
+              setRefreshKey(prev => prev + 1);
+              if (teamId != null) navigate(`/team-details/${teamId}`);
             }} />
           </div>
         )}
@@ -221,7 +252,7 @@ export default function Teams() {
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Users className="w-6 h-6" />
-                Times Cadastrados
+                {hasTeam ? "Outros Times" : "Times Cadastrados"}
               </CardTitle>
               <CardDescription>
                 Times do evento atual. O filtro começa na sua sede, mas você pode ver as outras.
