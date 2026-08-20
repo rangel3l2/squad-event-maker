@@ -50,46 +50,55 @@ export default function Teams() {
         console.log("=== VERIFICANDO SE USUÁRIO JÁ ESTÁ EM UM TIME DESTE EVENTO ===");
         console.log("ID do usuário:", usuario.id, "Evento atual:", EVENTO_ATUAL);
 
-        // Verificar se é dono de algum time no evento atual
+        // Buscar todos os times do usuário em todos os eventos
+        let currentTeam: Time | null = null;
+        const previousTeams: Time[] = [];
+
+        // Verificar se é dono de algum time em qualquer evento
         try {
-          const timesDoDono = await buscarTimesPorDono(usuario.id!, EVENTO_ATUAL);
-          const timeAtual = timesDoDono.find(t => Number(t.evento) === Number(EVENTO_ATUAL));
-          
-          if (timeAtual && timeAtual.id != null) {
-            console.log("Usuário é DONO do time neste evento:", timeAtual.nome_time);
-            setHasTeam(true);
-            setCurrentTeamName(timeAtual.nome_time || "");
-            setMyTeam(timeAtual);
-            return;
+          const timesDoDono = await buscarTimesPorDono(usuario.id!, null);
+          for (const t of timesDoDono) {
+            if (t.id == null) continue;
+            if (Number(t.evento) === Number(EVENTO_ATUAL)) {
+              currentTeam = t;
+            } else {
+              previousTeams.push(t);
+            }
           }
         } catch (error) {
-          console.log("Usuário não é dono de nenhum time neste evento");
+          console.log("Usuário não é dono de nenhum time");
         }
 
-        // Verificar se é integrante de algum time no evento atual
-        const times = await listarTimes({ evento: EVENTO_ATUAL });
-        console.log("Total de times do evento atual:", times.length);
-        
-        for (const time of times) {
+        // Verificar se é integrante de algum time em qualquer evento
+        const todosOsTimes = await listarTimes({ evento: null });
+        for (const time of todosOsTimes) {
           const integrantes = time.integrantes || [];
-          console.log(`Time "${time.nome_time}" tem ${integrantes.length} integrantes`);
-          
           const ehIntegrante = integrantes.some(
             (integrante: any) => integrante.usuario_id === usuario.id
           );
-          
-          if (ehIntegrante) {
-            console.log("Usuário é INTEGRANTE do time neste evento:", time.nome_time);
-            setHasTeam(true);
-            setCurrentTeamName(time.nome_time);
-            setMyTeam(time);
-            return;
+          if (!ehIntegrante) continue;
+
+          if (Number(time.evento) === Number(EVENTO_ATUAL)) {
+            if (!currentTeam) currentTeam = time;
+          } else {
+            if (!previousTeams.some((t) => t.id === time.id)) {
+              previousTeams.push(time);
+            }
           }
         }
 
-        console.log("Usuário NÃO está em nenhum time neste evento");
-        setHasTeam(false);
-        setMyTeam(null);
+        if (currentTeam) {
+          console.log("Usuário está no time deste evento:", currentTeam.nome_time);
+          setHasTeam(true);
+          setCurrentTeamName(currentTeam.nome_time || "");
+          setMyTeam(currentTeam);
+        } else {
+          console.log("Usuário NÃO está em nenhum time neste evento");
+          setHasTeam(false);
+          setMyTeam(null);
+        }
+
+        setPastTeams(previousTeams);
       } catch (error) {
         console.error("Error checking profile:", error);
       }
