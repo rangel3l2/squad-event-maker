@@ -232,18 +232,6 @@ export default function Teams() {
     loadTeams();
   }, [refreshKey, sedeFiltro]); // Recarrega quando refreshKey ou sede mudar
 
-  // Filtrar times conforme busca
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredTeams(allTeams);
-    } else {
-      const filtered = allTeams.filter(time =>
-        time.nome_time.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredTeams(filtered);
-    }
-  }, [searchTerm, allTeams]);
-
   const getMembrosDoTime = (time: Time) => {
     const integrantes = Array.isArray(time.integrantes) ? time.integrantes : [];
     const ids = integrantes.map((i: any) => i.usuario_id ?? i.id);
