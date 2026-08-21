@@ -70,13 +70,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Drop any stale API/provider token so the callback always exchanges a fresh one.
     clearApiAuth();
 
+    // Depois de um logout explícito, forçamos a tela de escolha de conta do Google.
+    const forceSelect = localStorage.getItem(FORCE_ACCOUNT_PICKER_KEY) === "1";
+    localStorage.removeItem(FORCE_ACCOUNT_PICKER_KEY);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo,
-        // access_type=offline garante novo provider_token; sem prompt=consent
-        // a renovação é silenciosa quando o usuário já está logado no Google.
-        queryParams: { access_type: 'offline' },
+        queryParams: forceSelect
+          ? { access_type: 'offline', prompt: 'select_account consent' }
+          : { access_type: 'offline' },
       },
     });
 
@@ -85,8 +89,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     clearApiAuth();
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch {
+      // segue com a limpeza local mesmo se a chamada remota falhar
+    }
+    clearBrowserAuthState();
+    localStorage.setItem(FORCE_ACCOUNT_PICKER_KEY, "1");
+    // Recarrega para descartar qualquer estado em memória.
+    window.location.replace("/auth");
   };
+
 
   return (
     <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signOut }}>
