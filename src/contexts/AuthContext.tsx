@@ -15,6 +15,44 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const FORCE_ACCOUNT_PICKER_KEY = "ftc_force_account_picker";
+
+/** Remove sessão Supabase, tokens e qualquer cache local do usuário. */
+const clearBrowserAuthState = () => {
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (key === FORCE_ACCOUNT_PICKER_KEY) continue;
+      if (
+        key.startsWith("sb-") ||
+        key.startsWith("supabase.") ||
+        key.startsWith("ftc_") ||
+        key.startsWith("lovable")
+      ) {
+        localStorage.removeItem(key);
+      }
+    }
+    sessionStorage.clear();
+  } catch {
+    // storage indisponível
+  }
+  // Cookies não-HttpOnly do domínio atual
+  try {
+    for (const cookie of document.cookie.split(";")) {
+      const name = cookie.split("=")[0]?.trim();
+      if (!name) continue;
+      const parts = window.location.hostname.split(".");
+      const domains = ["", window.location.hostname];
+      for (let i = 0; i < parts.length - 1; i++) domains.push("." + parts.slice(i).join("."));
+      for (const d of domains) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${d ? `; domain=${d}` : ""}`;
+      }
+    }
+  } catch {
+    // ignore
+  }
+};
+
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
