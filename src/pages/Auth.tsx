@@ -6,6 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { listarUsuarios } from "@/services/api";
 import { getApiToken, ensureApiToken } from "@/services/apiAuth";
 import { toast } from "sonner";
+import logoAsset from "@/assets/logodeitadoFigurinha.png.asset.json";
+
+const logoCopa = logoAsset.url;
 
 const safeNext = (value: string | null) =>
   value && value.startsWith("/") && !value.startsWith("//") ? value : null;
@@ -74,7 +77,11 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-lg mx-auto mb-4" />
+          <img
+            src={logoCopa}
+            alt="Frontend Teams Cup Logo"
+            className="h-20 w-auto object-contain mx-auto mb-4 animate-fade-in"
+          />
           <CardTitle className="text-3xl font-bold">Frontend Teams Cup</CardTitle>
           <CardDescription>
             {requiresReauthentication
