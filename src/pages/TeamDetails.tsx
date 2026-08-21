@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { listarUsuarios, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, buscarTodasSubmissoesDinamica, buscarTimesPorDono, type Usuario, type Time, type Dinamica, type ArquivoDinamica, type SubmissaoDinamica } from "@/services/api";
 import CodeViewer from "@/components/CodeViewer";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { TeamColorManager } from "@/components/teams/TeamColorManager";
 import { EditTeamDialog } from "@/components/teams/EditTeamDialog";
 
 import { EVENTO_ATUAL } from "@/services/api";
@@ -661,17 +660,35 @@ export default function TeamDetails() {
 
 
 
-        {/* Cor do Time (apenas líder) */}
-        {isUserInTeam && isLeader && time.id && time.dono_id && (
-          <TeamColorManager
-            timeId={time.id}
-            donoId={time.dono_id}
-            sedeId={time.sede ?? null}
-            evento={time.evento ?? EVENTO_ATUAL}
-            corAtualId={time.cor_id ?? null}
-            corAtual={time.cor_time ?? time.cor_base ?? null}
-            onUpdated={() => window.location.reload()}
-          />
+        {/* Cor do Time — visualização elegante da cor escolhida */}
+        {time.cor_time && (
+          <Card
+            className="overflow-hidden"
+            style={{
+              borderColor: `${time.cor_time}40`,
+              backgroundImage: `linear-gradient(135deg, ${time.cor_time}15 0%, transparent 55%)`,
+            }}
+          >
+            <CardContent className="py-6">
+              <div className="flex flex-col sm:flex-row items-center gap-5">
+                <div
+                  className="w-20 h-20 rounded-2xl border-2 shadow-lg flex-shrink-0"
+                  style={{
+                    backgroundColor: time.cor_time,
+                    borderColor: `${time.cor_time}80`,
+                    boxShadow: `0 8px 24px -6px ${time.cor_time}60`,
+                  }}
+                />
+                <div className="text-center sm:text-left space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Cor do Time</p>
+                  <p className="text-2xl font-bold tracking-tight">{time.nome_time}</p>
+                  <p className="font-mono text-sm text-muted-foreground">
+                    {time.cor_time.toUpperCase()}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
 

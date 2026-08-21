@@ -15,7 +15,8 @@ import {
 import { Pencil } from "lucide-react";
 import { TeamLogoUploader } from "./TeamLogoUploader";
 import { SedeSelector } from "./SedeSelector";
-import { atualizarTime, listarTimes, EVENTO_ATUAL, type Time } from "@/services/api";
+import { TeamColorPicker, type CorSelecionada } from "./TeamColorPicker";
+import { atualizarTime, definirCorTime, listarTimes, EVENTO_ATUAL, type Time } from "@/services/api";
 
 interface EditTeamDialogProps {
   time: Time;
@@ -28,6 +29,7 @@ export function EditTeamDialog({ time, onUpdated }: EditTeamDialogProps) {
   const [logoUrl, setLogoUrl] = useState(time.imagem_time ?? "");
   const [miniLogoUrl, setMiniLogoUrl] = useState(time.img_logo_pequeno ?? "");
   const [sedeId, setSedeId] = useState<number | null>(time.sede ?? null);
+  const [cor, setCor] = useState<CorSelecionada | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -36,6 +38,16 @@ export function EditTeamDialog({ time, onUpdated }: EditTeamDialogProps) {
     setLogoUrl(time.imagem_time ?? "");
     setMiniLogoUrl(time.img_logo_pequeno ?? "");
     setSedeId(time.sede ?? null);
+    // Inicializa a cor apenas se o time já tiver uma cor definida
+    if (time.cor_id && time.cor_time) {
+      setCor({
+        cor_id: time.cor_id,
+        cor_base: time.cor_base ?? time.cor_time,
+        cor_time: time.cor_time,
+      });
+    } else {
+      setCor(null);
+    }
   }, [open, time]);
 
   const evento = time.evento ?? EVENTO_ATUAL;
@@ -87,6 +99,15 @@ export function EditTeamDialog({ time, onUpdated }: EditTeamDialogProps) {
         evento,
       });
 
+      // Se a cor foi alterada, salva via rota dedicada de cor
+      if (cor && (cor.cor_id !== time.cor_id || cor.cor_time !== time.cor_time)) {
+        await definirCorTime(time.id!, {
+          dono_id: time.dono_id!,
+          cor_id: cor.cor_id,
+          cor_time: cor.cor_time,
+        });
+      }
+
       toast.success("Dados do time atualizados!");
       setOpen(false);
       onUpdated({
@@ -95,6 +116,9 @@ export function EditTeamDialog({ time, onUpdated }: EditTeamDialogProps) {
         imagem_time: logoUrl,
         img_logo_pequeno: miniLogoUrl,
         sede: sedeId,
+        cor_id: cor?.cor_id ?? time.cor_id,
+        cor_base: cor?.cor_base ?? time.cor_base,
+        cor_time: cor?.cor_time ?? time.cor_time,
       });
     } catch (error: any) {
       const msg = String(error?.message ?? "");
@@ -148,6 +172,16 @@ export function EditTeamDialog({ time, onUpdated }: EditTeamDialogProps) {
           />
 
           <SedeSelector value={sedeId} onChange={setSedeId} evento={evento} />
+
+          <div className="space-y-3">
+            <TeamColorPicker
+              sedeId={sedeId}
+              evento={evento}
+              value={cor}
+              onChange={setCor}
+              corAtualId={time.cor_id ?? null}
+            />
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="edit-codigo-time">Código de convite (não editável)</Label>
