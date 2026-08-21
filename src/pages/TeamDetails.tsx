@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { listarUsuarios, mostrarTime, sairDoTime, transferirDono, deletarTime, adicionarIntegrante, listarTimes, buscarDinamicasTime, buscarImagensDinamica, buscarGifDinamica, buscarTodasSubmissoesDinamica, buscarTimesPorDono, type Usuario, type Time, type Dinamica, type ArquivoDinamica, type SubmissaoDinamica } from "@/services/api";
 import CodeViewer from "@/components/CodeViewer";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { TeamColorManager } from "@/components/teams/TeamColorManager";
 import { EditTeamDialog } from "@/components/teams/EditTeamDialog";
 
 import { EVENTO_ATUAL } from "@/services/api";
