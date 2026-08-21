@@ -6,6 +6,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { listarUsuarios } from "@/services/api";
 import { getApiToken, ensureApiToken } from "@/services/apiAuth";
 import { toast } from "sonner";
+import logoAsset from "@/assets/logodeitadoFigurinha.png.asset.json";
+
+const logoCopa = logoAsset.url;
 
 const safeNext = (value: string | null) =>
   value && value.startsWith("/") && !value.startsWith("//") ? value : null;
