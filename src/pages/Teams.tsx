@@ -28,6 +28,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EventSwitcher } from "@/components/EventSwitcher";
 
 export default function Teams() {
   const navigate = useNavigate();
@@ -240,7 +241,10 @@ export default function Teams() {
             evento: EVENTO_ATUAL,
             sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
           }),
-          listarUsuariosSemTime(),
+          listarUsuariosSemTime({
+            evento: EVENTO_ATUAL,
+            sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
+          }),
         ]);
 
         // Enriquece times incompletos sem integrantes
@@ -510,6 +514,14 @@ export default function Teams() {
                   </Card>
                 </div>
               )}
+
+              {/* Seletor de edição (evento) */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Mostrando dados da edição:
+                </span>
+                <EventSwitcher />
+              </div>
 
               {/* Abas de categorias */}
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
