@@ -12,6 +12,7 @@ import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { listarUsuarios, listarTimes, listarSedesPorEvento, mostrarTime, mostrarTimeUsuario, EVENTO_ATUAL, type Sede, type Time, type Usuario } from "@/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Teams() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function Teams() {
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [sedeFiltro, setSedeFiltro] = useState<string>("todas");
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -134,6 +136,8 @@ export default function Teams() {
         setPastTeams(previousTeams);
       } catch (error) {
         console.error("Error checking profile:", error);
+      } finally {
+        setProfileLoading(false);
       }
     };
 
@@ -339,7 +343,14 @@ export default function Teams() {
           <div className="max-w-7xl mx-auto grid lg:grid-cols-4 gap-6 items-start">
             {/* Sidebar - Meu Time */}
             <aside className="lg:col-span-1 space-y-6">
-              {hasTeam && myTeam && (
+              {profileLoading && (
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-24 w-full rounded-lg" />
+                </div>
+              )}
+
+              {!profileLoading && hasTeam && myTeam && (
                 <div className="space-y-3">
                   <h2 className="text-lg font-bold flex items-center gap-2">
                     <Users className="w-5 h-5 text-primary" />
@@ -368,7 +379,7 @@ export default function Teams() {
 
             {/* Conteúdo principal */}
             <section className="lg:col-span-3 space-y-8">
-              {!hasTeam && (
+              {!profileLoading && !hasTeam && (
                 <div className="grid md:grid-cols-2 gap-6">
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("join")}>
                     <CardHeader>
@@ -438,7 +449,13 @@ export default function Teams() {
                   </div>
 
                   {/* Grid de Times */}
-                  {filteredTeams.filter((t) => t.id !== myTeam?.id).length === 0 ? (
+                  {profileLoading ? (
+                    <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <Skeleton key={i} className="h-28 w-full rounded-lg" />
+                      ))}
+                    </div>
+                  ) : filteredTeams.filter((t) => t.id !== myTeam?.id).length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
                       {searchTerm ? "Nenhum time encontrado com esse nome" : "Nenhum time cadastrado ainda"}
                     </p>
