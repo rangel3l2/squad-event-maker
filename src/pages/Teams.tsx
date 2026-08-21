@@ -379,7 +379,7 @@ export default function Teams() {
 
             {/* Conteúdo principal */}
             <section className="lg:col-span-3 space-y-8">
-              {!hasTeam && (
+              {!profileLoading && !hasTeam && (
                 <div className="grid md:grid-cols-2 gap-6">
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("join")}>
                     <CardHeader>
