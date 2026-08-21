@@ -135,6 +135,8 @@ export default function Teams() {
         setPastTeams(previousTeams);
       } catch (error) {
         console.error("Error checking profile:", error);
+      } finally {
+        setProfileLoading(false);
       }
     };
 
