@@ -6,13 +6,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, PlusCircle, Search, History } from "lucide-react";
+import { Users, PlusCircle, Search, History, UserX, UserPlus } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, listarTimes, listarSedesPorEvento, mostrarTime, mostrarTimeUsuario, EVENTO_ATUAL, type Sede, type Time, type Usuario } from "@/services/api";
+import {
+  listarUsuarios,
+  listarTimes,
+  listarTimesIncompletos,
+  listarUsuariosSemTime,
+  listarSedesPorEvento,
+  mostrarTime,
+  mostrarTimeUsuario,
+  EVENTO_ATUAL,
+  labelNivel,
+  labelPeriodo,
+  type Sede,
+  type Time,
+  type Usuario,
+} from "@/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Teams() {
   const navigate = useNavigate();
