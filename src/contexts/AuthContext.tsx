@@ -15,6 +15,44 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const FORCE_ACCOUNT_PICKER_KEY = "ftc_force_account_picker";
+
+/** Remove sessão Supabase, tokens e qualquer cache local do usuário. */
+const clearBrowserAuthState = () => {
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (key === FORCE_ACCOUNT_PICKER_KEY) continue;
+      if (
+        key.startsWith("sb-") ||
+        key.startsWith("supabase.") ||
+        key.startsWith("ftc_") ||
+        key.startsWith("lovable")
+      ) {
+        localStorage.removeItem(key);
+      }
+    }
+    sessionStorage.clear();
+  } catch {
+    // storage indisponível
+  }
+  // Cookies não-HttpOnly do domínio atual
+  try {
+    for (const cookie of document.cookie.split(";")) {
+      const name = cookie.split("=")[0]?.trim();
+      if (!name) continue;
+      const parts = window.location.hostname.split(".");
+      const domains = ["", window.location.hostname];
+      for (let i = 0; i < parts.length - 1; i++) domains.push("." + parts.slice(i).join("."));
+      for (const d of domains) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${d ? `; domain=${d}` : ""}`;
+      }
+    }
+  } catch {
+    // ignore
+  }
+};
+
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -70,13 +108,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Drop any stale API/provider token so the callback always exchanges a fresh one.
     clearApiAuth();
 
+    // Depois de um logout explícito, forçamos a tela de escolha de conta do Google.
+    const forceSelect = localStorage.getItem(FORCE_ACCOUNT_PICKER_KEY) === "1";
+    localStorage.removeItem(FORCE_ACCOUNT_PICKER_KEY);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo,
-        // access_type=offline garante novo provider_token; sem prompt=consent
-        // a renovação é silenciosa quando o usuário já está logado no Google.
-        queryParams: { access_type: 'offline' },
+        queryParams: forceSelect
+          ? { access_type: 'offline', prompt: 'select_account consent' }
+          : { access_type: 'offline' },
       },
     });
 
@@ -85,8 +127,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     clearApiAuth();
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch {
+      // segue com a limpeza local mesmo se a chamada remota falhar
+    }
+    clearBrowserAuthState();
+    localStorage.setItem(FORCE_ACCOUNT_PICKER_KEY, "1");
+    // Recarrega para descartar qualquer estado em memória.
+    window.location.replace("/auth");
   };
+
 
   return (
     <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signOut }}>
