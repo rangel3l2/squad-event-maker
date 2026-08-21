@@ -47,6 +47,10 @@ export default function Teams() {
   const [sedeFiltro, setSedeFiltro] = useState<string>("todas");
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"cadastrados" | "incompletos" | "sem-time">("cadastrados");
+  const [incompleteTeams, setIncompleteTeams] = useState<Time[]>([]);
+  const [usersWithoutTeam, setUsersWithoutTeam] = useState<Usuario[]>([]);
+  const [tabLoading, setTabLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
