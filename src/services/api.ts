@@ -1030,6 +1030,9 @@ export const setEventoAtual = (evento: number | null) => {
   return EVENTO_ATUAL;
 };
 
+/** True quando a edição exibida é a atual (mais recente). Edições anteriores são somente leitura. */
+export const isEdicaoAtual = (): boolean => EVENTO_ATUAL === EVENTO_PADRAO;
+
 /** Edição escolhida manualmente pelo usuário (ou null se estiver usando a padrão). */
 export const getEventoOverride = (): number | null => {
   const bruto = localStorage.getItem(EVENTO_OVERRIDE_KEY);
