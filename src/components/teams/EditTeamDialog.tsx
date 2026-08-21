@@ -15,7 +15,8 @@ import {
 import { Pencil } from "lucide-react";
 import { TeamLogoUploader } from "./TeamLogoUploader";
 import { SedeSelector } from "./SedeSelector";
-import { atualizarTime, listarTimes, EVENTO_ATUAL, type Time } from "@/services/api";
+import { TeamColorPicker, type CorSelecionada } from "./TeamColorPicker";
+import { atualizarTime, definirCorTime, listarTimes, EVENTO_ATUAL, type Time } from "@/services/api";
 
 interface EditTeamDialogProps {
   time: Time;
