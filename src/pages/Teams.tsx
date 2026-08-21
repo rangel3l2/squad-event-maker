@@ -6,13 +6,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, PlusCircle, Search, History } from "lucide-react";
+import { Users, PlusCircle, Search, History, UserX, UserPlus } from "lucide-react";
 import { CreateTeamForm } from "@/components/teams/CreateTeamForm";
 import { JoinTeamForm } from "@/components/teams/JoinTeamForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { listarUsuarios, listarTimes, listarSedesPorEvento, mostrarTime, mostrarTimeUsuario, EVENTO_ATUAL, type Sede, type Time, type Usuario } from "@/services/api";
+import {
+  listarUsuarios,
+  listarTimes,
+  listarTimesIncompletos,
+  listarUsuariosSemTime,
+  listarSedesPorEvento,
+  mostrarTime,
+  mostrarTimeUsuario,
+  EVENTO_ATUAL,
+  labelNivel,
+  labelPeriodo,
+  type Sede,
+  type Time,
+  type Usuario,
+} from "@/services/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Teams() {
   const navigate = useNavigate();
@@ -25,13 +40,17 @@ export default function Teams() {
   const [myTeam, setMyTeam] = useState<Time | null>(null);
   const [pastTeams, setPastTeams] = useState<Time[]>([]);
   const [allTeams, setAllTeams] = useState<Time[]>([]);
-  const [filteredTeams, setFilteredTeams] = useState<Time[]>([]);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [sedes, setSedes] = useState<Sede[]>([]);
   const [sedeFiltro, setSedeFiltro] = useState<string>("todas");
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"cadastrados" | "incompletos" | "sem-time">("cadastrados");
+  const [incompleteTeams, setIncompleteTeams] = useState<Time[]>([]);
+  const [usersWithoutTeam, setUsersWithoutTeam] = useState<Usuario[]>([]);
+  const [tabLoading, setTabLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -174,7 +193,6 @@ export default function Teams() {
           sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
         });
         setAllTeams(times);
-        setFilteredTeams(times);
 
         // Alguns endpoints de listagem não retornam os integrantes.
         // Enriquecemos os times sem integrantes para exibir os avatares nos cards.
@@ -195,14 +213,13 @@ export default function Teams() {
           const mapa = new Map<number, any[]>();
           detalhes.forEach((d) => d && mapa.set(d.id as number, d.integrantes));
           if (mapa.size > 0) {
-            const merge = (lista: Time[]) =>
-              lista.map((t) =>
+            setAllTeams((prev) =>
+              prev.map((t) =>
                 t.id != null && mapa.has(t.id)
                   ? { ...t, integrantes: mapa.get(t.id) as any }
                   : t
-              );
-            setAllTeams((prev) => merge(prev));
-            setFilteredTeams((prev) => merge(prev));
+              )
+            );
           }
         }
       } catch (error) {
@@ -213,17 +230,61 @@ export default function Teams() {
     loadTeams();
   }, [refreshKey, sedeFiltro]); // Recarrega quando refreshKey ou sede mudar
 
-  // Filtrar times conforme busca
+  // Carregar dados das abas complementares (times incompletos e jogadores sem time)
   useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredTeams(allTeams);
-    } else {
-      const filtered = allTeams.filter(time =>
-        time.nome_time.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredTeams(filtered);
-    }
-  }, [searchTerm, allTeams]);
+    const loadTabData = async () => {
+      setTabLoading(true);
+      try {
+        const [incompletos, semTime] = await Promise.all([
+          listarTimesIncompletos({
+            evento: EVENTO_ATUAL,
+            sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
+          }),
+          listarUsuariosSemTime(),
+        ]);
+
+        // Enriquece times incompletos sem integrantes
+        const faltando = incompletos.filter(
+          (t) => t.id != null && !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
+        );
+        if (faltando.length > 0) {
+          const detalhes = await Promise.all(
+            faltando.slice(0, 30).map(async (t) => {
+              try {
+                const det = await mostrarTime(t.id as number);
+                return { id: t.id, integrantes: (det as any)?.integrantes ?? [] };
+              } catch {
+                return null;
+              }
+            })
+          );
+          const mapa = new Map<number, any[]>();
+          detalhes.forEach((d) => d && mapa.set(d.id as number, d.integrantes));
+          if (mapa.size > 0) {
+            setIncompleteTeams(
+              incompletos.map((t) =>
+                t.id != null && mapa.has(t.id)
+                  ? { ...t, integrantes: mapa.get(t.id) as any }
+                  : t
+              )
+            );
+          } else {
+            setIncompleteTeams(incompletos);
+          }
+        } else {
+          setIncompleteTeams(incompletos);
+        }
+
+        setUsersWithoutTeam(semTime);
+      } catch (error) {
+        console.error("Erro ao carregar dados das abas:", error);
+      } finally {
+        setTabLoading(false);
+      }
+    };
+
+    loadTabData();
+  }, [refreshKey, sedeFiltro]);
 
   const getMembrosDoTime = (time: Time) => {
     const integrantes = Array.isArray(time.integrantes) ? time.integrantes : [];
@@ -309,6 +370,47 @@ export default function Teams() {
       </Card>
     );
   };
+
+  const renderUserCard = (usuario: Usuario) => {
+    return (
+      <Card className="overflow-hidden transition-all hover:shadow-lg hover:scale-[1.02]">
+        <CardContent className="flex items-center gap-3 py-5 px-4">
+          <Avatar className="w-14 h-14 ring-2 ring-background">
+            <AvatarImage src={usuario.url_image_perfil} alt={usuario.nome} />
+            <AvatarFallback className="text-lg bg-muted">
+              {usuario.nome?.charAt(0).toUpperCase() || "?"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="font-bold truncate text-base">{usuario.nome}</p>
+            <p className="text-xs text-muted-foreground">
+              {labelNivel(usuario.nivel)} • {labelPeriodo(usuario.periodo)}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const sortedAllTeams = [...allTeams].sort((a, b) =>
+    a.nome_time.localeCompare(b.nome_time, "pt-BR", { ignorePunctuation: true })
+  );
+  const sortedIncompleteTeams = [...incompleteTeams].sort((a, b) =>
+    a.nome_time.localeCompare(b.nome_time, "pt-BR", { ignorePunctuation: true })
+  );
+  const sortedUsersWithoutTeam = [...usersWithoutTeam].sort((a, b) =>
+    a.nome.localeCompare(b.nome, "pt-BR", { ignorePunctuation: true })
+  );
+
+  const filteredAllTeams = sortedAllTeams.filter((time) =>
+    searchTerm ? time.nome_time.toLowerCase().includes(searchTerm.toLowerCase()) : true
+  );
+  const filteredIncompleteTeams = sortedIncompleteTeams.filter((time) =>
+    searchTerm ? time.nome_time.toLowerCase().includes(searchTerm.toLowerCase()) : true
+  );
+  const filteredUsersWithoutTeam = sortedUsersWithoutTeam.filter((u) =>
+    searchTerm ? u.nome.toLowerCase().includes(searchTerm.toLowerCase()) : true
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -409,67 +511,143 @@ export default function Teams() {
                 </div>
               )}
 
-              {/* Lista de Times Cadastrados */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl flex items-center gap-2">
-                    <Users className="w-6 h-6" />
+              {/* Abas de categorias */}
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+                <TabsList className="w-full grid grid-cols-3 h-auto p-1.5 bg-muted/50 rounded-2xl">
+                  <TabsTrigger
+                    value="cadastrados"
+                    className="py-4 text-sm md:text-base font-semibold data-[state=active]:bg-background data-[state=active]:shadow-md rounded-xl gap-2"
+                  >
+                    <Users className="w-5 h-5" />
                     Times Cadastrados
-                  </CardTitle>
-                  <CardDescription>
-                    Times do evento atual. O filtro começa na sua sede, mas você pode ver as outras.
-                  </CardDescription>
-                  <div className="pt-3">
-                    <Select value={sedeFiltro} onValueChange={setSedeFiltro}>
-                      <SelectTrigger className="w-full sm:w-[320px]">
-                        <SelectValue placeholder="Filtrar por sede" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todas">Todas as sedes</SelectItem>
-                        {sedes.map((sede) => (
-                          <SelectItem key={sede.id} value={String(sede.id)}>
-                            {sede.nome_campus} — {sede.cidade}/{sede.uf}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {/* Campo de busca */}
-                  <div className="relative mb-6">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                    <Input
-                      type="text"
-                      placeholder="Buscar time pelo nome..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="incompletos"
+                    className="py-4 text-sm md:text-base font-semibold data-[state=active]:bg-background data-[state=active]:shadow-md rounded-xl gap-2"
+                  >
+                    <UserPlus className="w-5 h-5" />
+                    Times Incompletos
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="sem-time"
+                    className="py-4 text-sm md:text-base font-semibold data-[state=active]:bg-background data-[state=active]:shadow-md rounded-xl gap-2"
+                  >
+                    <UserX className="w-5 h-5" />
+                    Jogadores sem Time
+                  </TabsTrigger>
+                </TabsList>
 
-                  {/* Grid de Times */}
-                  {profileLoading ? (
-                    <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {Array.from({ length: 6 }).map((_, i) => (
-                        <Skeleton key={i} className="h-28 w-full rounded-lg" />
-                      ))}
-                    </div>
-                  ) : filteredTeams.filter((t) => t.id !== myTeam?.id).length === 0 ? (
-                    <p className="text-center text-muted-foreground py-8">
-                      {searchTerm ? "Nenhum time encontrado com esse nome" : "Nenhum time cadastrado ainda"}
-                    </p>
-                  ) : (
-                    <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {filteredTeams.filter((t) => t.id !== myTeam?.id).map((time) => (
-                        <div key={time.id}>
-                          {renderTeamCard(time, false, false)}
+                <div className="mt-6">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                          <CardTitle className="text-2xl flex items-center gap-2">
+                            {activeTab === "cadastrados" && <><Users className="w-6 h-6" /> Times Cadastrados</>}
+                            {activeTab === "incompletos" && <><UserPlus className="w-6 h-6" /> Times Incompletos</>}
+                            {activeTab === "sem-time" && <><UserX className="w-6 h-6" /> Jogadores sem Time</>}
+                          </CardTitle>
+                          <CardDescription>
+                            {activeTab === "cadastrados" && "Todos os times do evento atual em ordem alfabética."}
+                            {activeTab === "incompletos" && "Times que ainda não completaram o número de integrantes."}
+                            {activeTab === "sem-time" && "Participantes que ainda não entraram em nenhum time."}
+                          </CardDescription>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                        <div className="pt-2">
+                          <Select value={sedeFiltro} onValueChange={setSedeFiltro}>
+                            <SelectTrigger className="w-full sm:w-[260px]">
+                              <SelectValue placeholder="Filtrar por sede" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="todas">Todas as sedes</SelectItem>
+                              {sedes.map((sede) => (
+                                <SelectItem key={sede.id} value={String(sede.id)}>
+                                  {sede.nome_campus} — {sede.cidade}/{sede.uf}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {/* Campo de busca */}
+                      <div className="relative mb-6">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                        <Input
+                          type="text"
+                          placeholder={
+                            activeTab === "sem-time"
+                              ? "Buscar jogador pelo nome..."
+                              : "Buscar time pelo nome..."
+                          }
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+
+                      {profileLoading || tabLoading ? (
+                        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {Array.from({ length: 6 }).map((_, i) => (
+                            <Skeleton key={i} className="h-28 w-full rounded-lg" />
+                          ))}
+                        </div>
+                      ) : (
+                        <>
+                          <TabsContent value="cadastrados" className="mt-0">
+                            {filteredAllTeams.length === 0 ? (
+                              <p className="text-center text-muted-foreground py-8">
+                                {searchTerm ? "Nenhum time encontrado com esse nome" : "Nenhum time cadastrado ainda"}
+                              </p>
+                            ) : (
+                              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                {filteredAllTeams.map((time) => (
+                                  <div key={time.id}>
+                                    {renderTeamCard(time, time.id === myTeam?.id, false)}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </TabsContent>
+
+                          <TabsContent value="incompletos" className="mt-0">
+                            {filteredIncompleteTeams.length === 0 ? (
+                              <p className="text-center text-muted-foreground py-8">
+                                {searchTerm ? "Nenhum time encontrado com esse nome" : "Nenhum time incompleto no momento"}
+                              </p>
+                            ) : (
+                              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                {filteredIncompleteTeams.map((time) => (
+                                  <div key={time.id}>
+                                    {renderTeamCard(time, time.id === myTeam?.id, false)}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </TabsContent>
+
+                          <TabsContent value="sem-time" className="mt-0">
+                            {filteredUsersWithoutTeam.length === 0 ? (
+                              <p className="text-center text-muted-foreground py-8">
+                                {searchTerm ? "Nenhum jogador encontrado com esse nome" : "Todos os jogadores já estão em times"}
+                              </p>
+                            ) : (
+                              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                {filteredUsersWithoutTeam.map((usuario) => (
+                                  <div key={usuario.id}>
+                                    {renderUserCard(usuario)}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </TabsContent>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </Tabs>
             </section>
           </div>
         )}
