@@ -99,6 +99,15 @@ export function EditTeamDialog({ time, onUpdated }: EditTeamDialogProps) {
         evento,
       });
 
+      // Se a cor foi alterada, salva via rota dedicada de cor
+      if (cor && (cor.cor_id !== time.cor_id || cor.cor_time !== time.cor_time)) {
+        await definirCorTime(time.id!, {
+          dono_id: time.dono_id!,
+          cor_id: cor.cor_id,
+          cor_time: cor.cor_time,
+        });
+      }
+
       toast.success("Dados do time atualizados!");
       setOpen(false);
       onUpdated({
@@ -107,6 +116,9 @@ export function EditTeamDialog({ time, onUpdated }: EditTeamDialogProps) {
         imagem_time: logoUrl,
         img_logo_pequeno: miniLogoUrl,
         sede: sedeId,
+        cor_id: cor?.cor_id ?? time.cor_id,
+        cor_base: cor?.cor_base ?? time.cor_base,
+        cor_time: cor?.cor_time ?? time.cor_time,
       });
     } catch (error: any) {
       const msg = String(error?.message ?? "");
