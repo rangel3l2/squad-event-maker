@@ -371,6 +371,47 @@ export default function Teams() {
     );
   };
 
+  const renderUserCard = (usuario: Usuario) => {
+    return (
+      <Card className="overflow-hidden transition-all hover:shadow-lg hover:scale-[1.02]">
+        <CardContent className="flex items-center gap-3 py-5 px-4">
+          <Avatar className="w-14 h-14 ring-2 ring-background">
+            <AvatarImage src={usuario.url_image_perfil} alt={usuario.nome} />
+            <AvatarFallback className="text-lg bg-muted">
+              {usuario.nome?.charAt(0).toUpperCase() || "?"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="font-bold truncate text-base">{usuario.nome}</p>
+            <p className="text-xs text-muted-foreground">
+              {labelNivel(usuario.nivel)} • {labelPeriodo(usuario.periodo)}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const sortedAllTeams = [...allTeams].sort((a, b) =>
+    a.nome_time.localeCompare(b.nome_time, "pt-BR", { ignorePunctuation: true })
+  );
+  const sortedIncompleteTeams = [...incompleteTeams].sort((a, b) =>
+    a.nome_time.localeCompare(b.nome_time, "pt-BR", { ignorePunctuation: true })
+  );
+  const sortedUsersWithoutTeam = [...usersWithoutTeam].sort((a, b) =>
+    a.nome.localeCompare(b.nome, "pt-BR", { ignorePunctuation: true })
+  );
+
+  const filteredAllTeams = sortedAllTeams.filter((time) =>
+    searchTerm ? time.nome_time.toLowerCase().includes(searchTerm.toLowerCase()) : true
+  );
+  const filteredIncompleteTeams = sortedIncompleteTeams.filter((time) =>
+    searchTerm ? time.nome_time.toLowerCase().includes(searchTerm.toLowerCase()) : true
+  );
+  const filteredUsersWithoutTeam = sortedUsersWithoutTeam.filter((u) =>
+    searchTerm ? u.nome.toLowerCase().includes(searchTerm.toLowerCase()) : true
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
