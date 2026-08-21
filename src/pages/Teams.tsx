@@ -19,6 +19,7 @@ import {
   mostrarTime,
   mostrarTimeUsuario,
   EVENTO_ATUAL,
+  isEdicaoAtual,
   labelNivel,
   labelPeriodo,
   type Sede,
@@ -52,6 +53,12 @@ export default function Teams() {
   const [incompleteTeams, setIncompleteTeams] = useState<Time[]>([]);
   const [usersWithoutTeam, setUsersWithoutTeam] = useState<Usuario[]>([]);
   const [tabLoading, setTabLoading] = useState(false);
+  // Edições anteriores são somente leitura: não é possível criar ou entrar em times.
+  const edicaoAtual = isEdicaoAtual();
+
+  useEffect(() => {
+    if (!edicaoAtual && mode !== "select") setMode("select");
+  }, [edicaoAtual, mode]);
 
   useEffect(() => {
     if (!user) {
@@ -485,7 +492,7 @@ export default function Teams() {
 
             {/* Conteúdo principal */}
             <section className="lg:col-span-3 space-y-8">
-              {!profileLoading && !hasTeam && (
+              {!profileLoading && !hasTeam && edicaoAtual && (
                 <div className="grid md:grid-cols-2 gap-6">
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setMode("join")}>
                     <CardHeader>
