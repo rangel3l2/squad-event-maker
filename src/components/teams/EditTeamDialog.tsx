@@ -29,6 +29,7 @@ export function EditTeamDialog({ time, onUpdated }: EditTeamDialogProps) {
   const [logoUrl, setLogoUrl] = useState(time.imagem_time ?? "");
   const [miniLogoUrl, setMiniLogoUrl] = useState(time.img_logo_pequeno ?? "");
   const [sedeId, setSedeId] = useState<number | null>(time.sede ?? null);
+  const [cor, setCor] = useState<CorSelecionada | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -37,6 +38,16 @@ export function EditTeamDialog({ time, onUpdated }: EditTeamDialogProps) {
     setLogoUrl(time.imagem_time ?? "");
     setMiniLogoUrl(time.img_logo_pequeno ?? "");
     setSedeId(time.sede ?? null);
+    // Inicializa a cor apenas se o time já tiver uma cor definida
+    if (time.cor_id && time.cor_time) {
+      setCor({
+        cor_id: time.cor_id,
+        cor_base: time.cor_base ?? time.cor_time,
+        cor_time: time.cor_time,
+      });
+    } else {
+      setCor(null);
+    }
   }, [open, time]);
 
   const evento = time.evento ?? EVENTO_ATUAL;
