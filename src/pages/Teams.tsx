@@ -342,7 +342,14 @@ export default function Teams() {
           <div className="max-w-7xl mx-auto grid lg:grid-cols-4 gap-6 items-start">
             {/* Sidebar - Meu Time */}
             <aside className="lg:col-span-1 space-y-6">
-              {hasTeam && myTeam && (
+              {profileLoading && (
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-24 w-full rounded-lg" />
+                </div>
+              )}
+
+              {!profileLoading && hasTeam && myTeam && (
                 <div className="space-y-3">
                   <h2 className="text-lg font-bold flex items-center gap-2">
                     <Users className="w-5 h-5 text-primary" />
