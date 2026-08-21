@@ -293,8 +293,17 @@ export const alterarUsuario = async (id: number, usuario: Partial<Usuario>): Pro
   return response.json();
 };
 
-export const listarUsuariosSemTime = async (): Promise<Usuario[]> => {
-  const response = await makeRequest('/usuarios/sem-time');
+export const listarUsuariosSemTime = async (
+  filtros?: { evento?: number | null; sede_id?: number | null }
+): Promise<Usuario[]> => {
+  const evento = filtros && 'evento' in filtros ? filtros.evento : EVENTO_ATUAL;
+  const params = new URLSearchParams();
+  if (evento !== null && evento !== undefined) params.set('evento', String(evento));
+  if (filtros?.sede_id !== null && filtros?.sede_id !== undefined) {
+    params.set('sede_id', String(filtros.sede_id));
+  }
+  const query = params.toString();
+  const response = await makeRequest(`/usuarios/sem-time${query ? `?${query}` : ''}`);
   if (!response.ok) throw new Error("Erro ao listar usuários sem time");
   return response.json();
 };
@@ -1003,17 +1012,49 @@ export const buscarTodasSubmissoesDinamica = async (
 export let EVENTO_ATUAL = 2;
 
 /** Lê o código do evento do arquivo `evento.txt` (editável sem alterar o código). */
+/** Chave usada para o override manual da edição (evento) escolhida pelo usuário. */
+export const EVENTO_OVERRIDE_KEY = "ftc:evento-selecionado";
+
+/** Edição padrão do sistema (vinda do evento.txt), ignorando o override manual. */
+export let EVENTO_PADRAO = 2;
+
+/** Define manualmente a edição exibida no app (persistida no navegador). */
+export const setEventoAtual = (evento: number | null) => {
+  if (evento === null) {
+    localStorage.removeItem(EVENTO_OVERRIDE_KEY);
+    EVENTO_ATUAL = EVENTO_PADRAO;
+  } else {
+    localStorage.setItem(EVENTO_OVERRIDE_KEY, String(evento));
+    EVENTO_ATUAL = evento;
+  }
+  return EVENTO_ATUAL;
+};
+
+/** Edição escolhida manualmente pelo usuário (ou null se estiver usando a padrão). */
+export const getEventoOverride = (): number | null => {
+  const bruto = localStorage.getItem(EVENTO_OVERRIDE_KEY);
+  if (!bruto) return null;
+  const numero = parseInt(bruto, 10);
+  return Number.isNaN(numero) || numero <= 0 ? null : numero;
+};
+
 export const carregarEventoAtual = async (): Promise<number> => {
   try {
     const resp = await fetch(`/evento.txt?t=${Date.now()}`, { cache: "no-store" });
     if (resp.ok) {
       const texto = (await resp.text()).trim();
       const numero = parseInt(texto, 10);
-      if (!Number.isNaN(numero) && numero > 0) EVENTO_ATUAL = numero;
+      if (!Number.isNaN(numero) && numero > 0) {
+        EVENTO_PADRAO = numero;
+        EVENTO_ATUAL = numero;
+      }
     }
   } catch {
     // mantém o valor padrão
   }
+  // Override manual (usuário escolheu ver outra edição)
+  const override = getEventoOverride();
+  if (override !== null) EVENTO_ATUAL = override;
   return EVENTO_ATUAL;
 };
 
