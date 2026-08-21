@@ -173,6 +173,16 @@ export function EditTeamDialog({ time, onUpdated }: EditTeamDialogProps) {
 
           <SedeSelector value={sedeId} onChange={setSedeId} evento={evento} />
 
+          <div className="space-y-3">
+            <TeamColorPicker
+              sedeId={sedeId}
+              evento={evento}
+              value={cor}
+              onChange={setCor}
+              corAtualId={time.cor_id ?? null}
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="edit-codigo-time">Código de convite (não editável)</Label>
             <Input
