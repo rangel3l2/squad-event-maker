@@ -449,7 +449,13 @@ export default function Teams() {
                   </div>
 
                   {/* Grid de Times */}
-                  {filteredTeams.filter((t) => t.id !== myTeam?.id).length === 0 ? (
+                  {profileLoading ? (
+                    <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <Skeleton key={i} className="h-28 w-full rounded-lg" />
+                      ))}
+                    </div>
+                  ) : filteredTeams.filter((t) => t.id !== myTeam?.id).length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
                       {searchTerm ? "Nenhum time encontrado com esse nome" : "Nenhum time cadastrado ainda"}
                     </p>
