@@ -193,7 +193,6 @@ export default function Teams() {
           sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
         });
         setAllTeams(times);
-        setFilteredTeams(times);
 
         // Alguns endpoints de listagem não retornam os integrantes.
         // Enriquecemos os times sem integrantes para exibir os avatares nos cards.
@@ -214,14 +213,13 @@ export default function Teams() {
           const mapa = new Map<number, any[]>();
           detalhes.forEach((d) => d && mapa.set(d.id as number, d.integrantes));
           if (mapa.size > 0) {
-            const merge = (lista: Time[]) =>
-              lista.map((t) =>
+            setAllTeams((prev) =>
+              prev.map((t) =>
                 t.id != null && mapa.has(t.id)
                   ? { ...t, integrantes: mapa.get(t.id) as any }
                   : t
-              );
-            setAllTeams((prev) => merge(prev));
-            setFilteredTeams((prev) => merge(prev));
+              )
+            );
           }
         }
       } catch (error) {
