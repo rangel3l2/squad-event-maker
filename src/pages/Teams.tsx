@@ -530,6 +530,14 @@ export default function Teams() {
                 <EventSwitcher />
               </div>
 
+              {!edicaoAtual && (
+                <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                  Você está vendo uma <strong className="text-foreground">edição anterior</strong> da
+                  Copa. Este histórico é somente leitura: não é possível criar times nem entrar em
+                  times de edições passadas.
+                </div>
+              )}
+
               {/* Abas de categorias */}
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
                 <TabsList className="w-full grid grid-cols-3 h-auto p-1.5 bg-muted/50 rounded-2xl">
