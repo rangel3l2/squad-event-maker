@@ -414,7 +414,7 @@ export default function Teams() {
                 <CardHeader>
                   <CardTitle className="text-2xl flex items-center gap-2">
                     <Users className="w-6 h-6" />
-                    {hasTeam ? "Outros Times" : "Times Cadastrados"}
+                    Times Cadastrados
                   </CardTitle>
                   <CardDescription>
                     Times do evento atual. O filtro começa na sua sede, mas você pode ver as outras.
