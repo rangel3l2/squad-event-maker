@@ -271,6 +271,63 @@ export type Database = {
           },
         ]
       }
+      join_requests: {
+        Row: {
+          captain_api_id: number | null
+          captain_email: string
+          created_at: string
+          event_code: number
+          id: string
+          message: string
+          requester_api_id: number | null
+          requester_avatar: string | null
+          requester_email: string
+          requester_name: string
+          requester_user_id: string
+          response_message: string | null
+          status: string
+          team_id: number
+          team_name: string
+          updated_at: string
+        }
+        Insert: {
+          captain_api_id?: number | null
+          captain_email: string
+          created_at?: string
+          event_code: number
+          id?: string
+          message: string
+          requester_api_id?: number | null
+          requester_avatar?: string | null
+          requester_email: string
+          requester_name: string
+          requester_user_id: string
+          response_message?: string | null
+          status?: string
+          team_id: number
+          team_name: string
+          updated_at?: string
+        }
+        Update: {
+          captain_api_id?: number | null
+          captain_email?: string
+          created_at?: string
+          event_code?: number
+          id?: string
+          message?: string
+          requester_api_id?: number | null
+          requester_avatar?: string | null
+          requester_email?: string
+          requester_name?: string
+          requester_user_id?: string
+          response_message?: string | null
+          status?: string
+          team_id?: number
+          team_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
