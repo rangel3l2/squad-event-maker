@@ -583,31 +583,46 @@ export default function TeamDetails() {
               </div>
 
               {!isUserInTeam && teamId && !userHasTeam && (
-                <div className="w-full max-w-md space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <KeyRound className="w-4 h-4" />
-                    <span>Digite o código para entrar neste time</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Código de convite"
-                      value={inviteCode}
-                      onChange={(e) => setInviteCode(e.target.value)}
-                      className="font-mono text-center"
-                      disabled={isJoining}
-                    />
-                    <Button 
-                      onClick={handleJoinTeam}
-                      disabled={isJoining || !inviteCode.trim()}
-                    >
-                      {isJoining ? "Entrando..." : "Entrar"}
-                    </Button>
+                <div className="w-full max-w-md space-y-4">
+                  <RequestJoinDialog
+                    time={time}
+                    captainEmail={donoEmail}
+                    captainApiId={time.dono_id}
+                  />
+
+                  <div className="space-y-3 pt-2 border-t border-border/50">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <KeyRound className="w-4 h-4" />
+                      <span>Ou entre direto com o código de convite</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Código de convite"
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value)}
+                        className="font-mono text-center"
+                        disabled={isJoining}
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={handleJoinTeam}
+                        disabled={isJoining || !inviteCode.trim()}
+                      >
+                        {isJoining ? "Entrando..." : "Entrar"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           </CardHeader>
         </Card>
+
+        {/* Pedidos de entrada — apenas para o capitão */}
+        {isLeader && (
+          <JoinRequestsPanel time={time} onAccepted={() => window.location.reload()} />
+        )}
+
 
         {/* Código de convite — sempre visível para membros */}
         {isUserInTeam && time.senha_convite && (
