@@ -15,6 +15,8 @@ import { listarUsuarios, mostrarTime, sairDoTime, transferirDono, deletarTime, a
 import CodeViewer from "@/components/CodeViewer";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { EditTeamDialog } from "@/components/teams/EditTeamDialog";
+import { RequestJoinDialog } from "@/components/teams/RequestJoinDialog";
+import { JoinRequestsPanel } from "@/components/teams/JoinRequestsPanel";
 
 import { EVENTO_ATUAL } from "@/services/api";
 
