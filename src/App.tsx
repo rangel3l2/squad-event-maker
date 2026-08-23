@@ -34,6 +34,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <JoinRequestsModal />
           <Routes>
             <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             <Route path="/" element={<Index />} />
