@@ -112,10 +112,8 @@ export const responderPedido = async (
   if (error) throw new Error(error.message);
 };
 
+/** Remove o pedido (permite pedir de novo depois, já que só existe 1 por time). */
 export const cancelarPedido = async (id: string): Promise<void> => {
-  const { error } = await supabase
-    .from("join_requests")
-    .update({ status: "cancelled" })
-    .eq("id", id);
+  const { error } = await supabase.from("join_requests").delete().eq("id", id);
   if (error) throw new Error(error.message);
 };
