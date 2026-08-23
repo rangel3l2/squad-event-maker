@@ -15,6 +15,8 @@ import { listarUsuarios, mostrarTime, sairDoTime, transferirDono, deletarTime, a
 import CodeViewer from "@/components/CodeViewer";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { EditTeamDialog } from "@/components/teams/EditTeamDialog";
+import { RequestJoinDialog } from "@/components/teams/RequestJoinDialog";
+import { JoinRequestsPanel } from "@/components/teams/JoinRequestsPanel";
 
 import { EVENTO_ATUAL } from "@/services/api";
 
@@ -43,6 +45,34 @@ export default function TeamDetails() {
   const [selectedSubmissao, setSelectedSubmissao] = useState<SubmissaoDinamica | null>(null);
   const [loadingSubmissoes, setLoadingSubmissoes] = useState(false);
   const [dinamicaAtual, setDinamicaAtual] = useState<any>(null);
+  const [donoEmail, setDonoEmail] = useState<string | null>(null);
+
+  // E-mail do dono/capitão do time (para direcionar os pedidos de entrada)
+  useEffect(() => {
+    let ativo = true;
+    const buscarDono = async () => {
+      if (!time?.dono_id) {
+        setDonoEmail(null);
+        return;
+      }
+      const jaConhecido = integrantes.find((u) => Number(u.id) === Number(time.dono_id));
+      if (jaConhecido?.email) {
+        if (ativo) setDonoEmail(jaConhecido.email);
+        return;
+      }
+      try {
+        const usuarios = await listarUsuarios();
+        const dono = usuarios.find((u) => Number(u.id) === Number(time.dono_id));
+        if (ativo) setDonoEmail(dono?.email ?? null);
+      } catch {
+        if (ativo) setDonoEmail(null);
+      }
+    };
+    void buscarDono();
+    return () => {
+      ativo = false;
+    };
+  }, [time?.dono_id, integrantes]);
 
   useEffect(() => {
     const loadTeamData = async () => {
