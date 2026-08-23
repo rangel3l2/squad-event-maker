@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import EventTeams from "./pages/EventTeams";
 import OAuthConsent from "./pages/OAuthConsent";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { JoinRequestsModal } from "@/components/teams/JoinRequestsModal";
 
 
 const queryClient = new QueryClient();
