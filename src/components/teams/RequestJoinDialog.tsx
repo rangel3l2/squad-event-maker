@@ -129,16 +129,26 @@ export function RequestJoinDialog({ time, captainEmail, captainApiId }: RequestJ
     );
   }
 
+  // Só é permitido um pedido por time: depois de respondido, não pode pedir de novo.
+  if (pedido?.status === "rejected") {
+    return (
+      <div className="w-full max-w-md rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-1">
+        <Badge variant="destructive">Pedido recusado pelo capitão</Badge>
+        {pedido.response_message && (
+          <p className="text-xs text-muted-foreground">Resposta: {pedido.response_message}</p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Você só pode solicitar entrada neste time uma vez.
+        </p>
+      </div>
+    );
+  }
+
+  if (pedido?.status === "accepted") return null;
+
   return (
     <div className="w-full max-w-md space-y-2">
-      {pedido?.status === "rejected" && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-1">
-          <Badge variant="destructive">Pedido recusado</Badge>
-          {pedido.response_message && (
-            <p className="text-xs text-muted-foreground">Resposta: {pedido.response_message}</p>
-          )}
-        </div>
-      )}
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
