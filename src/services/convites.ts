@@ -127,3 +127,34 @@ export const excluirConvite = async (conviteId: number): Promise<void> => {
   });
   await parse(response, "excluir solicitação");
 };
+
+/** Encontra o convite (pendente ou não) de um usuário para um time. */
+export const buscarConvite = async (
+  timeId: number,
+  usuarioId: number
+): Promise<Convite | null> => {
+  const [pendentes, aceitos] = await Promise.all([
+    listarConvitesDoTime(timeId, { status: false }).catch(() => [] as Convite[]),
+    listarConvitesDoTime(timeId, { status: true }).catch(() => [] as Convite[]),
+  ]);
+  return [...pendentes, ...aceitos].find((c) => c.id_user === usuarioId) ?? null;
+};
+
+/** Reflete na API a decisão do capitão (aceitar/recusar) tomada no site. */
+export const sincronizarDecisao = async (
+  timeId: number,
+  usuarioId: number,
+  aceito: boolean
+): Promise<void> => {
+  const convite = await buscarConvite(timeId, usuarioId);
+  if (convite) await atualizarConvite(convite.id, { aceito, ativo: false });
+};
+
+/** Remove na API a solicitação quando o próprio jogador cancela. */
+export const cancelarConviteDoUsuario = async (
+  timeId: number,
+  usuarioId: number
+): Promise<void> => {
+  const convite = await buscarConvite(timeId, usuarioId);
+  if (convite) await excluirConvite(convite.id);
+};
