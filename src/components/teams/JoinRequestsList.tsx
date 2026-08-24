@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { adicionarIntegrante, listarUsuarios } from "@/services/api";
 import { listarPedidosRecebidos, responderPedido, type JoinRequest } from "@/services/joinRequests";
+import { sincronizarDecisao } from "@/services/convites";
 
 /** Hook compartilhado: pedidos pendentes recebidos pelo capitão logado. */
 export function usePedidosRecebidos() {
