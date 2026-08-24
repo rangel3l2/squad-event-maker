@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Users, LogOut, UserCircle } from "lucide-react";
 import { useJoinRequestsBadge } from "@/hooks/useJoinRequestsBadge";
+import { NotificationsBell } from "@/components/NotificationsBell";
 import logoAsset from "@/assets/logodeitadoFigurinha.png.asset.json";
 
 const logoCopa = logoAsset.url;
@@ -51,7 +52,9 @@ const Navbar = () => {
                   Perfil
                 </Button>
               </Link>
+              <NotificationsBell />
               <Button onClick={signOut} variant="ghost" size="sm">
+
                 <LogOut className="w-4 h-4 mr-2" />
                 Sair
               </Button>

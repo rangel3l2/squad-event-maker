@@ -37,7 +37,7 @@ const redirectToReauth = () => {
 
 
 // Make authenticated request through edge function proxy
-const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Promise<Response> => {
+export const makeAuthenticatedRequest = async (path: string, options?: RequestInit): Promise<Response> => {
   const token = await getAuthToken();
   
   if (!token) {
