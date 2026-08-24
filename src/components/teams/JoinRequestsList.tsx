@@ -103,6 +103,8 @@ export function JoinRequestsList({ pedidos, onChanged, compact }: Props) {
     }
   };
 
+  const mensagemMockada = (nome: string) => `${nome} deseja entrar no seu time.`;
+
   return (
     <div className="space-y-3">
       {pedidos.map((pedido) => (
@@ -117,7 +119,7 @@ export function JoinRequestsList({ pedidos, onChanged, compact }: Props) {
               <p className="text-xs text-muted-foreground truncate">
                 quer entrar no {pedido.team_name}
               </p>
-              <p className="text-sm mt-2 whitespace-pre-wrap">{pedido.message}</p>
+              <p className="text-sm mt-2 whitespace-pre-wrap">{mensagemMockada(pedido.requester_name)}</p>
             </div>
           </div>
           <div className="flex flex-col gap-2">
