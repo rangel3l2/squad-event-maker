@@ -69,6 +69,11 @@ export function JoinRequestsList({ pedidos, onChanged, compact }: Props) {
         evento: pedido.event_code,
       });
       await responderPedido(pedido.id, "accepted");
+      try {
+        await sincronizarDecisao(pedido.team_id, usuarioId, true);
+      } catch (e) {
+        console.warn("Não foi possível atualizar o convite na API:", e);
+      }
       toast.success(`${pedido.requester_name} agora faz parte do ${pedido.team_name}!`);
       onChanged?.();
     } catch (error: any) {
@@ -82,6 +87,13 @@ export function JoinRequestsList({ pedidos, onChanged, compact }: Props) {
     setProcessando(pedido.id);
     try {
       await responderPedido(pedido.id, "rejected", motivos[pedido.id]?.trim() || undefined);
+      if (pedido.requester_api_id != null) {
+        try {
+          await sincronizarDecisao(pedido.team_id, pedido.requester_api_id, false);
+        } catch (e) {
+          console.warn("Não foi possível atualizar o convite na API:", e);
+        }
+      }
       toast.success("Pedido recusado");
       onChanged?.();
     } catch (error: any) {
