@@ -133,7 +133,9 @@ export function JoinRequestsModal() {
           <div className="min-w-0 flex-1">
             <p className="font-semibold truncate">{pedido.requester_name}</p>
             <p className="text-xs text-muted-foreground truncate">{pedido.requester_email}</p>
-            <p className="text-sm mt-2 whitespace-pre-wrap">{pedido.message}</p>
+            <p className="text-sm mt-2 whitespace-pre-wrap">
+              {pedido.requester_name} deseja entrar no seu time.
+            </p>
           </div>
         </div>
 
