@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -30,10 +29,11 @@ interface RequestJoinDialogProps {
   captainApiId?: number | null;
 }
 
+const MENSAGEM_PEDIDO = (nome: string) => `${nome} deseja entrar no seu time.`;
+
 export function RequestJoinDialog({ time, captainEmail, captainApiId }: RequestJoinDialogProps) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [mensagem, setMensagem] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [pedido, setPedido] = useState<JoinRequest | null>(null);
   const [carregando, setCarregando] = useState(true);
@@ -67,27 +67,24 @@ export function RequestJoinDialog({ time, captainEmail, captainApiId }: RequestJ
       toast.error("Não foi possível identificar o capitão deste time");
       return;
     }
-    if (mensagem.trim().length < 3) {
-      toast.error("Escreva uma mensagem para o capitão");
-      return;
-    }
 
     setEnviando(true);
     try {
       const usuarios = await listarUsuarios();
       const usuario = usuarios.find((u) => u.email === user.email);
+      const requesterName = usuario?.nome ?? user.user_metadata?.full_name ?? user.email!;
 
       const novo = await criarPedidoEntrada({
         team_id: time.id!,
         team_name: time.nome_time,
         event_code: time.evento ?? EVENTO_ATUAL,
         requester_api_id: usuario?.id ?? null,
-        requester_name: usuario?.nome ?? user.user_metadata?.full_name ?? user.email!,
+        requester_name: requesterName,
         requester_email: user.email!,
         requester_avatar: usuario?.url_image_perfil ?? null,
         captain_api_id: captainApiId ?? null,
         captain_email: captainEmail,
-        message: mensagem.trim(),
+        message: MENSAGEM_PEDIDO(requesterName),
       });
 
       // Registra a solicitação também na API oficial (convite_entrar_time)
@@ -100,7 +97,6 @@ export function RequestJoinDialog({ time, captainEmail, captainApiId }: RequestJ
       }
 
       setPedido(novo);
-      setMensagem("");
       setOpen(false);
       toast.success("Pedido enviado! Aguarde a resposta do capitão.");
     } catch (error: any) {
@@ -137,7 +133,9 @@ export function RequestJoinDialog({ time, captainEmail, captainApiId }: RequestJ
           <Clock className="w-4 h-4 text-primary" />
           Pedido enviado — aguardando resposta do capitão
         </div>
-        <p className="text-xs text-muted-foreground italic">"{pedido.message}"</p>
+        <p className="text-xs text-muted-foreground italic">
+          "{MENSAGEM_PEDIDO(pedido.requester_name)}"
+        </p>
         <Button variant="ghost" size="sm" onClick={cancelar}>
           <XCircle className="w-4 h-4 mr-2" />
           Cancelar pedido
@@ -165,8 +163,6 @@ export function RequestJoinDialog({ time, captainEmail, captainApiId }: RequestJ
 
   return (
     <div className="w-full max-w-md space-y-2">
-
-
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button className="w-full">
@@ -178,24 +174,21 @@ export function RequestJoinDialog({ time, captainEmail, captainApiId }: RequestJ
           <DialogHeader>
             <DialogTitle>Pedir para entrar em "{time.nome_time}"</DialogTitle>
             <DialogDescription>
-              Escreva uma mensagem para o capitão. Ele poderá aceitar ou recusar seu pedido.
+              O capitão receberá sua solicitação e poderá aceitar ou recusar seu pedido.
             </DialogDescription>
           </DialogHeader>
 
-          <Textarea
-            placeholder="Oi! Sou do 3º ano, jogo de meio-campo e queria muito entrar no time..."
-            value={mensagem}
-            maxLength={1000}
-            rows={5}
-            onChange={(e) => setMensagem(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground text-right">{mensagem.length}/1000</p>
+          <p className="text-sm text-muted-foreground">
+            {user?.user_metadata?.full_name || user?.email
+              ? MENSAGEM_PEDIDO(user?.user_metadata?.full_name || user?.email!)
+              : "Você está solicitando entrada neste time."}
+          </p>
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)} disabled={enviando}>
               Cancelar
             </Button>
-            <Button onClick={enviar} disabled={enviando || mensagem.trim().length < 3}>
+            <Button onClick={enviar} disabled={enviando}>
               {enviando ? "Enviando..." : "Enviar pedido"}
             </Button>
           </DialogFooter>
