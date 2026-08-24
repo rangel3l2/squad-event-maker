@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Users, LogOut, UserCircle } from "lucide-react";
 import { useJoinRequestsBadge } from "@/hooks/useJoinRequestsBadge";
+import { NotificationsBell } from "@/components/NotificationsBell";
 import logoAsset from "@/assets/logodeitadoFigurinha.png.asset.json";
 
 const logoCopa = logoAsset.url;
