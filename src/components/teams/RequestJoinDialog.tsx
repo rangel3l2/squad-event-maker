@@ -90,6 +90,15 @@ export function RequestJoinDialog({ time, captainEmail, captainApiId }: RequestJ
         message: mensagem.trim(),
       });
 
+      // Registra a solicitação também na API oficial (convite_entrar_time)
+      if (usuario?.id != null) {
+        try {
+          await registrarConvite(usuario.id, time.id!);
+        } catch (e) {
+          console.warn("Não foi possível registrar o convite na API:", e);
+        }
+      }
+
       setPedido(novo);
       setMensagem("");
       setOpen(false);
@@ -105,6 +114,13 @@ export function RequestJoinDialog({ time, captainEmail, captainApiId }: RequestJ
     if (!pedido) return;
     try {
       await cancelarPedido(pedido.id);
+      if (pedido.requester_api_id != null && time.id != null) {
+        try {
+          await cancelarConviteDoUsuario(time.id, pedido.requester_api_id);
+        } catch (e) {
+          console.warn("Não foi possível cancelar o convite na API:", e);
+        }
+      }
       setPedido({ ...pedido, status: "cancelled" });
       toast.success("Pedido cancelado");
     } catch (error: any) {
