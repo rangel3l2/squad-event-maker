@@ -52,7 +52,9 @@ const Navbar = () => {
                   Perfil
                 </Button>
               </Link>
+              <NotificationsBell />
               <Button onClick={signOut} variant="ghost" size="sm">
+
                 <LogOut className="w-4 h-4 mr-2" />
                 Sair
               </Button>
