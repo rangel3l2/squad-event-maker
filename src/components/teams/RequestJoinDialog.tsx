@@ -21,6 +21,7 @@ import {
   cancelarPedido,
   type JoinRequest,
 } from "@/services/joinRequests";
+import { registrarConvite, cancelarConviteDoUsuario } from "@/services/convites";
 
 interface RequestJoinDialogProps {
   time: Time;
