@@ -442,6 +442,53 @@ export const listarTimes = async (
   });
 };
 
+/**
+ * Lista os times de um evento JÁ com os integrantes, em UMA única requisição
+ * (`/eventos/{cod}/sedes-times`). Evita o padrão N+1 de buscar `/times` e
+ * depois `/times/{id}` para cada card. Faz fallback para `/times` se a rota
+ * agregada não estiver disponível.
+ */
+export const listarTimesComIntegrantes = async (
+  filtros?: { evento?: number | null; sede_id?: number | null }
+): Promise<Time[]> => {
+  const evento = filtros && 'evento' in filtros ? filtros.evento : EVENTO_ATUAL;
+  const sedeId = filtros?.sede_id ?? null;
+
+  if (evento !== null && evento !== undefined) {
+    try {
+      const query = sedeId !== null ? `?sede_id=${sedeId}` : '';
+      const response = await makeRequest(`/eventos/${evento}/sedes-times${query}`);
+      if (response.ok) {
+        const data = await response.json();
+        const sedesArr: any[] = Array.isArray(data) ? data : (data?.sedes ?? []);
+        const lista: Time[] = [];
+        for (const item of sedesArr) {
+          const sede = item?.sede ?? item;
+          const sedeIdItem = sede?.id ?? item?.sede_id ?? null;
+          const times: any[] = item?.times ?? sede?.times ?? [];
+          for (const t of times) {
+            lista.push({
+              ...t,
+              sede: t?.sede ?? sedeIdItem ?? undefined,
+              evento: t?.evento ?? evento,
+              integrantes: Array.isArray(t?.integrantes) ? t.integrantes : [],
+            } as Time);
+          }
+        }
+        if (lista.length > 0 || sedesArr.length > 0) {
+          return sedeId === null
+            ? lista
+            : lista.filter((t) => t.sede == null || Number(t.sede) === Number(sedeId));
+        }
+      }
+    } catch (error) {
+      console.warn('Rota agregada sedes-times indisponível, usando /times', error);
+    }
+  }
+
+  return listarTimes({ evento, sede_id: sedeId });
+};
+
 
 /** Times de todas as edições (usado para duplicar times de eventos anteriores) */
 export const listarTimesTodosEventos = async (): Promise<Time[]> =>
