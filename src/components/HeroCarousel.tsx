@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/carousel";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import videoCopa from "@/assets/videoCopa2026.webm.asset.json";
+import videoCopa from "@/assets/videoCopa2026.webm";
 import { SedesShowcase } from "@/components/SedesShowcase";
 import { MapPin, Trophy, Users, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -85,7 +85,7 @@ export const HeroCarousel = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const slides: Slide[] = [
-    { type: "video", src: videoCopa.url },
+    { type: "video", src: videoCopa },
     loading ? { type: "promo" } : user ? { type: "sedes" } : { type: "promo" },
   ];
 
