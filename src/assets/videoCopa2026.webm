@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Squad Event Maker - Sistema de Gestão de Times</title>
+    <meta name="description" content="Plataforma completa para criar times personalizados e gerenciar eventos escolares. Forme equipes, escolha logos e cores exclusivas.">
+    <meta name="author" content="Squad Event Maker" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:wght@400;700&display=swap" rel="stylesheet">
+
+    
+    
+
+    
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/IBb4ftL0OjVYgjYjo060u5Elq362/social-images/social-1761348078913-copa_frontend_ifms.png">
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@lovable_dev" />
+    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/IBb4ftL0OjVYgjYjo060u5Elq362/social-images/social-1761348078913-copa_frontend_ifms.png">
+    
+  
+  
+  
+  <meta property="og:title" content="Squad Event Maker - Sistema de Gestão de Times">
+  <meta name="twitter:title" content="Squad Event Maker - Sistema de Gestão de Times">
+  <meta property="og:description" content="Plataforma completa para criar times personalizados e gerenciar eventos escolares. Forme equipes, escolha logos e cores exclusivas.">
+  <meta name="twitter:description" content="Plataforma completa para criar times personalizados e gerenciar eventos escolares. Forme equipes, escolha logos e cores exclusivas.">
+  <link rel="icon" type="image/png" href="/favicon.png">
+</head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
