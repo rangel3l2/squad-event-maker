@@ -93,10 +93,68 @@ export const makeAuthenticatedRequest = async (path: string, options?: RequestIn
 };
 
 
+// ---------------------------------------------------------------------------
+// Cache + deduplicação de GETs
+// Evita que várias telas/efeitos disparem a mesma requisição ao mesmo tempo
+// (ou repetidamente durante o polling). Qualquer método de escrita limpa o cache.
+// ---------------------------------------------------------------------------
+const GET_CACHE_TTL = 15_000;
+type CachedGet = { at: number; status: number; body: string; contentType: string };
+const getCache = new Map<string, CachedGet>();
+const inFlight = new Map<string, Promise<CachedGet>>();
+
+export const invalidateApiCache = (prefix?: string) => {
+  if (!prefix) {
+    getCache.clear();
+    return;
+  }
+  for (const key of Array.from(getCache.keys())) {
+    if (key.startsWith(prefix)) getCache.delete(key);
+  }
+};
+
+const buildResponse = (cached: CachedGet) =>
+  new Response(cached.body, {
+    status: cached.status,
+    headers: { 'Content-Type': cached.contentType },
+  });
+
 // Legacy makeRequest for backwards compatibility - now routes through proxy
 const makeRequest = async (path: string, options?: RequestInit): Promise<Response> => {
-  return makeAuthenticatedRequest(path, options);
+  const method = (options?.method || 'GET').toUpperCase();
+
+  if (method !== 'GET') {
+    invalidateApiCache();
+    return makeAuthenticatedRequest(path, options);
+  }
+
+  const cached = getCache.get(path);
+  if (cached && Date.now() - cached.at < GET_CACHE_TTL) return buildResponse(cached);
+
+  const pending = inFlight.get(path);
+  if (pending) return buildResponse(await pending);
+
+  const request = (async (): Promise<CachedGet> => {
+    const response = await makeAuthenticatedRequest(path, options);
+    const body = await response.text();
+    const entry: CachedGet = {
+      at: Date.now(),
+      status: response.status,
+      body,
+      contentType: response.headers.get('content-type') || 'application/json',
+    };
+    if (response.ok) getCache.set(path, entry);
+    return entry;
+  })();
+
+  inFlight.set(path, request);
+  try {
+    return buildResponse(await request);
+  } finally {
+    inFlight.delete(path);
+  }
 };
+
 
 // Períodos de estudo (valores inteiros aceitos pela API)
 export const PERIODOS = [
