@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Users, LogOut, UserCircle } from "lucide-react";
 import { useJoinRequestsBadge } from "@/hooks/useJoinRequestsBadge";
 import { NotificationsBell } from "@/components/NotificationsBell";
-import logoAsset from "@/assets/logodeitadoFigurinha.png.asset.json";
+import logoCopa from "@/assets/logodeitadoFigurinha.png";
 
-const logoCopa = logoAsset.url;
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
