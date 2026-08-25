@@ -93,10 +93,68 @@ export const makeAuthenticatedRequest = async (path: string, options?: RequestIn
 };
 
 
+// ---------------------------------------------------------------------------
+// Cache + deduplicação de GETs
+// Evita que várias telas/efeitos disparem a mesma requisição ao mesmo tempo
+// (ou repetidamente durante o polling). Qualquer método de escrita limpa o cache.
+// ---------------------------------------------------------------------------
+const GET_CACHE_TTL = 15_000;
+type CachedGet = { at: number; status: number; body: string; contentType: string };
+const getCache = new Map<string, CachedGet>();
+const inFlight = new Map<string, Promise<CachedGet>>();
+
+export const invalidateApiCache = (prefix?: string) => {
+  if (!prefix) {
+    getCache.clear();
+    return;
+  }
+  for (const key of Array.from(getCache.keys())) {
+    if (key.startsWith(prefix)) getCache.delete(key);
+  }
+};
+
+const buildResponse = (cached: CachedGet) =>
+  new Response(cached.body, {
+    status: cached.status,
+    headers: { 'Content-Type': cached.contentType },
+  });
+
 // Legacy makeRequest for backwards compatibility - now routes through proxy
 const makeRequest = async (path: string, options?: RequestInit): Promise<Response> => {
-  return makeAuthenticatedRequest(path, options);
+  const method = (options?.method || 'GET').toUpperCase();
+
+  if (method !== 'GET') {
+    invalidateApiCache();
+    return makeAuthenticatedRequest(path, options);
+  }
+
+  const cached = getCache.get(path);
+  if (cached && Date.now() - cached.at < GET_CACHE_TTL) return buildResponse(cached);
+
+  const pending = inFlight.get(path);
+  if (pending) return buildResponse(await pending);
+
+  const request = (async (): Promise<CachedGet> => {
+    const response = await makeAuthenticatedRequest(path, options);
+    const body = await response.text();
+    const entry: CachedGet = {
+      at: Date.now(),
+      status: response.status,
+      body,
+      contentType: response.headers.get('content-type') || 'application/json',
+    };
+    if (response.ok) getCache.set(path, entry);
+    return entry;
+  })();
+
+  inFlight.set(path, request);
+  try {
+    return buildResponse(await request);
+  } finally {
+    inFlight.delete(path);
+  }
 };
+
 
 // Períodos de estudo (valores inteiros aceitos pela API)
 export const PERIODOS = [
@@ -382,6 +440,53 @@ export const listarTimes = async (
         : t.sede === undefined || t.sede === null || Number(t.sede) === Number(filtros.sede_id);
     return okEvento && okSede;
   });
+};
+
+/**
+ * Lista os times de um evento JÁ com os integrantes, em UMA única requisição
+ * (`/eventos/{cod}/sedes-times`). Evita o padrão N+1 de buscar `/times` e
+ * depois `/times/{id}` para cada card. Faz fallback para `/times` se a rota
+ * agregada não estiver disponível.
+ */
+export const listarTimesComIntegrantes = async (
+  filtros?: { evento?: number | null; sede_id?: number | null }
+): Promise<Time[]> => {
+  const evento = filtros && 'evento' in filtros ? filtros.evento : EVENTO_ATUAL;
+  const sedeId = filtros?.sede_id ?? null;
+
+  if (evento !== null && evento !== undefined) {
+    try {
+      const query = sedeId !== null ? `?sede_id=${sedeId}` : '';
+      const response = await makeRequest(`/eventos/${evento}/sedes-times${query}`);
+      if (response.ok) {
+        const data = await response.json();
+        const sedesArr: any[] = Array.isArray(data) ? data : (data?.sedes ?? []);
+        const lista: Time[] = [];
+        for (const item of sedesArr) {
+          const sede = item?.sede ?? item;
+          const sedeIdItem = sede?.id ?? item?.sede_id ?? null;
+          const times: any[] = item?.times ?? sede?.times ?? [];
+          for (const t of times) {
+            lista.push({
+              ...t,
+              sede: t?.sede ?? sedeIdItem ?? undefined,
+              evento: t?.evento ?? evento,
+              integrantes: Array.isArray(t?.integrantes) ? t.integrantes : [],
+            } as Time);
+          }
+        }
+        if (lista.length > 0 || sedesArr.length > 0) {
+          return sedeId === null
+            ? lista
+            : lista.filter((t) => t.sede == null || Number(t.sede) === Number(sedeId));
+        }
+      }
+    } catch (error) {
+      console.warn('Rota agregada sedes-times indisponível, usando /times', error);
+    }
+  }
+
+  return listarTimes({ evento, sede_id: sedeId });
 };
 
 
