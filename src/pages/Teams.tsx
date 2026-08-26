@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   listarUsuarios,
   listarTimes,
+  listarTimesComIntegrantes,
   listarTimesIncompletos,
   listarUsuariosSemTime,
   listarSedesPorEvento,
