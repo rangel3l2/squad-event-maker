@@ -442,6 +442,53 @@ export const listarTimes = async (
   });
 };
 
+const normalizeIntegranteAgregado = (integrante: any): Integrante & Record<string, any> => ({
+  ...integrante,
+  usuario_id: Number(
+    integrante?.usuario_id ?? integrante?.usuario?.id ?? integrante?.id ?? 0
+  ),
+  nome: integrante?.nome ?? integrante?.usuario?.nome ?? '',
+  url_image_perfil:
+    integrante?.url_image_perfil ?? integrante?.imagem ?? integrante?.usuario?.url_image_perfil,
+  funcao: integrante?.funcao ?? '',
+});
+
+const normalizeTimeAgregado = (
+  item: any,
+  evento: number,
+  sedeId?: number | null
+): Time | null => {
+  const raw = item?.time && typeof item.time === 'object' ? item.time : item;
+  const id = raw?.id ?? raw?.time_id;
+  const nome = raw?.nome_time ?? raw?.nome;
+  if (id == null || typeof nome !== 'string' || !nome.trim()) return null;
+
+  const integrantesRaw = Array.isArray(raw?.integrantes)
+    ? raw.integrantes
+    : Array.isArray(item?.integrantes)
+      ? item.integrantes
+      : [];
+  const integrantes = integrantesRaw.map(normalizeIntegranteAgregado);
+  const dono = integrantesRaw.find((integrante: any) =>
+    String(integrante?.funcao ?? '').toLowerCase().includes('dono') ||
+    String(integrante?.funcao ?? '').toLowerCase().includes('capit')
+  );
+
+  return {
+    ...raw,
+    id: Number(id),
+    nome_time: nome,
+    dono_id: Number(raw?.dono_id ?? raw?.dono?.id ?? dono?.usuario_id ?? dono?.id ?? 0),
+    imagem_time: raw?.imagem_time ?? raw?.imagem ?? raw?.imagem_url,
+    img_logo_pequeno: raw?.img_logo_pequeno ?? raw?.mini_logo ?? raw?.imagem_pequena,
+    sede: raw?.sede ?? raw?.sede_id ?? sedeId ?? undefined,
+    evento: raw?.evento ?? raw?.evento_cod ?? evento,
+    integrantes,
+    qtd_integrantes:
+      raw?.qtd_integrantes ?? raw?.quantidade_integrantes ?? raw?.quantidade ?? integrantes.length,
+  };
+};
+
 /**
  * Lista os times de um evento JÁ com os integrantes, em UMA única requisição
  * (`/eventos/{cod}/sedes-times`). Evita o padrão N+1 de buscar `/times` e
@@ -460,26 +507,50 @@ export const listarTimesComIntegrantes = async (
       const response = await makeRequest(`/eventos/${evento}/sedes-times${query}`);
       if (response.ok) {
         const data = await response.json();
-        const sedesArr: any[] = Array.isArray(data) ? data : (data?.sedes ?? []);
+        const sedesArr: any[] = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.sedes)
+            ? data.sedes
+            : Array.isArray(data?.sedes_times)
+              ? data.sedes_times
+              : [];
         const lista: Time[] = [];
         for (const item of sedesArr) {
           const sede = item?.sede ?? item;
           const sedeIdItem = sede?.id ?? item?.sede_id ?? null;
-          const times: any[] = item?.times ?? sede?.times ?? [];
+          const times: any[] = Array.isArray(item?.times)
+            ? item.times
+            : Array.isArray(sede?.times)
+              ? sede.times
+              : [];
           for (const t of times) {
-            lista.push({
-              ...t,
-              sede: t?.sede ?? sedeIdItem ?? undefined,
-              evento: t?.evento ?? evento,
-              integrantes: Array.isArray(t?.integrantes) ? t.integrantes : [],
-            } as Time);
+            const normalizado = normalizeTimeAgregado(t, evento, sedeIdItem);
+            if (normalizado) lista.push(normalizado);
           }
         }
-        if (lista.length > 0 || sedesArr.length > 0) {
+
+        // Algumas versões da API retornam `{ times: [...] }` sem agrupamento.
+        if (lista.length === 0 && Array.isArray(data?.times)) {
+          for (const t of data.times) {
+            const normalizado = normalizeTimeAgregado(t, evento, sedeId);
+            if (normalizado) lista.push(normalizado);
+          }
+        }
+
+        if (lista.length > 0) {
           return sedeId === null
             ? lista
             : lista.filter((t) => t.sede == null || Number(t.sede) === Number(sedeId));
         }
+
+        const declarouListaVazia =
+          (sedesArr.length === 0 && Array.isArray(data)) ||
+          (Array.isArray(data?.sedes) && data.sedes.length === 0) ||
+          (Array.isArray(data?.sedes_times) && data.sedes_times.length === 0) ||
+          (Array.isArray(data?.times) && data.times.length === 0);
+        if (declarouListaVazia) return [];
+
+        console.warn('Resposta de sedes-times sem times reconhecíveis, usando /times');
       }
     } catch (error) {
       console.warn('Rota agregada sedes-times indisponível, usando /times', error);
