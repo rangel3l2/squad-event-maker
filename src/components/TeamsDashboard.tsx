@@ -101,36 +101,13 @@ export const TeamsDashboard = () => {
     let active = true;
     const fetchTimes = async () => {
       try {
-        const timesData = await listarTimes({
+        // Uma única requisição já traz os times COM os integrantes.
+        const timesData = await listarTimesComIntegrantes({
           evento: EVENTO_ATUAL,
           sede_id: sedeFiltro === TODAS ? null : Number(sedeFiltro),
         });
         if (!active) return;
         setTimes(timesData);
-
-        // A listagem nem sempre traz os integrantes: completamos para exibir os avatares.
-        const faltando = timesData.filter(
-          (t) => t.id != null && !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
-        );
-        if (faltando.length > 0) {
-          const detalhes = await Promise.all(
-            faltando.slice(0, 24).map(async (t) => {
-              try {
-                const det: any = await mostrarTime(t.id as number);
-                return { id: t.id as number, integrantes: det?.integrantes ?? det?.time?.integrantes ?? [] };
-              } catch {
-                return null;
-              }
-            })
-          );
-          const mapa = new Map<number, any[]>();
-          detalhes.forEach((d) => d && mapa.set(d.id, d.integrantes));
-          if (active && mapa.size > 0) {
-            setTimes((prev) =>
-              prev.map((t) => (t.id != null && mapa.has(t.id) ? { ...t, integrantes: mapa.get(t.id) as any } : t))
-            );
-          }
-        }
       } catch (error) {
         console.error("Erro ao carregar times:", error);
       } finally {
@@ -139,12 +116,16 @@ export const TeamsDashboard = () => {
     };
 
     fetchTimes();
-    const interval = setInterval(fetchTimes, 10000);
+    // Atualização periódica leve, e apenas com a aba visível.
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchTimes();
+    }, 60000);
     return () => {
       active = false;
       clearInterval(interval);
     };
   }, [sedeFiltro]);
+
 
   const sedeAtual = useMemo(
     () => sedes.find((s) => String(s.id) === sedeFiltro) ?? null,
