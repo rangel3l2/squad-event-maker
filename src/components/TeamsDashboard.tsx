@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { listarTimes, listarSedesPorEvento, listarUsuarios, mostrarTime, EVENTO_ATUAL, type Sede, type Time, type Usuario } from "@/services/api";
+import { listarTimesComIntegrantes, listarSedesPorEvento, listarUsuarios, EVENTO_ATUAL, type Sede, type Time, type Usuario } from "@/services/api";
 import { TeamCard } from "@/components/teams/TeamCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSavedLocation } from "@/hooks/useUserLocation";
