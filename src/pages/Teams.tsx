@@ -111,13 +111,33 @@ export default function Teams() {
           }
         }
 
-        // A listagem nem sempre retorna os integrantes: buscar detalhes quando faltar
+        // O evento atual já vem completo (times + integrantes) numa requisição só.
+        try {
+          const atuaisCompletos = await listarTimesComIntegrantes({ evento: EVENTO_ATUAL });
+          const mapaAtual = new Map<number, any[]>();
+          atuaisCompletos.forEach((t) => {
+            if (t.id != null) mapaAtual.set(Number(t.id), (t.integrantes || []) as any[]);
+          });
+          todosOsTimes = todosOsTimes.map((t) =>
+            t.id != null && mapaAtual.has(Number(t.id))
+              ? { ...t, integrantes: mapaAtual.get(Number(t.id)) as any }
+              : t
+          );
+        } catch {
+          /* ignore */
+        }
+
+        // Edições anteriores: só buscamos detalhes dos poucos times que ainda
+        // não têm integrantes e que não são meus por posse.
         const semIntegrantes = todosOsTimes.filter(
-          (t) => t.id != null && !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
+          (t) =>
+            t.id != null &&
+            Number(t.evento) !== Number(EVENTO_ATUAL) &&
+            !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
         );
         if (semIntegrantes.length > 0) {
           const detalhes = await Promise.all(
-            semIntegrantes.slice(0, 40).map(async (t) => {
+            semIntegrantes.slice(0, 10).map(async (t) => {
               try {
                 const det = await mostrarTime(t.id as number);
                 return { id: t.id, integrantes: ((det as any)?.integrantes ?? []) as any[] };
@@ -132,6 +152,7 @@ export default function Teams() {
             t.id != null && mapa.has(t.id) ? { ...t, integrantes: mapa.get(t.id) as any } : t
           );
         }
+
 
         for (const time of todosOsTimes) {
           if (time.id == null) continue;
