@@ -217,40 +217,12 @@ export default function Teams() {
   useEffect(() => {
     const loadTeams = async () => {
       try {
-        const times = await listarTimes({
+        // Uma requisição só: times + integrantes.
+        const times = await listarTimesComIntegrantes({
           evento: EVENTO_ATUAL,
           sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
         });
         setAllTeams(times);
-
-        // Alguns endpoints de listagem não retornam os integrantes.
-        // Enriquecemos os times sem integrantes para exibir os avatares nos cards.
-        const faltando = times.filter(
-          (t) => t.id != null && !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
-        );
-        if (faltando.length > 0) {
-          const detalhes = await Promise.all(
-            faltando.slice(0, 30).map(async (t) => {
-              try {
-                const det = await mostrarTime(t.id as number);
-                return { id: t.id, integrantes: (det as any)?.integrantes ?? [] };
-              } catch {
-                return null;
-              }
-            })
-          );
-          const mapa = new Map<number, any[]>();
-          detalhes.forEach((d) => d && mapa.set(d.id as number, d.integrantes));
-          if (mapa.size > 0) {
-            setAllTeams((prev) =>
-              prev.map((t) =>
-                t.id != null && mapa.has(t.id)
-                  ? { ...t, integrantes: mapa.get(t.id) as any }
-                  : t
-              )
-            );
-          }
-        }
       } catch (error) {
         console.error("Erro ao carregar times:", error);
       }
@@ -264,7 +236,7 @@ export default function Teams() {
     const loadTabData = async () => {
       setTabLoading(true);
       try {
-        const [incompletos, semTime] = await Promise.all([
+        const [incompletos, semTime, completos] = await Promise.all([
           listarTimesIncompletos({
             evento: EVENTO_ATUAL,
             sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
@@ -273,39 +245,24 @@ export default function Teams() {
             evento: EVENTO_ATUAL,
             sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
           }),
+          listarTimesComIntegrantes({
+            evento: EVENTO_ATUAL,
+            sede_id: sedeFiltro === "todas" ? null : Number(sedeFiltro),
+          }).catch(() => [] as Time[]),
         ]);
 
-        // Enriquece times incompletos sem integrantes
-        const faltando = incompletos.filter(
-          (t) => t.id != null && !(Array.isArray(t.integrantes) && t.integrantes.length > 0)
+        // Reaproveita os integrantes já carregados pela rota agregada
+        const mapa = new Map<number, any[]>();
+        completos.forEach((t) => {
+          if (t.id != null) mapa.set(Number(t.id), (t.integrantes || []) as any[]);
+        });
+        setIncompleteTeams(
+          incompletos.map((t) =>
+            t.id != null && mapa.has(Number(t.id)) && !(t.integrantes?.length)
+              ? { ...t, integrantes: mapa.get(Number(t.id)) as any }
+              : t
+          )
         );
-        if (faltando.length > 0) {
-          const detalhes = await Promise.all(
-            faltando.slice(0, 30).map(async (t) => {
-              try {
-                const det = await mostrarTime(t.id as number);
-                return { id: t.id, integrantes: (det as any)?.integrantes ?? [] };
-              } catch {
-                return null;
-              }
-            })
-          );
-          const mapa = new Map<number, any[]>();
-          detalhes.forEach((d) => d && mapa.set(d.id as number, d.integrantes));
-          if (mapa.size > 0) {
-            setIncompleteTeams(
-              incompletos.map((t) =>
-                t.id != null && mapa.has(t.id)
-                  ? { ...t, integrantes: mapa.get(t.id) as any }
-                  : t
-              )
-            );
-          } else {
-            setIncompleteTeams(incompletos);
-          }
-        } else {
-          setIncompleteTeams(incompletos);
-        }
 
         setUsersWithoutTeam(semTime);
       } catch (error) {
@@ -317,6 +274,7 @@ export default function Teams() {
 
     loadTabData();
   }, [refreshKey, sedeFiltro]);
+
 
   const getMembrosDoTime = (time: Time) => {
     const integrantes = Array.isArray(time.integrantes) ? time.integrantes : [];
